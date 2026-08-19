@@ -1,4 +1,4 @@
-# 魔兽世界 · 回合制战记 (WoW Web Game)
+# 魔兽世界·战大陆 (WoW Web Game)
 
 一个高还原度的魔兽世界**网页版回合制 RPG**。暗黑魔兽风 UI，无需构建、无需服务器，**双击 `index.html` 即可游玩**。
 
@@ -137,7 +137,7 @@ node test-dom.js
 - **移动端专享交互**：创建角色时点击种族卡片先看详情、再点一次确认选择（桌面仍为悬停查看）
 - **触屏滑动翻页**：天赋树内**左右滑动切换三系专精**（带拖拽跟随与滑入动画，滑动后 400ms 内拦截误触点击）；技能书**左右滑动翻页**（每页 8 条技能，页码指示点可点击跳转，单页时自动隐藏翻页控件）——桌面端鼠标拖拽同样可用
 - **PWA 增强**：`theme-color` 状态栏配色、`viewport-fit=cover`、可添加到主屏（`apple-mobile-web-app-capable`）
-- **🤖 安卓原生 APK（Capacitor，按安卓应用开发规范构建）**：已接入 Capacitor 8 打包为原生安卓应用（包名 `com.wowweb.game`，应用名「魔兽世界 · 回合制战记」，WebView 加载本地资源、无需联网）。首次构建需 Android SDK 36 + JDK 17-21（仓库内 `android/` 工程已生成，`android/local.properties` 指向本机 SDK）：
+- **🤖 安卓原生 APK（Capacitor，按安卓应用开发规范构建）**：已接入 Capacitor 8 打包为原生安卓应用（包名 `com.wowweb.game`，应用名「魔兽世界·战大陆」，WebView 加载本地资源、无需联网）。首次构建需 Android SDK 36 + JDK 17-21（仓库内 `android/` 工程已生成，`android/local.properties` 指向本机 SDK）：
   - **正式版**：`npm run apk:release` → 产物 `android/app/build/outputs/apk/release/app-release.apk`（**v1.0.0，release 签名**，已用 `keytool` 生成 30 年有效期的 `android/keystore/wow-web-release.keystore`，密码存于 `android/keystore/keystore-pass.txt` 与 `android/keystore.properties`——⚠️ **两者均被 `.gitignore` 排除、务必离线备份，丢失将无法更新已发布应用**）
   - 改完游戏源码后一键重建：`npm run apk`（自动同步 `www/` 静态资源 → `npx cap sync` → Gradle 打包）；`npm run apk:release` 构建 release 签名版，`npm run apk:install` 为 debug 版直装
   - 手机已连 adb 时 `npm run apk:install` 直接安装；或把 APK 传到手机手动安装（需允许未知来源）
@@ -148,6 +148,52 @@ node test-dom.js
 - **🛣️ 旅行面板（直达/中转双分区 + 最近路径）**：旅行面板将可达区域拆分为**两个独立分区**——🚀 **直达**（当前所在 + 飞艇/远洋航线 + 步行直达的 1 跳区域，金色分区标题带计数）与 🗺️ **中转区域**（需多跳的区域，蓝色分区，标注「N 站 + 首站 X」），直达单独成列表，一眼分拣「马上能去」与「需要中转」；每个分区内按推荐等级升序（当前所在置顶）。**中转区默认折叠**：旅行面板默认只展示直达区，中转区域折叠为一条标题（带「▸ 展开」指示），点击标题即可展开/收起全部中转地图，展开偏好跨会话持久化（localStorage），标题支持键盘 Enter/Space 操作，减少面板噪音、聚焦关联地图。**最近路径**：打开「出发旅行」后按全图最短路径（BFS）计算当前位置到每个区域的跳数，**按推荐等级升序**列出全图 49 个区域（同级按距离近者优先，当前所在置顶），并标注「最近路径」——🚀 **直达**（直连 1 跳，金色徽标 + 行高亮）与 🛣️ **N 站**（多跳，附「首站 X」即最近路径第一步，悬停可见完整路径 A → B → C）；面板顶部汇总直连数与最远站数。**点击行为**：直达区域点击直接出发；多跳区域点击沿最近路径先前往首站（弹出提示），保留逐区域推进的冒险节奏
 - **🚁⛵ 跨大陆直达航线**：主城间新增**直达航线**系统（`D.AIRSHIPS` 注册表，双向）——🚁 **飞艇**：奥格瑞玛 ↔ 暴风城；⛵ **远洋商船**：西部荒野 ↔ 尘泥沼泽。航线在旅行面板以独立青色徽标（🚁 飞艇 / ⛵ 远洋商船）+ 行高亮显示（区别于普通 🚀 直达），点击直接乘飞艇/商船抵达并弹出提示；BFS 将航线作为 1 跳边并入最短路径计算（如暴风城→贫瘠之地由 6 站缩至 2 站），面板顶部汇总当前区域可用航线数，大幅减少跨大陆中长距离奔波
 - **📜 旅行面板未接任务数**：旅行面板每个区域行显示该地**未接任务数**（绿色「📜 可接 N」徽标，与任务板「可接取」口径一致——未接取且未完成的任务），顶部汇总**全图可接任务总数**；接取或完成任务后徽标实时减一，等级不足的锁定副本行不显示，规划行程时一眼看出下一站该去哪接任务
+
+## 🔄 在线更新与自动发布（GitHub Actions）
+
+游戏内置**在线更新检查**（`js/updater.js`，仓库 [chwl66/wow-web](https://github.com/chwl66/wow-web)）：
+- 进入世界界面后**每日自动检查**一次 GitHub Releases；发现新版本弹出「🔄 在线更新」弹窗，展示更新日志
+- **⚡ 增量热更新（安卓端）**：免装 APK 秒级完成——下载更新清单 `update.json` → 智能选择**增量补丁**（仅变更文件，`patch-vX.Y.Z.zip`，与上一版本差量）或**全量资源包**（`www-vX.Y.Z.zip`）→ 下载 → **SHA-256 校验**（防篡改/防损坏）→ 解压到内部存储 → 切换 WebView 加载路径并自动重启，**存档保留**；补丁基准不匹配时自动回退全量包
+- 热更新不可用（桌面浏览器/无插件）时回退「📦 下载 APK」完整安装，APK 覆盖安装同样保留存档
+- 「⚙️ 设置 → 版本与更新」可**手动检查**，无更新时提示已是最新；无网络/请求失败时静默跳过，不影响游戏
+- 版本号由 `package.json` 单点派生（`scripts/gen-version.js` 生成 `js/version.js`），与 APK 的 versionCode/versionName 完全一致
+
+### 自动构建 & 发布 Release
+
+`.github/workflows/release.yml`：推送 `main`/`master` 后自动执行——**当 package.json 版本高于最新已发布 Release 时**，构建签名 APK 并创建 GitHub Release（tag `vX.Y.Z` + 自动生成更新日志），同时发布在线更新产物：
+
+| 产物 | 说明 |
+|---|---|
+| `app-release.apk` | 签名安装包（完整安装） |
+| `update.json` | 更新清单（版本 / 全量包 / 增量补丁 / 逐文件 SHA-256） |
+| `www-vX.Y.Z.zip` | 全量 Web 资源包（热更新基准） |
+| `patch-vX.Y.Z.zip` | 相对上一版的**增量补丁**（仅变更/新增文件） |
+
+普通提交（未升版本）只构建不重复发布；也可在 Actions 页手动触发。
+
+### 首次配置（一次性）
+
+1. **推送本仓库**到 GitHub 后，在仓库 **Settings → Secrets and variables → Actions** 添加 4 个 Secret：
+
+   | Secret | 值（本地获取） |
+   |---|---|
+   | `ANDROID_KEYSTORE_BASE64` | `base64 -w0 android/keystore/wow-web-release.keystore` 的输出 |
+   | `KEYSTORE_PASSWORD` | keystore 口令（见本地 `android/keystore.properties`） |
+   | `KEY_ALIAS` | 密钥别名（本工程为 `wowweb`） |
+   | `KEY_PASSWORD` | 密钥口令 |
+
+2. **升级版本**：改代码后 `npm version patch`（或 `minor`/`major`）提升 `package.json` 版本 → 推送 `main`，Actions 自动构建并发布 Release（含增量补丁）。用户手机打开游戏即自动热更新，无需重新安装。
+
+3. 用户手机安装旧版后，打开游戏即自动检测到新版本并提示下载更新。
+
+⚠️ 4 个 Secret 缺一不可（不签名无法安装/无法覆盖更新）；`android/keystore/` 与 `android/keystore.properties` 已被 `.gitignore` 排除且**不会**随仓库上传，请务必在本地离线备份。
+
+### 热更新实现说明
+
+- **原生层**：`HotUpdatePlugin.java`（自研插件，`MainActivity` 注册）基于 Capacitor 官方 `Bridge.setServerBasePath()` 机制——把 WebView 资源加载路径切换到内部存储 `<files>/updates/www-<版本>/`，支持全量解压与「复制当前生效目录 + 叠加补丁」两种模式，含 zip-slip 防护与版本元信息（`.hotupdate.json`）
+- **插件依赖**：`@capacitor/filesystem`（写入下载包）；官方插件要求 JDK 21 toolchain，已通过 `settings.gradle` 的 foojay-resolver 自动下载对应 JDK，本地/CI 无需手动安装
+- **产物生成**：`npm run www:artifacts`（本地）或 CI 内 `scripts/update-artifacts.js`——遍历 `www/` 计算逐文件 SHA-256、与上一版清单（从上一个 Release 拉取 `update.json`）做差量生成增量补丁
+- **zip 写入器**：`scripts/zip-writer.js` 为无依赖标准 ZIP 实现（node zlib deflate），安卓端 `java.util.zip.ZipInputStream` 直接兼容
 
 ## 📝 说明
 

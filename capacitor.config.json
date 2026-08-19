@@ -1,6 +1,6 @@
 {
   "appId": "com.wowweb.game",
-  "appName": "魔兽世界 · 回合制战记",
+  "appName": "魔兽世界·战大陆",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

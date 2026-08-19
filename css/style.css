@@ -1,5 +1,5 @@
 /* ============================================================
-   魔兽世界 · 回合制战记 — 暗黑魔兽风
+   魔兽世界 · 战大陆 — 暗黑魔兽风
    深色基调 + 金色描边 + 羊皮纸质感的战斗日志
    ============================================================ */
 :root {
@@ -1605,3 +1605,12 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
 .set-switch:hover { border-color: var(--gold); }
 .set-switch:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (max-width: 480px) { .set-desc { font-size: 11px; } }
+
+/* ===== 在线更新弹窗 ===== */
+.upd-box { padding: 2px 0; }
+.upd-title { font-size: 15px; color: var(--gold); }
+.upd-sub { font-size: 12px; color: var(--text-dim); margin: 8px 0 12px; line-height: 1.6; }
+.upd-sub b { color: var(--text); }
+.upd-log { border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.04); padding: 10px 12px; margin-bottom: 6px; max-height: 40vh; overflow-y: auto; }
+.upd-log-title { font-size: 12px; color: var(--gold); opacity: 0.85; margin-bottom: 6px; }
+.upd-log pre { margin: 0; font-family: inherit; font-size: 12px; color: var(--text); line-height: 1.65; white-space: pre-wrap; word-break: break-word; }

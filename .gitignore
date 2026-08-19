@@ -19,3 +19,6 @@ www/
 # 旧备份压缩包
 index.zip
 www.zip
+
+# 在线更新产物(由 scripts/update-artifacts.js 生成)
+dist-update/

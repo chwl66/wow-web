@@ -1,4 +1,4 @@
-/* 魔兽世界 · 网页版 — 主流程:标题画面 / 角色创建(阵营→种族→职业→命名) */
+/* 魔兽世界 · 战大陆 — 主流程:标题画面 / 角色创建(阵营→种族→职业→命名) */
 (function () {
   'use strict';
   const W = window.WOW;
@@ -48,7 +48,7 @@
           <div class="wow-logo">
             <span class="wow-w">W</span><span class="wow-o">O</span><span class="wow-w">W</span>
           </div>
-          <div class="wow-sub">魔兽世界 · 回合制战记</div>
+          <div class="wow-sub">魔兽世界·战大陆</div>
           <div class="wow-tagline">为了联盟！为了部落！</div>
           <div class="title-menu">
             <button class="btn gold big title-btn" data-act="new">⚔️ 创建新英雄</button>

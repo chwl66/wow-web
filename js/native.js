@@ -1,4 +1,4 @@
-/* 魔兽世界 · 网页版 — Capacitor 原生桥接(仅安卓/iOS 原生壳生效)
+/* 魔兽世界 · 战大陆 — Capacitor 原生桥接(仅安卓/iOS 原生壳生效)
  * 依据安卓应用开发规范:
  *  1. 系统返回键按导航层级处理:关弹窗 → 战斗逃跑 → 世界回标题 → 标题双击退出
  *  2. 切后台(appStateChange)强制自动存档(beforeunload 在 WebView 不可靠)
@@ -91,6 +91,20 @@
       SysBars.setStyle({ style: 'DARK', bar: 'StatusBar' });
     } catch (e) { /* 老版本忽略 */ }
   }
+
+  // ---------- 3.5 热更新:启动时同步当前生效的 Web 资源版本 ----------
+  // 若已应用过热更新(内部存储目录加载),把生效版本写入 localStorage,
+  // 供增量更新决策(patch 基准判断)与「设置」面板展示使用。
+  try {
+    const HotUpdate = window.Capacitor.Plugins && window.Capacitor.Plugins.HotUpdate;
+    if (HotUpdate) {
+      HotUpdate.getActiveUpdate().then((active) => {
+        if (active && active.version) {
+          try { localStorage.setItem('wow_web_applied_version', active.version); } catch (e) { /* ignore */ }
+        }
+      }).catch(() => { /* ignore */ });
+    }
+  } catch (e) { /* ignore */ }
 
   // ---------- 4. 首屏就绪后隐藏启动画面 ----------
   if (Splash) {

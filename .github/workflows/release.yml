@@ -1,0 +1,148 @@
+# 自动构建 & 发布 Release
+# 触发条件:推送 main/master 分支(或手动 workflow_dispatch)。
+# 仅当 package.json 版本号高于最新已发布 Release 时,才构建签名 APK 并发布新 Release——
+# 普通提交(未升版本)不会重复发布。
+#
+# 前置配置(GitHub 仓库 Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64 : 签名 keystore 的 base64(本地执行 base64 -w0 android/keystore/wow-web-release.keystore)
+#   KEYSTORE_PASSWORD       : keystore 口令
+#   KEY_ALIAS               : 密钥别名(本工程为 wowweb)
+#   KEY_PASSWORD            : 密钥口令
+# 四个 Secret 缺一不可,否则构建失败(不签名无法安装/无法覆盖更新)。
+
+name: Build & Release
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 完整历史,用于生成更新日志
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # JDK 21:与官方插件(@capacitor/filesystem 等)要求的 toolchain 匹配,避免额外下载
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 版本比对:package.json 版本 > 最新 Release tag → 需要发布
+      - name: Compare version with latest release
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          LATEST="$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)"
+          LATEST="${LATEST#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          NEEDED=false
+          node -e "
+            const cur='$VERSION', latest='$LATEST';
+            const p=(s)=>s.split('.').map(n=>parseInt(n,10)||0);
+            const a=p(cur), b=p(latest||'0.0.0');
+            for(let i=0;i<3;i++){ if(a[i]>b[i]) process.exit(0); if(a[i]<b[i]) process.exit(1); }
+            process.exit(1);
+          " && NEEDED=true || true
+          echo "release_needed=$NEEDED" >> "$GITHUB_OUTPUT"
+          echo "::notice::version=$VERSION latest=$LATEST release_needed=$NEEDED"
+
+      - name: Generate changelog
+        id: changelog
+        if: steps.ver.outputs.release_needed == 'true'
+        run: |
+          if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "v" ]; then RANGE="$LATEST_TAG..HEAD"; else RANGE="HEAD"; fi
+          BODY="$(git log "$RANGE" --oneline --no-merges | head -60)"
+          [ -n "$BODY" ] || BODY="v$VERSION 发布"
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}"
+          BODY="${BODY//$'\r'/'%0D'}"
+          echo "body=$BODY" >> "$GITHUB_OUTPUT"
+        env:
+          LATEST_TAG: v${{ steps.ver.outputs.latest }}
+          VERSION: ${{ steps.ver.outputs.version }}
+
+      - name: Sync web assets & Capacitor
+        run: |
+          npm run www:sync
+          npx cap sync android
+
+      - name: Set up release keystore
+        if: steps.ver.outputs.release_needed == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::缺少签名 Secret(ANDROID_KEYSTORE_BASE64/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD),无法构建可安装的签名 APK。请在仓库 Settings→Secrets 中配置后重试。"
+            exit 1
+          fi
+          mkdir -p android/keystore
+          echo "$KEYSTORE_B64" | base64 -d > android/keystore/wow-web-release.keystore
+          printf 'storeFile=keystore/wow-web-release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
+
+      - name: Build release APK
+        if: steps.ver.outputs.release_needed == 'true'
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleRelease
+
+      # 在线增量更新产物:update.json(清单)+ 全量包 + 相对上一版的增量补丁
+      - name: Build update artifacts
+        if: steps.ver.outputs.release_needed == 'true'
+        env:
+          LATEST_TAG: v${{ steps.ver.outputs.latest }}
+        run: |
+          BASE_ARG=""
+          if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "v" ]; then
+            mkdir -p /tmp/prev
+            if gh release download "$LATEST_TAG" -p update.json -D /tmp/prev --clobber 2>/dev/null; then
+              BASE_ARG="--base /tmp/prev/update.json"
+            fi
+          fi
+          node scripts/update-artifacts.js $BASE_ARG --out dist-update
+
+      - name: Create GitHub Release
+        if: steps.ver.outputs.release_needed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: v${{ steps.ver.outputs.version }}
+          body: |
+            ## 更新日志
+
+            ${{ steps.changelog.outputs.body }}
+
+            ## 安装
+
+            - 下载 `app-release.apk` 安装(需允许未知来源),将覆盖旧版本,**存档保留**。
+            - 安卓端游戏内「设置 → 检查更新」可**⚡ 在线增量更新**(免装 APK,秒级完成)。
+            - 更新产物:`update.json`(更新清单)、`www-vX.Y.Z.zip`(全量资源包)、`patch-vX.Y.Z.zip`(增量补丁)。
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            dist-update/update.json
+            dist-update/www-v*.zip
+            dist-update/patch-v*.zip
+          draft: false
+          prerelease: false

@@ -1,4 +1,4 @@
-/* 魔兽世界 · 网页版 — 世界界面:区域 / 探索 / 商店 / 旅店 / 任务 / 旅行 / 状态 / 背包 / 存档 */
+/* 魔兽世界 · 战大陆 — 世界界面:区域 / 探索 / 商店 / 旅店 / 任务 / 旅行 / 状态 / 背包 / 存档 */
 (function () {
   'use strict';
   const W = window.WOW;
@@ -70,6 +70,8 @@
         }
       }
       this._startEliteTicker();
+      // 在线更新检查(每日自动一次,静默失败)
+      if (W.Updater) W.Updater.autoCheck();
     },
 
     /* ---------- 稀有精英刷新计时 ---------- */
@@ -2784,6 +2786,16 @@
             </div>
             ${sw('itemsCollapsed', itemsCollapsed)}
           </div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">🔄 版本与更新</div>
+          <div class="set-row" data-set-row="update">
+            <div class="set-info">
+              <div class="set-name">📦 当前版本 v${W.Utils.esc((window.WOW_VERSION || '1.0.0'))}</div>
+              <div class="set-desc">从 GitHub 仓库 <b>chwl66/wow-web</b> 检查最新版本，发现新版本后可前往下载更新 APK（存档保留）</div>
+            </div>
+            <button type="button" class="btn gold small" data-set-update>🔄 检查更新</button>
+          </div>
         </div>`;
       W.UI.openModal(html, { title: '设置' });
       const m = document.getElementById('modal-root');
@@ -2808,6 +2820,19 @@
           W.Audio.click();
         });
       });
+      // 手动检查更新
+      const upd = m.querySelector('[data-set-update]');
+      if (upd && W.Updater) {
+        upd.addEventListener('click', () => {
+          W.Audio.click();
+          upd.disabled = true;
+          upd.innerHTML = '⏳ 检查中…';
+          W.Updater.manual().then(() => {
+            upd.disabled = false;
+            upd.innerHTML = '🔄 检查更新';
+          });
+        });
+      }
     },
 
     backToTitle() {
