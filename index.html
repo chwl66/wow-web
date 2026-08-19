@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0c">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>魔兽世界 · 回合制战记</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- 标题 -->
+    <div id="view-title" class="view"></div>
+
+    <!-- 角色创建 -->
+    <div id="view-create" class="view">
+      <div class="create-wrap"></div>
+    </div>
+
+    <!-- 世界 -->
+    <div id="view-world" class="view">
+      <div class="world-header"></div>
+      <div class="world-main">
+        <div class="zone-panel"></div>
+        <div class="side-panel"></div>
+      </div>
+      <div class="world-footer">
+        <button class="btn" data-act="status">📋 状态</button>
+        <button class="btn" data-act="bag">🎒 背包</button>
+        <button class="btn" data-act="skills">📖 技能</button>
+        <button class="btn" data-act="pets" style="display:none">🐾 宠物</button>
+        <button class="btn" data-act="talents">🌟 天赋</button>
+        <button class="btn" data-act="forge">⚒️ 锻造</button>
+        <button class="btn" data-act="ach">🏅 成就</button>
+<button class="btn" data-act="codex">👹 图鉴</button>
+<button class="btn" data-act="rep">🏛️ 声望</button>
+        <button class="btn" data-act="save">💾 存档</button>
+        <button class="btn" data-act="settings">⚙️ 设置</button>
+        <button class="btn ghost" data-act="title">🏠 标题</button>
+      </div>
+    </div>
+
+    <!-- 战斗 -->
+    <div id="view-battle" class="view">
+      <div class="battle-header"></div>
+      <div class="battle-stage"></div>
+      <div class="battle-bottom">
+        <div class="combat-log"></div>
+        <div class="skill-bar"></div>
+        <div class="scroll-bar"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="modal-root"></div>
+
+  <!-- 引擎与数据:按依赖顺序加载,file:// 双击可直接运行 -->
+  <script src="js/ns.js"></script>
+  <script src="js/data-races.js"></script>
+  <script src="js/data-world.js"></script>
+  <script src="js/data-talents.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/character.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/native.js"></script>
+</body>
+</html>

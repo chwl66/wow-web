@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+ (API 31+) 数据提取规则。
+    游戏存档保存在 WebView 的 localStorage（内部存储根目录 app_webview/）与 SharedPreferences 中，
+    使用 root 域整体备份;cache/code_cache/no_backup 由系统自动排除。
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="device_root" path="." />
+    </device-transfer>
+</data-extraction-rules>

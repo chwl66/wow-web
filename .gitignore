@@ -1,0 +1,21 @@
+# 签名密钥(绝不可提交,丢失无法更新已发布应用)
+android/keystore/
+android/keystore.properties
+
+# Android 构建产物
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/build/
+android/capacitor-cordova-android-plugins/.gradle/
+
+# Node
+node_modules/
+
+# 打包用静态资源副本(由 npm run www:sync 生成)
+www/
+
+# 旧备份压缩包
+index.zip
+www.zip
