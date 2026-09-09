@@ -32,7 +32,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Capacitor 8 的 CLI 要求 Node >= 22,用 20 会让 npx cap sync 直接 fatal 退出
+          node-version: 22
           cache: npm
 
       # JDK 21:与官方插件(@capacitor/filesystem 等)要求的 toolchain 匹配,避免额外下载
@@ -76,7 +77,9 @@ jobs:
           LATEST_TAG: v${{ steps.ver.outputs.latest }}
           VERSION: ${{ steps.ver.outputs.version }}
 
+      # 只有真要发版时才同步资源并跑 cap sync —— 否则普通推送也会因这一步失败而整条红
       - name: Sync web assets & Capacitor
+        if: steps.ver.outputs.release_needed == 'true'
         run: |
           npm run www:sync
           npx cap sync android

@@ -25,7 +25,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 与 release.yml 保持一致(Capacitor 8 CLI 要求 Node >= 22)
+          node-version: 22
           cache: npm
 
       # jsdom 现为 devDependency(test-dom.js 需要),npm ci 默认会装
