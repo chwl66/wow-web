@@ -2744,9 +2744,11 @@
       W.UI.openModal(html, { title: '存档管理' });
       const m = document.getElementById('modal-root');
       m.querySelectorAll('[data-save]').forEach((btn) => btn.addEventListener('click', () => {
-        W.State.save(parseInt(btn.dataset.save, 10));
-        W.Audio.levelup();
-        W.UI.toast('已保存进度', 'ok');
+        // 落盘失败时 persist() 已弹出空间已满的警告,这里只负责不再谎报「已保存」
+        if (W.State.save(parseInt(btn.dataset.save, 10))) {
+          W.Audio.levelup();
+          W.UI.toast('已保存进度', 'ok');
+        }
         this.openSave();
       }));
       m.querySelectorAll('[data-load]').forEach((btn) => btn.addEventListener('click', () => {
@@ -2754,6 +2756,8 @@
           W.UI.closeModal();
           W.UI.toast('读档成功', 'ok');
           this.showWorld();
+        } else {
+          W.UI.toast('该存档不完整，无法读取', 'warn');
         }
       }));
       m.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', () => {

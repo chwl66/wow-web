@@ -351,11 +351,30 @@ function checkEq(name, got, want) {
     W.Combat.start(char, [D.MONSTERS.dm_sailor, D.MONSTERS.dm_sailor], ui, {});
     const b = W.Combat.battle;
     W.Utils.delay = () => Promise.resolve();
+    // 逐宠物回合精确断言。宠物既会普攻(日志含「攻击」)也会释放「撕咬」(日志含「施放」),
+    // 两者都必须算作一次行动 —— 只数「攻击」会被 40% 的技能释放随机欠计,导致断言抖动。
+    let petTurns = 0;   // 宠物本应有行动的宠物回合数
+    const wrong = [];   // 行动日志条数 != 1 的宠物回合
+    const origPetTurn = W.Combat._petTurn;
+    W.Combat._petTurn = function () {
+      const bb = this.battle;
+      // 宠物全灭 / 无存活敌人 / 战斗已结束 → 这一轮宠物本就不该行动,不计入判定
+      const shouldAct = !bb.ended && bb.pets.some((p) => p.hp > 0) && bb.enemies.some((e) => e.hp > 0);
+      const from = log.length;
+      const r = origPetTurn.call(this);
+      if (shouldAct) {
+        petTurns++;
+        const acted = log.slice(from).filter((l) => l.includes('白虎')).length;
+        if (acted !== 1) wrong.push(`第${bb.round}回合=${acted}条`);
+      }
+      return r;
+    };
     await W.Combat.playerAction({ type: 'skill', skill: 'summon_pet_tiger', target: 'e0' });
     await W.Combat.playerAction({ type: 'attack', target: 'e0' });
-    const petAttacks = log.filter((l) => l.includes('白虎') && l.includes('攻击')).length;
-    check('宠物每回合仅攻击一次', petAttacks <= 2, `got ${petAttacks}`);
-    console.log('  宠物攻击次数(2回合内):', petAttacks);
+    W.Combat._petTurn = origPetTurn;
+    check('宠物每个宠物回合恰好行动一次', petTurns >= 1 && wrong.length === 0,
+      `宠物回合 ${petTurns},异常 ${wrong.join(', ') || '无'}`);
+    console.log('  宠物应行动的回合数:', petTurns);
   }
   // 3. 月火术 dmg+dot
   {
@@ -1672,6 +1691,79 @@ function checkEq(name, got, want) {
     check('自动存档使用3号以后空槽', r.saved && r.slot === 3, `saved=${r.saved} slot=${r.slot}`);
     S.save(9);
     check('支持写入第10槽(索引9)', S.saveSlots[9] && S.saveSlots[9].name === '扩容侠');
+  }
+  // 存档落盘失败(存储空间已满)与格式迁移
+  {
+    const S = W.State;
+    const KEY = W.Config.SAVE_KEY;
+    const toasts = [];
+    const origToast = W.UI.toast;
+    W.UI.toast = (msg, cls) => toasts.push(cls + '|' + msg);
+    const origSet = global.localStorage.setItem;
+    S.saveSlots = []; S._saveSlot = 0; S._autoToast = true; S._quotaWarned = false;
+    const char = W.Char.create('写满侠', 'human', 'warrior');
+    char.level = 7;
+    S.newCharacter(char);
+
+    // 正常路径:落盘成功才更新最近保存时间,载荷带格式版本号
+    S.lastSavedAt = 0;
+    check('落盘成功返回true', S.save(0, 'manual') === true);
+    check('落盘成功才更新最近保存时间', S.lastSavedAt > 0);
+    check('存档载荷带格式版本号', JSON.parse(global.localStorage.getItem(KEY)).v === W.Config.SAVE_VERSION);
+
+    // 模拟 localStorage 写满(Chrome/Safari 命名)
+    global.localStorage.setItem = () => { const e = new Error('full'); e.name = 'QuotaExceededError'; throw e; };
+    S.lastSavedAt = 0; S._lastAutoSave = 0;
+    char.level = 8;
+    const r = S.autoSave(true);
+    check('存储写满时autoSave报告失败', r.saved === false && r.reason === 'storage-full', `saved=${r.saved} reason=${r.reason}`);
+    check('存储写满不谎报已保存时间', S.lastSavedAt === 0);
+    check('存储写满弹出警告toast', toasts.some((t) => t.startsWith('warn|') && t.includes('空间已满')), toasts.join('|'));
+    const warned = toasts.length;
+    S._lastAutoSave = 0;
+    S.autoSave(true);
+    check('写满警告每会话只弹一次', toasts.length === warned, `before=${warned} after=${toasts.length}`);
+    // Firefox 命名 / 老内核只有 code,同样要认
+    global.localStorage.setItem = () => { const e = new Error('full'); e.name = 'NS_ERROR_DOM_QUOTA_REACHED'; throw e; };
+    check('Firefox 配额异常同样识别', S.persist() === false);
+    global.localStorage.setItem = () => { const e = new Error('full'); e.code = 22; throw e; };
+    check('老内核 code=22 同样识别', S.persist() === false);
+    // 非配额异常(隐私模式禁用存储等)不得误报「空间已满」
+    global.localStorage.setItem = () => { throw new Error('access denied'); };
+    const notQuota = toasts.length;
+    check('非配额异常返回失败且不误报写满', S.persist() === false && toasts.length === notQuota);
+    global.localStorage.setItem = origSet;
+    check('存储恢复后可继续保存', S.save(0, 'manual') === true && S.saveSlots[0].data.level === 8);
+
+    // 格式迁移与结构校验
+    const m1 = S.migrateSave({ slots: [{ name: '甲', data: {} }, 42, null, { name: '乙', data: {} }], current: 3 });
+    check('migrateSave 丢弃畸形条目', m1.slots.length === 4 && m1.slots[0].name === '甲'
+      && m1.slots[1] === null && m1.slots[2] === null && m1.slots[3].name === '乙');
+    const m2 = S.migrateSave({ slots: Array.from({ length: 14 }, (x, i) => ({ name: 'n' + i, data: {} })), current: 99 });
+    check('migrateSave 截断超槽并把越界 current 归 0', m2.slots.length === W.Config.MAX_SLOTS && m2.current === 0);
+    const m3 = S.migrateSave({ slots: [{ name: '旧', data: { level: 3 } }], current: 0 });
+    check('缺 v 字段按 v1 处理并升级到当前版', m3.from === 1 && m3.v === W.Config.SAVE_VERSION);
+    check('非对象载荷返回空存档', S.migrateSave(null).slots.length === 0 && S.migrateSave('x').slots.length === 0);
+    check('slots 非数组时归一化为空', S.migrateSave({ slots: '坏', current: 0 }).slots.length === 0);
+
+    // 读档端:缺 data 的不完整条目不得返回成功(否则 character 变 undefined)
+    S.saveSlots = [{ name: '残缺', savedAt: 1 }];
+    S._saveSlot = 0;
+    S.newCharacter(null);
+    check('缺 data 的存档读取失败且不改动角色', S.load(0) === false && S.character === null);
+
+    // 端到端:写入 → 重新读槽 → 读档
+    const c2 = W.Char.create('往返侠', 'orc', 'shaman');
+    c2.level = 21;
+    S.newCharacter(c2);
+    S.save(4, 'manual');
+    S.saveSlots = []; S._saveSlot = 0;
+    const loaded = S.loadSlots();
+    check('loadSlots 经 migrateSave 恢复槽位', !!loaded[4] && loaded[4].name === '往返侠');
+    S.newCharacter(null);
+    check('loadSlots 后可读档', S.load(4) === true && !!S.character && S.character.name === '往返侠' && S.character.level === 21);
+
+    W.UI.toast = origToast;
   }
   // 战斗:生命偷取附魔吸血
   {

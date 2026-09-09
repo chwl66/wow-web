@@ -7,6 +7,13 @@
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
   W.$ = $; W.$$ = $$;
 
+  /* 存储写满判定:各浏览器命名不一 —— Chrome/Safari 抛 QuotaExceededError,
+   * Firefox 抛 NS_ERROR_DOM_QUOTA_REACHED,老内核只给 code 22 / 1014。 */
+  function isQuotaError(e) {
+    return !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+      || e.code === 22 || e.code === 1014);
+  }
+
   /* ============ 游戏状态 ============ */
   const State = {
     character: null,
@@ -15,6 +22,7 @@
     lastSavedAt: 0,      // 最近保存时间戳(供自动存档指示器显示)
     _lastAutoSave: 0,    // 上次自动存档时间戳(节流)
     _autoToast: false,   // 会话内是否已提示过自动存档
+    _quotaWarned: false, // 存储写满只提示一次,避免每次自动存档都刷屏
 
     newCharacter(char) {
       this.character = char;
@@ -22,10 +30,12 @@
 
     // ---------- 存档 ----------
     // src: 'manual' 手动保存 / 'auto' 自动保存
+    // 返回是否真正落盘:false 时内存槽位已更新但 localStorage 未更新,
+    // 重开页面会回到旧进度 —— 调用方据此决定能不能说「已保存」。
     save(slot, src) {
       const idx = slot == null ? this._saveSlot : slot;
       const c = this.character;
-      if (!c) return;
+      if (!c) return false;
       const entry = {
         name: c.name, classCN: W.Data.CLASSES[c.classId].name, raceCN: W.Data.RACES[c.race].name,
         level: c.level, zone: c.zone, savedAt: Date.now(),
@@ -36,8 +46,9 @@
       };
       this.saveSlots[idx] = entry;
       this._saveSlot = idx;
-      this.lastSavedAt = entry.savedAt;
-      this.persist();
+      const ok = this.persist();
+      if (ok) this.lastSavedAt = entry.savedAt;
+      return ok;
     },
 
     // 存档条目摘要(兼容旧存档字段缺失)
@@ -97,8 +108,9 @@
       if (!force && now - this._lastAutoSave < C.AUTO_SAVE_MIN_INTERVAL * 1000) return { saved: false, reason: 'throttled' };
       const slot = this._pickAutoSlot();
       if (slot < 0) return { saved: false, reason: 'no-slot' };
-      this.save(slot, 'auto');
-      this._lastAutoSave = now;
+      const ok = this.save(slot, 'auto');
+      this._lastAutoSave = now;      // 失败也计入节流:存储写满时反复重试只会刷屏
+      if (!ok) return { saved: false, reason: 'storage-full', slot };
       if (!this._autoToast) {
         this._autoToast = true;
         if (W.UI && W.UI.toast) W.UI.toast('💾 已开启自动存档，进度将自动保存', 'ok');
@@ -106,27 +118,60 @@
       return { saved: true, slot };
     },
 
+    // 写入 localStorage,返回是否成功。写满时必须让用户看见:
+    // 静默失败会让界面一直显示「💾 自动存档 刚刚」,用户下次打开才发现进度全丢。
     persist() {
-      try { localStorage.setItem(C.SAVE_KEY, JSON.stringify({ slots: this.saveSlots, current: this._saveSlot })); }
-      catch (e) { /* 存储失败忽略 */ }
+      try {
+        localStorage.setItem(C.SAVE_KEY, JSON.stringify({ slots: this.saveSlots, current: this._saveSlot, v: C.SAVE_VERSION }));
+        this._quotaWarned = false;
+        return true;
+      } catch (e) {
+        if (isQuotaError(e) && !this._quotaWarned) {
+          this._quotaWarned = true;
+          if (W.UI && W.UI.toast) W.UI.toast('⚠️ 浏览器存储空间已满，进度未能写入！请在「存档管理」删除不用的旧存档', 'warn');
+        }
+        return false;
+      }
+    },
+
+    /* 存档格式迁移 + 结构校验(单点入口)。
+     * persist() 写入 v: C.SAVE_VERSION,读档时经由这里升级。今后改存档结构,
+     * 就在下面按版本补一段升级分支 —— 不要再往业务代码里散落 if (!char.x),
+     * 那会让「旧存档到底兼容到哪一版」无处可查。
+     * 顺带做结构校验:localStorage 里的内容可能被截断或被手改,坏数据要挡在进入游戏之前。 */
+    migrateSave(obj) {
+      if (!obj || typeof obj !== 'object') return { slots: [], current: 0, from: 0, v: C.SAVE_VERSION };
+      const from = obj.v || 1;                    // v1 及更早的存档不带版本字段
+      let slots = Array.isArray(obj.slots) ? obj.slots.slice(0, C.MAX_SLOTS) : [];
+      if (from < 2) {
+        // v1 → v2:槽位扩容至 10,每条新增 src/gold/zoneCN 摘要。
+        // 摘要缺失由 slotSummary() 读时兜底,角色字段补齐由 character.ensureClassFeatures() 负责,
+        // 此处只保证 slots 是可渲染的数组。
+      }
+      // 超长/畸形条目丢弃(MAX_SLOTS 之外的历史遗留槽位同样归一化掉)
+      slots = slots.map((e) => (e && typeof e === 'object' && typeof e.name === 'string' ? e : null));
+      let current = Number.isInteger(obj.current) ? obj.current : 0;
+      if (current < 0 || current >= C.MAX_SLOTS) current = 0;
+      return { slots, current, from, v: C.SAVE_VERSION };
     },
 
     loadSlots() {
       try {
         const raw = localStorage.getItem(C.SAVE_KEY);
         if (raw) {
-          const obj = JSON.parse(raw);
-          this.saveSlots = obj.slots || [];
-          this._saveSlot = obj.current || 0;
+          const obj = this.migrateSave(JSON.parse(raw));
+          this.saveSlots = obj.slots;
+          this._saveSlot = obj.current;
         }
       } catch (e) { this.saveSlots = []; }
       return this.saveSlots;
     },
 
+    // 条目缺 data 说明存档不完整(写入被截断/被编辑过),读它会把 character 变成 undefined
     load(slot) {
       const idx = slot == null ? this._saveSlot : slot;
       const entry = this.saveSlots[idx];
-      if (!entry) return false;
+      if (!entry || !entry.data) return false;
       this.character = entry.data;
       this._saveSlot = idx;
       this._lastAutoSave = 0; // 读档后立即允许自动存档
@@ -135,7 +180,7 @@
 
     erase(slot) {
       if (this.saveSlots[slot]) { delete this.saveSlots[slot]; this.saveSlots[slot] = undefined; }
-      this.persist();
+      return this.persist();
     },
 
     /* 新游戏重置 */
@@ -201,8 +246,10 @@
 
     /* 轻提示 */
     toast(msg, cls) {
+      // 复用同一个节点:创建时必须补上 id,否则下面的 #toast 永远查不到,
+      // 每次提示都会往 body 追加一个新 div(旧节点只去掉 .show,永不移除),长时间游戏持续堆积。
       let t = $('#toast');
-      if (!t) { t = W.Utils.el('div', 'toast', ''); document.body.appendChild(t); }
+      if (!t) { t = W.Utils.el('div', 'toast', ''); t.id = 'toast'; document.body.appendChild(t); }
       t.className = 'toast show ' + (cls || '');
       t.innerHTML = msg;
       clearTimeout(t._timer);

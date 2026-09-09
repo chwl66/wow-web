@@ -350,6 +350,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   if (sv) sv.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   check('存档成功', W.State.saveSlots.some(Boolean));
   check('手动保存后显示手动来源标签', !!doc.querySelector('.save-src-manual'));
+  {
+    const t = doc.getElementById('toast');
+    check('落盘成功才提示已保存', !!t && t.classList.contains('show') && t.textContent.includes('已保存'),
+      t ? t.className + '|' + t.textContent : 'no toast');
+    W.UI.toast('第一条提示', 'ok');
+    W.UI.toast('第二条提示', 'warn');
+    check('轻提示复用同一节点(不堆积)',
+      doc.querySelectorAll('div.toast').length === 1 && doc.getElementById('toast').textContent === '第二条提示',
+      `节点数=${doc.querySelectorAll('div.toast').length}`);
+  }
   click('.close-x');
 
   console.log('== 天赋界面 ==');
