@@ -103,20 +103,39 @@ wow-web/
 │   ├── combat.js         # 回合制战斗引擎
 │   ├── battle.js         # 战斗界面(技能栏/飘字/日志/目标选择)
 │   ├── world.js          # 世界界面(探索/商店/旅店/任务/旅行/存档)
-│   └── main.js           # 标题 / 角色创建流程
-├── test-headless.js      # 无头测试(数据完整性 + 战斗模拟)
-└── test-dom.js           # jsdom 全流程测试(需 node_modules/jsdom)
+│   ├── main.js           # 标题 / 角色创建流程
+│   ├── native.js         # 安卓原生桥接(返回键/切后台存档/启动画面)
+│   ├── updater.js        # 在线更新检查与增量热更新
+│   └── version.js        # 版本号(由 scripts/gen-version.js 生成,勿手改)
+├── scripts/
+│   ├── gen-version.js    # package.json 版本 → js/version.js
+│   ├── www-sync.js       # 同步 index.html + css/ + js/ 到 www/
+│   ├── check-assets.js   # index.html 引用与脚本顺序自检 + 首屏体积
+│   ├── bump-check.js     # 发版判定(本地可预演本次是否发版)
+│   ├── update-artifacts.js # 更新清单 / 全量包 / 增量补丁
+│   └── zip-writer.js     # 无依赖标准 ZIP 实现
+├── .github/workflows/
+│   ├── ci.yml            # 静态自检 + 测试(推送与 PR)
+│   └── release.yml       # 构建签名 APK 并发布 Release
+├── test-headless.js      # 无头测试(数据完整性 + 战斗模拟,零依赖)
+└── test-dom.js           # jsdom 全流程测试(jsdom 为 devDependency)
 ```
 
 ## 🧪 测试
 
 ```bash
-# 数据与战斗引擎测试(无需依赖)
-node test-headless.js
+npm install          # jsdom 为 devDependency,仅测试需要(打包/游玩不依赖)
+npm test             # = node test-headless.js && node test-dom.js
+```
 
-# DOM 全流程测试(角色创建→世界→战斗→副本→死亡复活→存档)
-npm install --no-save jsdom   # 首次运行前安装
-node test-dom.js
+- `test-headless.js`：数据完整性 + 战斗引擎 + 存档/锻造/声望/成就等 30+ 组用例(不需要任何依赖)
+- `test-dom.js`：jsdom 全流程(角色创建→世界→战斗→副本→死亡复活→存档)
+- `npm run check`：校验 `index.html` 引用的 js/css 都存在、脚本加载顺序符合依赖关系、汇报首屏体积
+
+推送与 Pull Request 由 `.github/workflows/ci.yml` 自动跑上述检查；`release.yml` 在真正发版前也会再跑一遍 `npm test`(测试红了不会签出 APK)。
+
+```bash
+npm run bump:check   # 本地预演:本次版本会不会触发自动发版
 ```
 
 ## 🎯 游戏循环
@@ -137,7 +156,7 @@ node test-dom.js
 - **移动端专享交互**：创建角色时点击种族卡片先看详情、再点一次确认选择（桌面仍为悬停查看）
 - **触屏滑动翻页**：天赋树内**左右滑动切换三系专精**（带拖拽跟随与滑入动画，滑动后 400ms 内拦截误触点击）；技能书**左右滑动翻页**（每页 8 条技能，页码指示点可点击跳转，单页时自动隐藏翻页控件）——桌面端鼠标拖拽同样可用
 - **PWA 增强**：`theme-color` 状态栏配色、`viewport-fit=cover`、可添加到主屏（`apple-mobile-web-app-capable`）
-- **🤖 安卓原生 APK（Capacitor，按安卓应用开发规范构建）**：已接入 Capacitor 8 打包为原生安卓应用（包名 `com.wowweb.game`，应用名「魔兽世界·战大陆」，WebView 加载本地资源、无需联网）。首次构建需 Android SDK 36 + JDK 17-21（仓库内 `android/` 工程已生成，`android/local.properties` 指向本机 SDK）：
+- **🤖 安卓原生 APK（Capacitor，按安卓应用开发规范构建）**：已接入 Capacitor 8 打包为原生安卓应用（包名 `com.wowweb.game`，应用名「魔兽世界·战大陆」，WebView 加载本地资源、无需联网）。首次构建需 Android SDK 36 + **JDK 21**（`android/app/capacitor.build.gradle` 把 source/target compatibility 固定为 `VERSION_21`；仓库内 `android/` 工程已生成，`android/local.properties` 指向本机 SDK）：
   - **正式版**：`npm run apk:release` → 产物 `android/app/build/outputs/apk/release/app-release.apk`（**v1.0.0，release 签名**，已用 `keytool` 生成 30 年有效期的 `android/keystore/wow-web-release.keystore`，密码存于 `android/keystore/keystore-pass.txt` 与 `android/keystore.properties`——⚠️ **两者均被 `.gitignore` 排除、务必离线备份，丢失将无法更新已发布应用**）
   - 改完游戏源码后一键重建：`npm run apk`（自动同步 `www/` 静态资源 → `npx cap sync` → Gradle 打包）；`npm run apk:release` 构建 release 签名版，`npm run apk:install` 为 debug 版直装
   - 手机已连 adb 时 `npm run apk:install` 直接安装；或把 APK 传到手机手动安装（需允许未知来源）
@@ -191,7 +210,7 @@ node test-dom.js
 ### 热更新实现说明
 
 - **原生层**：`HotUpdatePlugin.java`（自研插件，`MainActivity` 注册）基于 Capacitor 官方 `Bridge.setServerBasePath()` 机制——把 WebView 资源加载路径切换到内部存储 `<files>/updates/www-<版本>/`，支持全量解压与「复制当前生效目录 + 叠加补丁」两种模式，含 zip-slip 防护与版本元信息（`.hotupdate.json`）
-- **插件依赖**：`@capacitor/filesystem`（写入下载包）；官方插件要求 JDK 21 toolchain，已通过 `settings.gradle` 的 foojay-resolver 自动下载对应 JDK，本地/CI 无需手动安装
+- **插件依赖**：`@capacitor/filesystem`（写入下载包）。编译需要 **JDK 21**（`android/app/capacitor.build.gradle` 的 `sourceCompatibility = JavaVersion.VERSION_21`）；`settings.gradle` 里的 foojay-resolver 已声明但当前没有构建请求 `java.toolchain.languageVersion`，因此它不会真的触发 JDK 下载——`sourceCompatibility` 只使用运行 Gradle 的那个 JDK，装上 JDK 21 即可
 - **产物生成**：`npm run www:artifacts`（本地）或 CI 内 `scripts/update-artifacts.js`——遍历 `www/` 计算逐文件 SHA-256、与上一版清单（从上一个 Release 拉取 `update.json`）做差量生成增量补丁
 - **zip 写入器**：`scripts/zip-writer.js` 为无依赖标准 ZIP 实现（node zlib deflate），安卓端 `java.util.zip.ZipInputStream` 直接兼容
 

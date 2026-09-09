@@ -1,0 +1,57 @@
+# 静态检查与测试
+# 触发:推送 main/master、Pull Request、或手动触发。
+# 只做「装 devDeps → 自检 → 跑测试」,不碰 Gradle/APK —— 打包归 release.yml。
+# 存在的意义:仓库里有 1600+ 条断言(test-headless.js + test-dom.js),
+# 此前只能靠本地手动跑,没有任何机制保证下次还是绿的。
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # jsdom 现为 devDependency(test-dom.js 需要),npm ci 默认会装
+      - name: Install dependencies
+        run: npm ci
+
+      # js/version.js 由 package.json 派生,漏跑 npm version 会让线上版本与 APK 对不上
+      - name: Verify version.js matches package.json
+        run: |
+          npm run gen:version
+          if ! git diff --quiet -- js/version.js; then
+            echo "::error::js/version.js 与 package.json 不一致。请本地运行 npm run gen:version 后提交。"
+            git --no-pager diff -- js/version.js
+            exit 1
+          fi
+
+      - name: Check html assets & script order
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      # 打包前最后一次确认 www/ 能正常生成,并留下体积记录
+      - name: Sync web assets
+        run: npm run www:sync
+
+      - name: Release preflight
+        if: github.event_name == 'push'
+        run: npm run bump:check

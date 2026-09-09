@@ -46,26 +46,20 @@ jobs:
         run: npm ci
 
       # 版本比对:package.json 版本 > 最新 Release tag → 需要发布
+      # 判定逻辑在 scripts/bump-check.js(本地可 `npm run bump:check` 预演本次推送会不会发版)
       - name: Compare version with latest release
         id: ver
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
           LATEST="$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)"
-          LATEST="${LATEST#v}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
-          NEEDED=false
-          node -e "
-            const cur='$VERSION', latest='$LATEST';
-            const p=(s)=>s.split('.').map(n=>parseInt(n,10)||0);
-            const a=p(cur), b=p(latest||'0.0.0');
-            for(let i=0;i<3;i++){ if(a[i]>b[i]) process.exit(0); if(a[i]<b[i]) process.exit(1); }
-            process.exit(1);
-          " && NEEDED=true || true
-          echo "release_needed=$NEEDED" >> "$GITHUB_OUTPUT"
-          echo "::notice::version=$VERSION latest=$LATEST release_needed=$NEEDED"
+          node scripts/bump-check.js --latest="${LATEST#v}" >> "$GITHUB_OUTPUT"
+
+      # 发版门禁:ci.yml 与本工作流各自独立触发,测试红了并不会拦住这里,
+      # 所以真正要出厂的这次必须自己再跑一遍,别把坏版本签进 APK。
+      - name: Test
+        if: steps.ver.outputs.release_needed == 'true'
+        run: npm test
 
       - name: Generate changelog
         id: changelog
