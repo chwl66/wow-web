@@ -174,7 +174,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .title-foot { margin-top: 36px; color: #5f5949; font-size: 13px; }
 
 /* ---------------- 角色创建 ---------------- */
-#view-create.active { display: flex; justify-content: center; }
+/* 标题 → 卡片 → 说明 上下分布 */
+#view-create.active { display: flex; flex-direction: column; align-items: center; }
 .create-step-title { font-size: 24px; color: var(--gold); text-align: center; margin: 26px 0 22px; letter-spacing: 2px; }
 .faction-pick { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
 .faction-card {
@@ -205,23 +206,6 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .faction-card.alliance .fc-name { color: #9db8ff; }
 .faction-card.horde .fc-name { color: #ff9a8a; }
 .fc-tagline { font-size: 12px; color: var(--text-dim); margin: 4px 0 10px; letter-spacing: 2px; }
-/* 种族预览图标行 */
-.fc-races { display: flex; justify-content: center; gap: 8px; margin: 12px 0 10px; }
-.fc-race-chip {
-  width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-  font-size: 20px; border-radius: 50%; background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14); transition: all 0.15s ease;
-}
-.faction-card.alliance .fc-race-chip { border-color: rgba(90, 140, 255, 0.4); }
-.faction-card.horde .fc-race-chip { border-color: rgba(255, 90, 74, 0.4); }
-.faction-card:hover .fc-race-chip { transform: translateY(-2px); }
-.fc-desc { color: var(--text); font-size: 13px; margin: 6px 0; }
-.fc-zone { color: var(--text-dim); font-size: 12px; }
-.fc-go {
-  margin-top: 14px; font-size: 13px; font-weight: bold; color: var(--gold-bright);
-  opacity: 0.85; transition: all 0.2s ease;
-}
-.faction-card:hover .fc-go { opacity: 1; letter-spacing: 1px; }
 
 .race-pick { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 860px; margin: 0 auto; }
 .race-card {
@@ -249,13 +233,15 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
   font-size: 13px; background: rgba(255,255,255,0.06); border-radius: 4px;
 }
-.rc-traits { display: block; font-size: 11px; color: var(--text-dim); margin-top: 8px; }
-.race-detail {
-  margin: 18px auto 0; max-width: 760px; padding: 14px 16px;
-  background: rgba(20, 16, 8, 0.85); border: 1px solid var(--border-gold); border-radius: 5px;
-  color: var(--text); font-size: 13px; line-height: 1.7;
-  min-height: 40px;
+/* 底部说明面板(阵营/种族/职业通用):随悬停/点击更新 */
+.pick-detail {
+  margin: 20px auto 0; width: 100%; max-width: 860px; padding: 15px 18px;
+  background: rgba(20, 16, 8, 0.85); border: 1px solid var(--border-gold); border-radius: 6px;
+  color: var(--text); font-size: 13px; line-height: 1.9; text-align: left;
+  min-height: 46px;
 }
+.pick-detail b { color: var(--gold-bright); }
+.pick-sub { color: var(--text-dim); font-size: 12px; }
 
 .class-pick { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 900px; margin: 0 auto; }
 .class-card {
@@ -278,7 +264,6 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   font-size: 11px; font-weight: bold; color: #101010; letter-spacing: 1px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
-.cc-desc { display: block; font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
 .create-step-title .cls-count { margin-left: 10px; font-size: 12px; font-weight: normal; vertical-align: middle; }
 
 .back-btn { margin: 22px auto 0; display: block; }
@@ -1414,27 +1399,42 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
   .title-btn { padding: 13px 10px; font-size: 15px; }
   .title-foot { margin-top: 28px; font-size: 12px; }
 
-  /* 角色创建 */
-  .create-step-title { font-size: 20px; margin: 20px 0 16px; }
-  .faction-pick { gap: 12px; }
-  .faction-card { width: min(300px, 100%); padding: 22px 14px; }
-  .fc-icon { font-size: 44px; }
-  .fc-name { font-size: 22px; }
+  /* 角色创建:紧凑卡片 + 说明面板固定在屏幕底部 */
+  /* 入场动画改纯淡入:固定面板不随 translateY 变换祖先跳动 */
+  #view-create.active { animation: viewFade 0.35s ease; padding-bottom: 104px; }
+  @keyframes viewFade { from { opacity: 0; } to { opacity: 1; } }
+  .create-step-title { font-size: 20px; margin: 18px 0 14px; }
+  /* 阵营:双卡并排成框(与种族/职业一致) */
+  .faction-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 440px; }
+  .faction-card { width: 100%; padding: 16px 8px 14px; }
+  .fc-emblem { font-size: 34px; }
+  .fc-name { font-size: 19px; margin: 7px 0 2px; letter-spacing: 2px; }
+  .fc-tagline { font-size: 10px; margin: 2px 0 0; }
   .race-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 100%; }
   .race-card { width: 100%; padding: 12px 8px; }
-  .rc-badge { width: 48px; height: 48px; font-size: 26px; }
+  .rc-badge { width: 42px; height: 42px; font-size: 23px; }
   .rc-classes { gap: 3px; }
   .rc-class { width: 20px; height: 20px; font-size: 12px; }
-  .faction-card { padding: 20px 12px; }
-  .fc-race-chip { width: 36px; height: 36px; font-size: 17px; }
   .rc-name { font-size: 15px; }
-  .rc-traits { font-size: 10px; }
+  .rc-en { font-size: 10px; }
   .class-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 100%; }
-  .class-card { width: 100%; padding: 14px 8px; }
-  .cc-icon { font-size: 32px; }
+  .class-card { width: 100%; padding: 12px 8px; }
+  .cc-icon { font-size: 30px; margin-top: 2px; }
   .cc-name { font-size: 15px; }
-  .cc-desc { font-size: 10px; }
-  .race-detail { margin-top: 14px; padding: 12px 12px; font-size: 12px; }
+  .cc-role { font-size: 10px; padding: 1px 7px; }
+  /* 说明面板:固定在屏幕底部(底部安全区避让),点卡即时预览不用滚动 */
+  .pick-detail {
+    position: fixed; left: 0; right: 0; bottom: 0; margin: 0;
+    width: auto; max-width: none; min-height: 0;
+    padding-top: 12px;
+    padding-right: max(14px, calc(var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) + 14px));
+    padding-bottom: max(12px, calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 12px));
+    padding-left: max(14px, calc(var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) + 14px));
+    font-size: 12px; line-height: 1.8;
+    border-radius: 12px 12px 0 0; border-left: none; border-right: none; border-bottom: none;
+    box-shadow: 0 -8px 28px rgba(0,0,0,0.65);
+    z-index: 60; max-height: 44vh; overflow-y: auto;
+  }
   .name-summary { font-size: 16px; }
   .modal-actions { gap: 8px; }
   .modal-actions .btn { flex: 1; min-width: 120px; }
@@ -1543,7 +1543,6 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
 @media (max-width: 420px) {
   .wow-logo { font-size: 52px; letter-spacing: -3px; }
   .race-pick, .class-pick { grid-template-columns: 1fr 1fr; }
-  .rc-traits { display: none; }
   .zone-actions { grid-template-columns: repeat(2, 1fr); }
   .world-footer { grid-template-columns: repeat(4, 1fr); }
   .world-footer .btn { font-size: 12px; }

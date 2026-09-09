@@ -162,28 +162,51 @@
       });
     },
 
+    /* 卡片预览:桌面悬停把说明显示到底部面板;触屏首次点击预览、再次点击进入下一步 */
+    _bindPreview(cards, getHtml) {
+      const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
+      cards.forEach((card) => {
+        const show = () => {
+          const d = document.getElementById('pick-detail');
+          if (d) d.innerHTML = getHtml(card);
+        };
+        card.addEventListener('mouseenter', show);
+        if (coarse) {
+          card.addEventListener('click', (e) => {
+            if (!card.dataset.seen) { e.stopPropagation(); card.dataset.seen = '1'; show(); }
+          });
+        }
+      });
+    },
+
     stepFaction() {
       this.create = { faction: null, race: null, classId: null, name: '' };
       const root = document.getElementById('view-create');
-      const factionCard = (id, emblem, name, tagline, startZone, act) => {
-        const races = Object.values(D.RACES).filter((r) => r.faction === id);
-        return `
-          <button class="faction-card ${id}" data-act="${act}">
-            <div class="fc-emblem">${emblem}</div>
-            <div class="fc-name">${name}</div>
-            <div class="fc-tagline">${tagline}</div>
-            <div class="fc-races">${races.map((r) => `<span class="fc-race-chip" title="${U.esc(r.name)}">${r.icon}</span>`).join('')}</div>
-            <div class="fc-desc">${races.map((r) => U.esc(r.name)).join(' · ')}</div>
-            <div class="fc-zone">📍 起始之地：${startZone}</div>
-            <div class="fc-go">选择${name} →</div>
-          </button>`;
+      // 阵营信息:卡片只放 徽章+名称+口号,详细说明(简介/种族/起始之地)在底部面板展示
+      const F = {
+        alliance: { emblem: '🦁', name: '联盟', tagline: '为圣光与荣耀而战', zone: '艾尔文森林', desc: '由人类、矮人、暗夜精灵与侏儒组成的强大同盟，守护艾泽拉斯的秩序与圣光。' },
+        horde: { emblem: '🐺', name: '部落', tagline: '鲜血与荣耀', zone: '杜隆塔尔', desc: '兽人、牛头人、巨魔与被遗忘者结成的部落，在残酷的荒野中为生存与荣耀而战。' },
       };
+      const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
       root.innerHTML = `
         <div class="create-step-title">选择你的阵营</div>
         <div class="faction-pick">
-          ${factionCard('alliance', '🦁', '联盟', '为圣光与荣耀而战', '艾尔文森林', 'faction-alliance')}
-          ${factionCard('horde', '🐺', '部落', '鲜血与荣耀', '杜隆塔尔', 'faction-horde')}
-        </div>`;
+          ${Object.keys(F).map((id) => `
+            <button class="faction-card ${id}" data-act="faction-${id}">
+              <div class="fc-emblem">${F[id].emblem}</div>
+              <div class="fc-name">${F[id].name}</div>
+              <div class="fc-tagline">${F[id].tagline}</div>
+            </button>`).join('')}
+        </div>
+        <div class="pick-detail" id="pick-detail">${coarse ? '👆 点击阵营卡片查看详情，再点一次即可选择' : '🖱️ 将鼠标悬停在阵营卡片上查看详情，点击选择'}</div>`;
+      this._bindPreview(root.querySelectorAll('.faction-card'), (card) => {
+        const id = card.dataset.act.slice(8);
+        const f = F[id];
+        const tagCls = id === 'alliance' ? 'ally-tag' : 'horde-tag';
+        return `<b>${f.name}</b> <span class="tag ${tagCls}">${f.name}</span> — ${f.desc}<br>
+          <span class="pick-sub">可玩种族：${Object.values(D.RACES).filter((r) => r.faction === id).map((r) => r.name).join(' · ')}</span><br>
+          <span class="pick-sub">📍 起始之地：${f.zone}</span>`;
+      });
     },
 
     stepRace(faction) {
@@ -191,7 +214,9 @@
       const root = document.getElementById('view-create');
       const races = Object.values(D.RACES).filter((r) => r.faction === faction);
       const factionCN = faction === 'alliance' ? '联盟' : '部落';
-      let html = `
+      const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
+      // 卡片只放 徽章+名称+英文+可玩职业图标,说明(简介/可玩职业/天赋)在底部面板展示
+      root.innerHTML = `
         <div class="create-step-title">选择你的种族 · <b class="fc-${faction}">${factionCN}</b></div>
         <div class="race-pick pick-${faction}">
           ${races.map((r) => `
@@ -200,35 +225,17 @@
               <span class="rc-name">${U.esc(r.name)}</span>
               <span class="rc-en">${r.en}</span>
               <span class="rc-classes" title="可玩职业">${r.classes.map((cid) => D.CLASSES[cid] ? `<span class="rc-class" title="${U.esc(D.CLASSES[cid].name)}">${D.CLASSES[cid].icon}</span>` : '').join('')}</span>
-              <span class="rc-traits">${r.traits.map((t) => t.name).join(' · ')}</span>
             </button>`).join('')}
         </div>
+        <div class="pick-detail" id="pick-detail">${coarse ? '👆 点击种族卡片查看详情，再点一次即可选择' : '🖱️ 将鼠标悬停在种族卡片上查看详情，点击选择'}</div>
         <button class="btn ghost back-btn" data-act="back-faction">← 返回选择阵营</button>`;
-      root.innerHTML = html;
-      // 悬停显示详情（触屏设备改为首次点击显示详情，再次点击进入下一步）
-      root.querySelectorAll('.race-card').forEach((card) => {
-        const showDetail = () => {
-          const r = D.RACES[card.dataset.act.slice(5)];
-          const tip = document.getElementById('race-detail');
-          if (tip) {
-            tip.innerHTML = `<b>${U.esc(r.name)}</b> <span class="tag ${faction === 'alliance' ? 'ally-tag' : 'horde-tag'}">${factionCN}</span> — ${U.esc(r.desc)}<br>${r.traits.map((t) => `· ${U.esc(t.name)}：${U.esc(t.desc)}`).join('<br>')}`;
-          }
-        };
-        card.addEventListener('mouseenter', showDetail);
-        card.addEventListener('click', (e) => {
-          // 仅触屏(无悬停):首次点击停在详情,避免直接跳转
-          const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
-          if (coarse && !card.dataset.seen) {
-            e.stopPropagation();
-            card.dataset.seen = '1';
-            showDetail();
-          }
-        });
+      this._bindPreview(root.querySelectorAll('.race-card'), (card) => {
+        const r = D.RACES[card.dataset.act.slice(5)];
+        const tagCls = faction === 'alliance' ? 'ally-tag' : 'horde-tag';
+        return `<b>${U.esc(r.name)}</b> <span class="tag ${tagCls}">${factionCN}</span> — ${U.esc(r.desc)}<br>
+          <span class="pick-sub">可玩职业：${r.classes.map((cid) => D.CLASSES[cid].name).join(' · ')}</span><br>
+          ${r.traits.map((t) => `· ${U.esc(t.name)}：${U.esc(t.desc)}`).join('<br>')}`;
       });
-      const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
-      const desc = U.el('div', 'race-detail', (coarse ? '点击卡片查看详情，再点一次即可选择' : '将鼠标悬停在种族上查看详情') + ` · ${factionCN}`);
-      desc.id = 'race-detail';
-      root.appendChild(desc);
     },
 
     stepClass() {
@@ -237,7 +244,9 @@
       const classes = race.classes.map((id) => D.CLASSES[id]);
       // 职责徽章配色(按角色关键词归类)
       const roleColor = { 近战: '#e67e22', 远程: '#3498db', 治疗: '#27ae60', 元素: '#9b59b6', 暗影: '#7d3fbf', 变形: '#16a085' };
-      let html = `
+      const coarse = window.matchMedia && window.matchMedia('(hover: none)').matches;
+      // 卡片只放 图标+名称+职责徽章,详细说明在底部面板展示
+      root.innerHTML = `
         <div class="create-step-title">选择你的职业 · <b>${U.esc(race.name)}</b><span class="tag cls-count">可玩 ${classes.length} 个</span></div>
         <div class="class-pick">
           ${classes.map((c) => {
@@ -247,12 +256,16 @@
               <span class="cc-icon">${c.icon}</span>
               <span class="cc-name">${U.esc(c.name)}</span>
               <span class="cc-role" style="background:${rc}">${U.esc(c.role)}</span>
-              <span class="cc-desc">${U.esc(c.desc)}</span>
             </button>`;
           }).join('')}
         </div>
+        <div class="pick-detail" id="pick-detail">${coarse ? '👆 点击职业卡片查看详情，再点一次即可选择' : '🖱️ 将鼠标悬停在职业卡片上查看详情，点击选择'}</div>
         <button class="btn ghost back-btn" data-act="back-race">← 返回选择种族</button>`;
-      root.innerHTML = html;
+      this._bindPreview(root.querySelectorAll('.class-card'), (card) => {
+        const c = D.CLASSES[card.dataset.act.slice(6)];
+        const rc = roleColor[String(c.role).split('·')[0].trim()] || '#8a8a8a';
+        return `<b>${U.esc(c.name)}</b> <span class="cc-role" style="background:${rc}">${U.esc(c.role)}</span> — ${U.esc(c.desc)}`;
+      });
     },
 
     stepName() {
