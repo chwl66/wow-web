@@ -46,7 +46,11 @@ function check(name, cond, extra) {
   else { failed++; console.log(`  ❌ ${name}${extra ? ' — ' + extra : ''}`); }
 }
 function hasWord(src, word) {
-  return new RegExp('\\b' + String(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(src);
+  // 要求字段以「属性访问(obj.field)」「对象字面量键(field:)」或「字符串键('field')」形式出现,
+  // 而非裸词 —— 否则像 hp/aoe 这类短词会在注释/无关文本里被 \b 误判,把「写了但没生效」的死机制放行。
+  // (字符串键用于 _buffMod(unit, 'healTaken') 这类以键名传参的实现。)
+  const w = String(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(\\.\\s*' + w + '\\b|\\b' + w + '\\s*:|[\'"]' + w + '[\'"])').test(src);
 }
 
 console.log('== 数据交叉引用审计 ==');
@@ -235,6 +239,8 @@ console.log('== 数据交叉引用审计 ==');
 
   const unreachable = [];
   for (const st of Object.values(D.SETS)) {
+    // 无加成的套装会让 Math.max 得到 -Infinity,`got < -Infinity` 恒为假而静默放过——显式标记为问题
+    if (!st.bonuses || !st.bonuses.length) { unreachable.push(`${st.id} 未定义套装加成`); continue; }
     const maxNeed = Math.max.apply(null, st.bonuses.map((b) => b.need));
     const got = st.pieces.filter((p) => obtainable.has(p)).length;
     if (got < maxNeed) unreachable.push(`${st.id} ${got}/${st.pieces.length}(需 ${maxNeed})`);
@@ -259,6 +265,7 @@ console.log('== 数据交叉引用审计 ==');
       }
     }
     // 严格一点:不断最终首领，光靠中途首领/小怪也够凑齐最强加成
+    if (!st.bonuses || !st.bonuses.length) continue; // 无加成套装已在上一条审计中标记
     const maxNeed = Math.max.apply(null, st.bonuses.map((b) => b.need));
     const n = st.pieces.filter((p) => fromAdds.has(p)).length;
     if (n < maxNeed) bossOnly.push(`${st.id} 仅 ${n}/${st.pieces.length} 件来自中途首领/小怪(需 ${maxNeed})`);

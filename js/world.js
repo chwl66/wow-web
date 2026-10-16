@@ -22,9 +22,12 @@
       // 横竖屏 / 窗口尺寸跨越断点时才重渲染(窄屏侧栏折叠态需要跟着变)
       // 幂等:与 _bindActions 同理,重复 init 不重复注册,避免多次触发同一回调
       this._compact = U.isNarrow();
-      const onViewport = () => this._onViewportChange();
-      window.addEventListener('resize', onViewport);
-      window.addEventListener('orientationchange', onViewport);
+      if (!this._viewportBound) {
+        this._viewportBound = true;
+        const onViewport = () => this._onViewportChange();
+        window.addEventListener('resize', onViewport);
+        window.addEventListener('orientationchange', onViewport);
+      }
     },
 
     _onViewportChange() {
@@ -212,6 +215,7 @@
     _startEliteTicker() {
       this._stopEliteTicker();
       this._eliteTimer = setInterval(() => {
+        if (document.hidden) return; // 标签页/应用切到后台时不刷新倒计时,省电
         const vw = document.getElementById('view-world');
         if (!vw || !vw.classList.contains('active')) return;
         const char = W.State.character;
@@ -280,8 +284,8 @@
         </div>
         <div class="zone-actions">
           <button class="btn gold big explore-btn" data-act="explore">${isDungeon ? '⚔️ 深入副本' : '⚔️ 外出探索'}</button>
-          ${isDungeon ? '' : `<button class="btn util-btn act-shop" data-act="shop">🛒 ${zone.shopName}</button>`}
-          ${isDungeon ? '' : `<button class="btn util-btn act-inn" data-act="inn">🏨 旅店休息</button>`}
+          ${!isDungeon && zone.shop && zone.shop.length ? `<button class="btn util-btn act-shop" data-act="shop">🛒 ${U.esc(zone.shopName)}</button>` : ''}
+          ${!isDungeon && zone.inn ? `<button class="btn util-btn act-inn" data-act="inn">🏨 旅店休息</button>` : ''}
           <button class="btn util-btn act-quests" data-act="quests">📜 任务板</button>
           ${isDungeon ? `<button class="btn util-btn act-manual" data-act="dungeon-manual">📖 副本手册</button>` : ''}
           ${isDungeon ? `<button class="btn util-btn act-travel" data-act="travel">🧭 离开副本</button>` : `<button class="btn util-btn act-travel" data-act="travel">🧭 出发旅行</button>`}
@@ -387,7 +391,7 @@
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
       const dungeon = D.DUNGEONS[zone.dungeon];
-      if (!char.dungeon) char.dungeon = { id: zone.dungeon, wave: 0 };
+      if (!char.dungeon || char.dungeon.id !== zone.dungeon) char.dungeon = { id: zone.dungeon, wave: 0 };
       const waveIdx = char.dungeon.wave;
       if (waveIdx >= dungeon.waves.length) {
         char.dungeon = null;
@@ -493,8 +497,8 @@
       }
       if (doneQuests.length) modal += doneQuests.map((q) => `<div class="reward-row quest-done">✅ 任务完成：${U.esc(q.name)}</div>`).join('');
 
-      if (dungeon && b.context === 'dungeon') {
-        const waveIdx = char.dungeon ? char.dungeon.wave : 0;
+      if (dungeon && b.context === 'dungeon' && char.dungeon) {
+        const waveIdx = char.dungeon.wave;
         if (waveIdx >= dungeon.waves.length - 1) {
           // 副本通关
           char.dungeon = null;
@@ -772,7 +776,8 @@
       for (const t of [...m.querySelectorAll('.lv-band-title')]) {
         let n = 0;
         for (let el = t.nextElementSibling; el && !el.classList.contains('lv-band-title'); el = el.nextElementSibling) {
-          if (el.classList.contains('bag-row')) n++;
+          // 背包装备行(.bag-row)与商店/物品行(.item-row)都计入分区件数
+          if (el.classList.contains('bag-row') || el.classList.contains('item-row')) n++;
         }
         const c = t.querySelector('.band-count');
         if (c) c.textContent = n + ' 件';
@@ -786,6 +791,8 @@
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
       const stock = zone.shop || [];
+      // 无货区域(如时光之穴/卡拉赞等纯枢纽)不显示商店入口,防御性兜底(按钮已在 render 侧隐藏)
+      if (!stock.length) { W.UI.toast('这里没有商店', 'warn'); return; }
       // 等级段展示:等级升序 → 品质降序 → 槽位,再按 10 级一档分区
       const list = stock.map((id) => D.ITEMS[id])
         .filter((it) => it && it.level <= char.level + 3)
@@ -799,9 +806,9 @@
       html += this._bandedHtml(list, (it) => (this._isGearItem(it) ? it.level : 0), (it) => this._itemRow(it, 'buy', char.gold >= it.buy));
       html += '</div><div class="shop-sell"><div class="sub-title">💰 出售背包物品<span class="sub-note">${inv.length} 件</span></div>';
       if (!inv.length) html += '<div class="empty">背包空空如也</div>';
-      html += this._bandedHtml(inv, (s) => { const it = D.ITEMS[s.id]; return it && this._isGearItem(it) ? it.level : 0; }, (s) => this._itemRow(D.ITEMS[s.id], 'sell', true, s.count));
+      html += this._bandedHtml(inv, (s) => { const it = D.ITEMS[s.id]; return it && this._isGearItem(it) ? it.level : 0; }, (s) => this._itemRow(D.ITEMS[s.id], 'sell', true, s.count, s.perf));
       html += '</div>';
-      W.UI.openModal(html, { title: '商店 · ' + zone.shopName });
+      W.UI.openModal(html, { title: '商店 · ' + U.esc(zone.shopName) });
       this._bindShop();
     },
 
@@ -875,11 +882,11 @@
       return `<div class="item-compare">对比已装备：${parts.join(' ')}</div>`;
     },
 
-    _itemRow(it, mode, enabled, count) {
+    _itemRow(it, mode, enabled, count, perf) {
       const nameColor = U.QUALITY_COLOR[it.quality];
-      const parts = this._itemStatsParts(it);
+      const parts = this._itemStatsParts(it, perf);
       let statsHtml = parts.length ? `<div class="item-stats">${U.esc(parts.join(' · '))}</div>` : '';
-      const price = mode === 'buy' ? it.buy : Math.max(1, Math.floor((it.sell != null ? it.sell : it.buy * 0.4)));
+      const price = mode === 'buy' ? it.buy : Math.max(1, Math.floor((it.sell != null ? it.sell : (it.buy || 0) * 0.4)));
       // 等级标签:装备行显示 Lv,购买区对超出等级的额外提示(与背包标记口径一致)
       const char = W.State.character;
       let lvTag = '';
@@ -888,10 +895,10 @@
         if (mode === 'buy' && char && char.level < it.level) lvTag += ` <span class="tag needlv-tag">🔒 需要${it.level}级</span>`;
       }
       return `
-        <div class="item-row" data-item="${it.id}" data-mode="${mode}">
+        <div class="item-row" data-item="${it.id}" data-mode="${mode}"${perf ? ' data-perf="1"' : ''}>
           <span class="item-icon">${it.icon}</span>
           <div class="item-info">
-            <div class="item-name" style="color:${nameColor}">${U.esc(it.name)}${it.quality !== 'white' ? ` <span class="tag q-${it.quality}">${it.quality === 'green' ? '优秀' : it.quality === 'blue' ? '精良' : it.quality === 'legendary' ? '传说' : '史诗'}</span>` : ''}${lvTag}${count ? ` <span class="item-count">×${count}</span>` : ''}</div>
+            <div class="item-name" style="color:${nameColor}">${U.esc(it.name)}${perf ? ' <span class="tag perf-tag">✨ 极品</span>' : ''}${it.quality !== 'white' ? ` <span class="tag q-${it.quality}">${it.quality === 'green' ? '优秀' : it.quality === 'blue' ? '精良' : it.quality === 'legendary' ? '传说' : '史诗'}</span>` : ''}${lvTag}${count ? ` <span class="item-count">×${count}</span>` : ''}</div>
             ${statsHtml}
           </div>
           <div class="item-price">${mode === 'buy' ? U.money(price) : '+ ' + U.money(price)}</div>
@@ -915,23 +922,25 @@
             // 购买会新增背包行+改变金币,局部更新需插入新行,收益低;保持整弹窗重绘(滚动由 openModal 保持)
             this.openShop();
           } else {
-            const price = Math.max(1, Math.floor((it.sell != null ? it.sell : it.buy * 0.4)));
+            const perf = row.dataset.perf === '1';
+            const price = Math.max(1, Math.floor((it.sell != null ? it.sell : (it.buy || 0) * 0.4)));
             char.gold += price;
-            W.Char.Inventory.remove(char, it.id, 1);
+            W.Char.Inventory.remove(char, it.id, 1, perf);
             W.Audio.click();
             W.UI.toast(`出售了 ${it.name}，获得 ${U.plainMoney(price)}`);
             // 局部更新:删行/改堆叠数量 + 刷新金币/出售计数/购买可购态/空态,不做整弹窗重绘
-            this._shopSellPartialUpdate(m, char, row, it.id);
+            this._shopSellPartialUpdate(m, char, row, it.id, perf);
           }
         }, { once: false });
       });
     },
 
     // 商店出售后局部更新:删行/改堆叠数量 + 刷新金币显示/出售区件数/购买按钮可购态/空态,避免整弹窗重绘
-    _shopSellPartialUpdate(m, char, row, itemId) {
+    _shopSellPartialUpdate(m, char, row, itemId, perf) {
       const inv = W.Char.Inventory.list(char);
       // 1) 该行:堆叠未卖完只改数量角标,卖完则整行移除
-      const st = inv.find((s) => s.id === itemId);
+      // 按 id + perf 精确定位堆栈(同名普通/极品分堆,避免误读另一堆的剩余数量)
+      const st = inv.find((s) => s.id === itemId && !!s.perf === !!perf);
       if (st && st.count > 0) {
         const cnt = row.querySelector('.item-count');
         if (cnt) cnt.textContent = '×' + st.count;
@@ -966,12 +975,16 @@
           b.disabled = !afford;
         }
       });
+      // 6) 等级段分区计数:出售后重算件数并移除已空分区(否则分区标题计数与实际行数不符)
+      this._bagRefreshBands(m);
     },
 
     /* ---------- 旅店 ---------- */
     openInn() {
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
+      // 防御性兜底:非旅店区域(枢纽/副本)不提供休息恢复(按钮已在 render 侧按 zone.inn 隐藏)
+      if (!zone.inn) { W.UI.toast('这里没有旅店', 'warn'); return; }
       const c = W.Char.computed(char);
       W.UI.openModal(`
         <div class="inn-scene">🏨 <b>${U.esc(zone.name)}</b> 的旅店</div>
@@ -1102,12 +1115,6 @@
       const direct = Object.keys(dist).filter((z) => dist[z] === 1).length;
       const maxHops = Object.keys(dist).reduce((m, z) => Math.max(m, dist[z]), 0);
       // 分区:🚀 直达(当前所在 + 飞艇/远洋航线 + 步行直达) 与 🗺️ 中转地图(需多跳),各自按推荐等级升序(当前置顶)
-      const levelSort = (a, b) => {
-        if (a === char.zone) return -1;
-        if (b === char.zone) return 1;
-        const dl = this._zoneLevelKey(a) - this._zoneLevelKey(b);
-        return dl || (dist[a] - dist[b]);
-      };
       const { directZones, mapZones } = this._travelPartition(dist, char);
       const questOpenTotal = Object.keys(dist).reduce((s, z) => s + this._zoneQuestOpen(char, z), 0);
       const byAirZones = airHere ? airHere.to.filter((z) => dist[z] === 1) : [];
@@ -2040,7 +2047,7 @@
         }
         if (deOk) statsParts.push('分解可得 ' + W.Char.Forge.matsLabel(W.Char.Forge.disenchantYield(it)));
         // 出售价(与商店一致:it.sell 优先,否则 buy × 0.4)
-        const sellPrice = Math.max(1, Math.floor(it.sell != null ? it.sell : it.buy * 0.4));
+        const sellPrice = Math.max(1, Math.floor(it.sell != null ? it.sell : (it.buy || 0) * 0.4));
         // 全部背包物品均可出售(与商店出售区一致:毒药/材料/消耗品/卷轴/已装备同 id 的背包副本/强化附魔件均有卖按钮,明确点击不误触;已装备与强化附魔仍保留标签提示)
         // 与已装备属性对比提示(戒指映射到实际目标槽;已装备/消耗品/材料/毒药不对比)
         let cmpHtml = '';

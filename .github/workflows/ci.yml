@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           # 与 release.yml 保持一致(Capacitor 8 CLI 要求 Node >= 22)
           node-version: 22
@@ -54,6 +54,13 @@ jobs:
       - name: Sync web assets
         run: npm run www:sync
 
+      # update-artifacts(全量包 + update.json)是安卓在线更新的命脉,发版前先跑通同一条路径
+      - name: Smoke test update artifacts
+        run: npm run www:artifacts -- --out "$RUNNER_TEMP/dist-update"
+
+      # 版本比对预演:GH_TOKEN 必填,否则 gh 未认证 → latest 恒为空 → 永远判「需要发版」
       - name: Release preflight
         if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run bump:check

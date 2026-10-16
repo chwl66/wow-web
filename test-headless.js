@@ -1117,15 +1117,20 @@ function checkEq(name, got, want) {
     char.hp = c.hpMax; char.hpMax = c.hpMax; char.rage = 100;
     const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
     const orig = W.RNG.chance;
-    // 强制命中/暴击/掉率,但概率为 0 的判定(闪避)仍返回 false,避免战斗无法结束
-    W.RNG.chance = (p) => p > 0;
-    W.Combat.start(char, [D.MONSTERS.elwynn_bandit], ui, {});
-    const b = W.Combat.battle;
-    b.enemies[0].dodge = 0;
-    W.Utils.delay = () => Promise.resolve();
-    let g = 0;
-    while (!b.ended && g++ < 30) await W.Combat.playerAction({ type: 'attack', target: 'e0' });
-    W.RNG.chance = orig;
+    let b;
+    try {
+      // 强制命中/暴击/掉率,但概率为 0 的判定(闪避)仍返回 false,避免战斗无法结束
+      W.RNG.chance = (p) => p > 0;
+      W.Combat.start(char, [D.MONSTERS.elwynn_bandit], ui, {});
+      b = W.Combat.battle;
+      b.enemies[0].dodge = 0;
+      W.Utils.delay = () => Promise.resolve();
+      let g = 0;
+      while (!b.ended && g++ < 30) await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    } finally {
+      // finally 兜底:中途抛错也不会把 RNG 打过桩的状态泄漏给后续用例
+      W.RNG.chance = orig;
+    }
     check('击杀怪物掉落装备(强盗掉落短剑/皮靴/药水)', b.victory && W.Char.Inventory.count(char, 'w_short_sword') === 1, `inv=${JSON.stringify(char.inventory)}`);
   }
   // 必定掉落(Boss 水晶)不受背包上限影响
@@ -1136,16 +1141,20 @@ function checkEq(name, got, want) {
     for (let i = 0; i < W.Config.BAG_SIZE; i++) char.inventory.push({ id: 'a_cloth', count: 1 }); // 塞满背包
     const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
     const orig = W.RNG.chance;
-    W.RNG.chance = (p) => p > 0;
-    W.Combat.start(char, [D.MONSTERS.vancleef], ui, { isDungeon: true });
-    const b = W.Combat.battle;
-    W.Utils.delay = () => Promise.resolve();
-    let g = 0;
-    while (!b.ended && g++ < 80) {
-      b.enemies.forEach((e) => { e.dodge = 0; }); // 含召唤爪牙,避免强制命中下无限闪避
-      await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    let b;
+    try {
+      W.RNG.chance = (p) => p > 0;
+      W.Combat.start(char, [D.MONSTERS.vancleef], ui, { isDungeon: true });
+      b = W.Combat.battle;
+      W.Utils.delay = () => Promise.resolve();
+      let g = 0;
+      while (!b.ended && g++ < 80) {
+        b.enemies.forEach((e) => { e.dodge = 0; }); // 含召唤爪牙,避免强制命中下无限闪避
+        await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+      }
+    } finally {
+      W.RNG.chance = orig;
     }
-    W.RNG.chance = orig;
     check('背包满时必定掉落(Boss水晶)仍拾取', b.victory && W.Char.Inventory.count(char, 'm_crystal') === 1,
       `crystal=${W.Char.Inventory.count(char, 'm_crystal')} 背包=${char.inventory.length}槽 ended=${b.ended}`);
   }
@@ -2001,13 +2010,17 @@ function checkEq(name, got, want) {
     const log = [];
     const ui = { log: (t, h) => log.push(h), float: () => {}, render: () => {}, onEnd: null };
     const orig = W.RNG.chance;
-    W.RNG.chance = (p) => p > 0;
-    W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
-    const b = W.Combat.battle;
-    W.Utils.delay = () => Promise.resolve();
-    b.enemies[0].dodge = 0;
-    await W.Combat.playerAction({ type: 'attack', target: 'e0' });
-    W.RNG.chance = orig;
+    let b;
+    try {
+      W.RNG.chance = (p) => p > 0;
+      W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
+      b = W.Combat.battle;
+      W.Utils.delay = () => Promise.resolve();
+      b.enemies[0].dodge = 0;
+      await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    } finally {
+      W.RNG.chance = orig;
+    }
     check('生命偷取恢复生命', log.some((l) => l.includes('生命偷取') && l.includes('恢复了')), log.slice(-4).join('|'));
   }
   // 旧存档迁移(upgrades 字段)
@@ -2148,7 +2161,7 @@ function checkEq(name, got, want) {
     }
     console.log(`  60级满装战士 vs 巫妖之影(58精英) → ${b.victory ? '击败精英 ✅' : '落败'} (${guard}回合)`);
     check('60 级精英战可正常结算', b.ended, `guard=${guard}`);
-    check('60 级精英战有胜负结果', b.victory !== undefined);
+    check('60 级精英战有胜负结果', typeof b.victory === 'boolean', `victory=${b.victory}`);
   }
 
   console.log('== 稀有精英刷新计时 ==');
@@ -3218,18 +3231,22 @@ function checkEq(name, got, want) {
       if (s && s.learn <= dc.level && !dc.learnedSkills.includes(sid)) dc.learnedSkills.push(sid);
     }
     const origChance = W.RNG.chance;
-    W.RNG.chance = () => true; // 所有掉落必掉且必极品
-    const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
-    W.Combat.start(dc, [D.MONSTERS.stv_ape], ui, {});
-    const bb = W.Combat.battle;
-    W.Utils.delay = () => Promise.resolve();
-    let g = 0;
-    while (!bb.ended && g++ < 40) {
-      const p = bb.player;
-      const skill = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && W.Combat.canUse(s, p) && (s.dmg || s.dot))[0];
-      await W.Combat.playerAction(skill ? { type: 'skill', skill: skill.id, target: 'e0' } : { type: 'attack', target: 'e0' });
+    let bb;
+    try {
+      W.RNG.chance = () => true; // 所有掉落必掉且必极品
+      const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+      W.Combat.start(dc, [D.MONSTERS.stv_ape], ui, {});
+      bb = W.Combat.battle;
+      W.Utils.delay = () => Promise.resolve();
+      let g = 0;
+      while (!bb.ended && g++ < 40) {
+        const p = bb.player;
+        const skill = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && W.Combat.canUse(s, p) && (s.dmg || s.dot))[0];
+        await W.Combat.playerAction(skill ? { type: 'skill', skill: skill.id, target: 'e0' } : { type: 'attack', target: 'e0' });
+      }
+    } finally {
+      W.RNG.chance = origChance;
     }
-    W.RNG.chance = origChance;
     const perfDrops = W.Char.Inventory.list(dc).filter((s) => s.perf && D.ITEMS[s.id] && D.ITEMS[s.id].slot !== 'consumable' && D.ITEMS[s.id].slot !== 'material');
     check('战斗可掉落极品装备', bb.victory && perfDrops.length > 0, `drops=${JSON.stringify(W.Char.Inventory.list(dc).map((s) => [s.id, !!s.perf]))}`);
   }

@@ -28,9 +28,16 @@ function isGreater(a, b) {
 function latestFromGh() {
   try {
     const out = execFileSync('gh', ['release', 'list', '--limit', '1', '--json', 'tagName', '-q', '.[0].tagName'],
-      { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim();
     return out.replace(/^v/, '');
   } catch (e) {
+    // 本地未装 gh / 未登录时按「无已发布 Release」处理(仍是首版语义)。
+    // 但在 CI(GitHub Actions / 已注入 GH_TOKEN)中失败说明凭证或网络有问题,
+    // 若继续按「无 Release」处理会误判为「需要发版」,这里必须把原因喊出来。
+    if (process.env.GITHUB_ACTIONS || process.env.GH_TOKEN) {
+      console.error(`⚠️ 无法读取已发布 Release(gh 调用失败),将按「无 Release」处理:`);
+      console.error(`   ${(e.stderr ? e.stderr.toString() : e.message || '').trim().split('\n')[0]}`);
+    }
     return '';
   }
 }

@@ -115,7 +115,8 @@
         const hi = HOT[e.key ? e.key.toLowerCase() : ''];
         if (hi !== undefined && (this._potionKeys || []).length) {
           const pid = this._potionKeys[hi];
-          if (pid) { W.Combat.usePotion(pid); e.preventDefault(); }
+          // 冷却中/状态已满的瓶子快捷键同样无效(与按钮 disabled 口径一致)
+          if (pid && !(this._potionOff || [])[hi]) { W.Combat.usePotion(pid); e.preventDefault(); }
         }
         if (e.key === 'Escape') { W.UI.closeModal(); }
       });
@@ -132,8 +133,8 @@
         onEnd: (b) => this._onEnd(b),
       }, opts);
       this.battle = battle;
-      this._log('info', `⚔️ 遭遇了 <b>${encounter.name || encounter.enemies.map((e) => D.MONSTERS[e.id] ? D.MONSTERS[e.id].name : e.name).join('、')}</b>！`);
-      if (encounter.title) this._log('boss', encounter.title);
+      this._log('info', `⚔️ 遭遇了 <b>${U.esc(encounter.name || encounter.enemies.map((e) => D.MONSTERS[e.id] ? D.MONSTERS[e.id].name : e.name).join('、'))}</b>！`);
+      if (encounter.title) this._log('boss', U.esc(encounter.title));
       this.render();
       W.UI.showView('battle');
     },
@@ -163,6 +164,14 @@
       const b = this.battle;
       if (!b) return;
       const c = b.char;
+      // 目标校正:当前锁定的敌人已阵亡/不存在时,自动落到首个存活敌人(与引擎的自动换目标口径一致)
+      if (this.targetKey) {
+        const cur = b.enemies.find((e) => e.key === this.targetKey);
+        if (!cur || cur.hp <= 0) {
+          const alive = b.enemies.find((e) => e.hp > 0);
+          if (alive) this.targetKey = alive.key;
+        }
+      }
       // 保留正在播放的飘字,避免被重绘清除
       const floats = {};
       this.els.stage.querySelectorAll('.float-layer').forEach((layer) => {
@@ -290,8 +299,8 @@
     },
 
     _resBar(unit) {
-      if (unit.res === 'rage') return U.bar(unit.rage / 100, 'rage', `怒气 ${unit.rage}`);
-      if (unit.res === 'energy') return U.bar(unit.energy / 100, 'energy', `能量 ${unit.energy}`);
+      if (unit.res === 'rage') return U.bar(unit.rage / W.Config.RAGE_MAX, 'rage', `怒气 ${unit.rage}`);
+      if (unit.res === 'energy') return U.bar(unit.energy / W.Config.ENERGY_MAX, 'energy', `能量 ${unit.energy}`);
       if (unit.cls === 'warlock') {
         return U.bar((unit.soulShards || 0) / W.Config.SOUL_SHARD_CAP, 'shard', `💜 灵魂碎片 ${unit.soulShards || 0}`) +
           (unit.manaMax > 0 ? U.bar(unit.mana / unit.manaMax, 'mana', `法力 ${Math.ceil(unit.mana)} / ${unit.manaMax}`) : '');
@@ -331,10 +340,10 @@
 
       skillList.forEach((s, i) => {
         let ok = canUse(s, p);
-        // 驯服野兽:仅对生命值低于 50% 的野兽目标可用
+        // 驯服野兽:仅对生命值低于 50% 的普通野兽目标可用(首领/精英不可驯服,与引擎判定一致)
         if (s.tame) {
           const t = b.enemies.find((e) => e.key === this.targetKey);
-          ok = ok && !!t && t.hp > 0 && t.kind === 'beast' && t.hp / t.hpMax <= 0.5;
+          ok = ok && !!t && t.hp > 0 && t.kind === 'beast' && !t.boss && !t.elite && t.hp / t.hpMax <= 0.5;
         }
         const cd = p.cd[s.id] || 0;
         const costHtml = s.res ? `<span class="sk-cost ${s.res}">${s.cost || 0}</span>` : '';
@@ -349,7 +358,8 @@
           </button>`;
       });
 
-      html += `<button class="skill-btn action flee" data-act="flee" title="尝试逃跑"><span class="sk-icon">🏃</span><span class="sk-name">逃跑</span></button>`;
+      const noFlee = b.isDungeon || b.isBoss; // 副本/首领战无法逃跑(与引擎 _flee 判定一致)
+      html += `<button class="skill-btn action flee ${noFlee ? 'disabled' : ''}" data-act="flee" ${noFlee ? 'disabled' : ''} title="${noFlee ? '副本/首领战中无法逃跑' : '尝试逃跑'}"><span class="sk-icon">🏃</span><span class="sk-name">逃跑</span></button>`;
       this.els.skillbar.innerHTML = html;
 
       this.els.skillbar.querySelectorAll('button').forEach((btn) => {
@@ -384,7 +394,7 @@
       };
       const potions = Object.values(D.ITEMS).filter((it) => it.consumable && U.consHasEffect(it.consumable) && W.Char.Inventory.count(char, it.id) > 0)
         .sort((a, b) => { const ra = potRank(a), rb = potRank(b); return (ra[0] - rb[0]) || (ra[1] - rb[1]); });
-      if (!scrolls.length && !potions.length) { this.els.scrollbar.innerHTML = ''; this.els.scrollbar.style.display = 'none'; return; }
+      if (!scrolls.length && !potions.length) { this.els.scrollbar.innerHTML = ''; this.els.scrollbar.style.display = 'none'; this._potionKeys = []; this._potionOff = []; return; }
       this.els.scrollbar.style.display = '';
       const coll = this._itemsCollapsed;
       const total = scrolls.length + potions.length;
@@ -393,6 +403,7 @@
       // 药水快捷键映射:背包中前 4 瓶(折叠态一键急救用)
       const HOTKEY = ['Q', 'E', 'R', 'F'];
       this._potionKeys = potions.slice(0, 4).map((it) => it.id);
+      this._potionOff = []; // 前 4 瓶的「禁用」状态(冷却/满血)供快捷键判定,避免绕过 UI 直接喝
       // 药水(冷却/满状态时禁用;折叠态转为带快捷键的迷你急救按钮)
       for (let pi = 0; pi < potions.length; pi++) {
         const it = potions[pi];
@@ -401,6 +412,7 @@
         const needMana = !!(U.consAmount(it.consumable, 'mana', player.manaMax) && player.mana < player.manaMax);
         const full = !needHeal && !needMana;
         const off = (cd > 0 || full);
+        if (pi < 4) this._potionOff[pi] = off;
         const tag = cd > 0 ? `冷却 ${cd}` : (full ? '已满' : `×${n}`);
         // 效果文案:百分比口径 + 当前等级的实际数值(让玩家知道这瓶能回多少)
         const effect = [
@@ -412,7 +424,7 @@
         if (coll) {
           if (pi < 4) {
             const hk = HOTKEY[pi];
-            html += `<button class="mini-potion${off ? ' disabled' : ''}" data-potion="${it.id}" data-hk="${hk}" title="${title}（或按 ${hk} 键）"><span class="hk-key">${hk}</span><span class="hk-ico">${it.icon}</span><span class="hk-num">${tag}</span></button>`;
+            html += `<button class="mini-potion${off ? ' disabled' : ''}" ${off ? 'disabled' : ''} data-potion="${it.id}" data-hk="${hk}" title="${title}（或按 ${hk} 键）"><span class="hk-key">${hk}</span><span class="hk-ico">${it.icon}</span><span class="hk-num">${tag}</span></button>`;
           }
           // 折叠态第 5 瓶及以后不显示(保留 4 个急救位)
         } else {
@@ -439,6 +451,7 @@
       });
       this.els.scrollbar.querySelectorAll('[data-potion]').forEach((btn) => {
         btn.addEventListener('click', () => {
+          if (btn.disabled) return; // 冷却中/状态已满:与展开态一致,点不动
           W.Combat.usePotion(btn.dataset.potion);
         });
       });

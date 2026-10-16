@@ -24,11 +24,17 @@ const W = global.WOW;
 const D = W.Data;
 const U = W.Utils;
 U.delay = () => Promise.resolve();
-// 允许通过环境变量试算不同难度系数(不改变默认配置)
-if (process.env.MON_HP) W.Config.MONSTER_HP_MULT = parseFloat(process.env.MON_HP);
-if (process.env.MON_ATK) W.Config.MONSTER_ATK_MULT = parseFloat(process.env.MON_ATK);
+// 允许通过环境变量试算不同难度系数(不改变默认配置);非法输入忽略,避免把配置改成 NaN
+const envNum = (name) => {
+  const v = parseFloat(process.env[name]);
+  return Number.isFinite(v) && v > 0 ? v : null;
+};
+const monHp = envNum('MON_HP'); if (monHp != null) W.Config.MONSTER_HP_MULT = monHp;
+const monAtk = envNum('MON_ATK'); if (monAtk != null) W.Config.MONSTER_ATK_MULT = monAtk;
 
-const TRIALS = Math.max(1, parseInt(process.argv[2], 10) || 120);
+// 每档对局数:取第一个纯数字参数(允许 `--noge 500` 这类顺序,不再只看 argv[2])
+const trialsArg = process.argv.slice(2).find((a) => /^\d+$/.test(a));
+const TRIALS = Math.max(1, parseInt(trialsArg, 10) || 120);
 const LEVELS = [10, 20, 35, 50, 60];
 const SLOTS = ['weapon', 'offhand', 'head', 'chest', 'gloves', 'legs', 'boots', 'cloak', 'neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
 const GEAR_SLOT_OF = { weapon: 'weapon', offhand: 'offhand', head: 'head', chest: 'chest', gloves: 'gloves', legs: 'legs', boots: 'boots', cloak: 'cloak', neck: 'neck', ring: 'ring1', trinket: 'trinket1' };

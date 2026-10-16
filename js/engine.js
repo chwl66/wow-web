@@ -317,7 +317,9 @@
       let t = $('#toast');
       if (!t) { t = W.Utils.el('div', 'toast', ''); t.id = 'toast'; document.body.appendChild(t); }
       t.className = 'toast show ' + (cls || '');
-      t.innerHTML = msg;
+      // 用 textContent 而非 innerHTML:提示内容一律是纯文本(含玩家自定角色名),
+      // 避免名字里的标签被解析执行(自 XSS)。所有调用方传的都是纯文本,不依赖 HTML。
+      t.textContent = msg;
       clearTimeout(t._timer);
       t._timer = setTimeout(() => t.classList.remove('show'), 2400);
     },

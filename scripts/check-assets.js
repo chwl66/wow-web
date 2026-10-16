@@ -14,10 +14,12 @@ for (const m of html.matchAll(/<script[^>]*\bsrc\s*=\s*["']([^"']+)["']/g)) refs
 for (const m of html.matchAll(/<link[^>]*\bhref\s*=\s*["']([^"']+)["']/g)) refs.push(m[1]);
 
 const local = refs.filter((r) => !/^(https?:|data:|\/\/)/i.test(r));
-const missing = local.filter((r) => !fs.existsSync(path.join(ROOT, r.split(/[?#]/)[0])));
+// 统一剥离 ?query/#hash 后再解析本地路径,避免「缺失检查 / 存在检查 / 体积统计」三处口径不一致
+const localPath = (r) => path.join(ROOT, r.split(/[?#]/)[0]);
+const missing = local.filter((r) => !fs.existsSync(localPath(r)));
 
 for (const r of local) {
-  const ok = fs.existsSync(path.join(ROOT, r));
+  const ok = fs.existsSync(localPath(r));
   console.log(`${ok ? '  ✅' : '  ❌'} ${r}`);
 }
 if (missing.length) {
@@ -27,7 +29,7 @@ if (missing.length) {
 }
 
 let total = 0;
-for (const r of local) total += fs.statSync(path.join(ROOT, r)).size;
+for (const r of local) total += fs.statSync(localPath(r)).size;
 const kb = total / 1024;
 const budget = parseFloat(process.argv[2]) || 900;
 console.log(`\n首屏资源: ${local.length} 个文件, ${kb.toFixed(1)} KB(未压缩)`);

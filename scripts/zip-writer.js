@@ -41,7 +41,13 @@ function createZip(files) {
   let offset = 0;
 
   for (const f of files) {
-    const name = Buffer.from(f.name, 'utf8');
+    // 规范化并校验条目名:统一用 / 分隔,拒绝绝对路径与 .. 逃逸(zip-slip),
+    // 否则解压方(安卓 ZipInputStream)可能写到包外目录。
+    const safeName = String(f.name).replace(/\\/g, '/');
+    if (safeName.startsWith('/') || /(^|\/)\.\.(\/|$)/.test(safeName)) {
+      throw new Error(`非法的 ZIP 条目路径(绝对或含 ..):${f.name}`);
+    }
+    const name = Buffer.from(safeName, 'utf8');
     const raw = Buffer.isBuffer(f.data) ? f.data : Buffer.from(f.data);
     const compressed = zlib.deflateRawSync(raw, { level: 9 });
     const crc = crc32(raw);

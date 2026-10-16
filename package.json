@@ -1,6 +1,6 @@
 {
   "name": "wow-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "一个高还原度的魔兽世界**网页版回合制 RPG**。暗黑魔兽风 UI，无需构建、无需服务器，**双击 `index.html` 即可游玩**。",
   "scripts": {
     "test": "node test-headless.js && node test-dom.js",

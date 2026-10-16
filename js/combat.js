@@ -842,7 +842,6 @@
 
       // 清除负面
       if (skill.cleanse) {
-        const hadDot = player.dots.length > 0;
         player.dots = [];
         if (skill.cleanseStrong) {
           player.ccs = [];

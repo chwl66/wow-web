@@ -181,7 +181,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       check('结算弹窗显示掉落物品', text('.modal-body').includes('拾取'));
       check('掉落数量与拾取行一致', (b.rewards.drops || []).length >= invAfter - invBefore);
     } else {
-      check('本场无掉落(跳过展示校验)', true);
+      console.log('  ⏭️ 本场无掉落,跳过结算弹窗掉落行校验(随机未掉落,非测试失败)');
     }
     // 自动存档:战斗胜利后按角色自动写入存档槽
     check('战斗胜利后自动存档(吉安娜)', W.State.saveSlots.some((e) => e && e.name === '吉安娜'),
@@ -1937,7 +1937,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       learnable.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       check('滑动后节点点击被抑制', W.Char.rankOf(sc, learnable.dataset.tree, learnable.dataset.talent) === rankBefore);
     } else {
-      check('滑动后无可用节点(跳过抑制检查)', true);
+      console.log('  ⏭️ 无可用天赋节点,跳过滑动抑制检查(前置状态缺失,非测试失败)');
     }
     swipe(doc.querySelector('.talent-tree'), 120, 210, 280, 205);
     check('右滑切回上一系', doc.querySelector('.talent-tab.active').dataset.tree === before);

@@ -1325,6 +1325,10 @@
     if (!char.codex) char.codex = {}; // 旧存档兜底:首领图鉴
     if (!char.reps) char.reps = {};   // 旧存档兜底:阵营声望
     if (!char.mounts) char.mounts = []; // 旧存档兜底:坐骑收藏
+    if (!char.quests || typeof char.quests !== 'object') char.quests = {}; // 旧存档兜底:进行中任务
+    if (!Array.isArray(char.completedQuests)) char.completedQuests = []; // 旧存档兜底:已完成任务
+    if (!Array.isArray(char.visited)) char.visited = []; // 旧存档兜底:已访问区域
+    if (!Array.isArray(char.learnedSkills)) char.learnedSkills = []; // 旧存档兜底:已学技能
     Equipment._migrateOrphanRing(char); // 旧存档孤儿戒指槽迁移
     if (char.classId === 'hunter') {
       if (!char.pets.length) char.pets.push(JSON.parse(JSON.stringify(D.PETS.pet_tiger)));

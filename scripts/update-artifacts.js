@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { createZip } = require('./zip-writer');
+const { versionCode } = require('./version-code');
 
 const ROOT = path.join(__dirname, '..');
 const WWW = path.join(ROOT, 'www');
@@ -55,8 +56,13 @@ function walkDir(dir, base, out) {
 
   // 2. 上一版清单(用于增量补丁)
   let prev = null;
-  if (baseArg && fs.existsSync(baseArg)) {
-    try { prev = JSON.parse(fs.readFileSync(baseArg, 'utf8')); } catch (e) { prev = null; }
+  if (baseArg) {
+    if (!fs.existsSync(baseArg)) {
+      console.warn(`⚠️ 未找到基准清单 ${baseArg},本次只生成全量包(无增量补丁)`);
+    } else {
+      try { prev = JSON.parse(fs.readFileSync(baseArg, 'utf8')); }
+      catch (e) { console.warn(`⚠️ 基准清单 ${baseArg} 解析失败(${e.message}),本次只生成全量包`); prev = null; }
+    }
   }
 
   // 3. 全量包
@@ -65,8 +71,10 @@ function walkDir(dir, base, out) {
   // 4. 补丁包(相对上一版变更/新增的文件)
   let patchBuf = null;
   let patchBase = null;
+  let patchCount = 0;
   if (prev && prev.version && prev.files) {
     const changed = entries.filter((e) => !prev.files[e.name] || prev.files[e.name].sha256 !== files[e.name].sha256);
+    patchCount = changed.length;
     if (changed.length) {
       patchBuf = createZip(changed);
       patchBase = prev.version;
@@ -80,7 +88,7 @@ function walkDir(dir, base, out) {
   const dl = `https://github.com/${REPO}/releases/download/v${VERSION}`;
   const manifest = {
     version: VERSION,
-    code: (() => { const [m, mi, p] = VERSION.split('.').map((n) => parseInt(n, 10) || 0); return m * 10000 + mi * 100 + p; })(),
+    code: versionCode(VERSION),
     patch: patchBuf ? {
       base: patchBase,
       url: `${dl}/patch-v${VERSION}.zip`,
@@ -104,6 +112,7 @@ function walkDir(dir, base, out) {
   console.log(`✅ 更新产物已生成 → ${outDir}`);
   console.log(`   版本: v${VERSION} (code ${manifest.code})`);
   console.log(`   文件数: ${entries.length}, 全量包: ${(fullBuf.length / 1024).toFixed(1)} KB (sha256 ${manifest.full.sha256.slice(0, 12)}…)`);
-  if (patchBuf) console.log(`   增量补丁: ${(patchBuf.length / 1024).toFixed(1)} KB (基准 v${patchBase}, ${patchBuf ? '' : ''}变更 ${(() => { const c = entries.filter((e) => !prev.files[e.name] || prev.files[e.name].sha256 !== files[e.name].sha256); return c.length; })()} 个文件, sha256 ${manifest.patch.sha256.slice(0, 12)}…)`);
-  else console.log('   增量补丁: (无上一版清单,跳过)');
+  if (patchBuf) console.log(`   增量补丁: ${(patchBuf.length / 1024).toFixed(1)} KB (基准 v${patchBase}, 变更 ${patchCount} 个文件, sha256 ${manifest.patch.sha256.slice(0, 12)}…)`);
+  else if (prev) console.log(`   增量补丁: 无变更,跳过(基准 v${prev.version})`);
+  else console.log('   增量补丁: 无上一版清单,跳过');
 })();
