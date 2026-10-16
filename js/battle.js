@@ -33,6 +33,68 @@
       this.els.skillbar = root.querySelector('.skill-bar');
       this.els.scrollbar = root.querySelector('.scroll-bar');
       this._bindKeys();
+      // 触屏长按查看详情(技能说明 / 单位状态 / 首领技能):title 悬停在触屏不可见
+      W.UI.bindInfoPress(root, (el) => this._infoFor(el), '[title], .unit, .skill-btn');
+    },
+
+    /* ---------- 长按详情:把触屏看不见的 title 提示变成可读面板 ---------- */
+    _unitByKey(key) {
+      const b = this.battle;
+      if (!b || !key) return null;
+      if (b.player && b.player.key === key) return b.player;
+      const pet = (b.pets || []).find((p) => p.key === key);
+      if (pet) return pet;
+      return (b.enemies || []).find((e) => e.key === key) || null;
+    },
+
+    _infoFor(el) {
+      // 1. 单位卡牌(含宠物/敌人)→ 状态面板:增益减益剩余回合 + 被动 / 首领技能
+      const unitEl = el.closest ? el.closest('.unit') : null;
+      if (unitEl && unitEl.dataset.key) {
+        const u = this._unitByKey(unitEl.dataset.key);
+        if (u) return { title: u.name, html: this._unitInfoHtml(u, unitEl.classList.contains('enemy-card')) };
+      }
+      // 2. 技能按钮 → 技能说明 + 当前不可用原因
+      if (el.classList && el.classList.contains('skill-btn')) {
+        return {
+          title: (el.querySelector('.sk-name') || {}).textContent || '技能',
+          html: '<div class="info-text">' + U.esc(el.title) + '</div>' +
+            (el.disabled ? '<div class="info-sub">⛔ 当前不可用：资源不足 / 冷却中 / 条件不满足</div>' : ''),
+        };
+      }
+      return null; // 其余回退到元素自身 title(如控制图标)
+    },
+
+    _unitInfoHtml(u, isEnemy) {
+      const rows = [];
+      for (const x of u.buffs || []) {
+        rows.push(`${x.isNegative ? '🔻' : '🔺'} ${U.esc(x.name)}（${x.rounds >= 999 ? '常驻' : '剩 ' + x.rounds + ' 回合'}）`);
+      }
+      for (const d of u.dots || []) rows.push(`☠️ ${U.esc(d.name)}（剩 ${d.rounds} 回合）`);
+      for (const h of u.hots || []) rows.push(`💚 ${U.esc(h.name)}（剩 ${h.rounds} 回合）`);
+      if (u.shield) rows.push(`🛡️ 护盾（可吸收 ${u.shield.amount} 点伤害）`);
+      const cc = (u.ccs || [])[0];
+      if (cc) rows.push(`🌀 控制：${CC_CN[cc.type] || cc.type}${cc.rounds != null ? '（剩 ' + cc.rounds + ' 回合）' : ''}`);
+      if (u.taunt) rows.push('🎯 嘲讽：优先吸引敌方单体攻击');
+
+      const skills = isEnemy && u.mSkills
+        ? u.mSkills.map((sid) => D.MONSTER_SKILLS[sid]).filter(Boolean)
+            .map((s) => `${s.icon} <b>${U.esc(s.name)}</b>：${U.esc(s.desc)}`)
+        : [];
+      const passives = isEnemy ? [] : (u.learned || []).map((id) => D.SKILLS[id]).filter((s) => s && s.passive)
+        .map((s) => `${s.icon} <b>${U.esc(s.name)}</b>（被动 · 常驻）：${U.esc(s.desc)}`);
+
+      let html = `<div class="info-text"><b>${U.esc(u.name)}</b> · Lv.${u.level} · 生命 ${Math.ceil(u.hp)} / ${u.hpMax}${isEnemy && u.elite ? ' · 精英' : ''}${isEnemy && u.boss ? ' · 首领' : ''}</div>`;
+      if (skills.length) {
+        html += `<div class="info-sec"><div class="info-sec-title">💀 怪物技能</div><div class="info-list">${skills.map((s) => '<div>' + s + '</div>').join('')}</div></div>`;
+      }
+      if (passives.length) {
+        html += `<div class="info-sec"><div class="info-sec-title">✨ 被动（常驻生效）</div><div class="info-list">${passives.map((s) => '<div>' + s + '</div>').join('')}</div></div>`;
+      }
+      html += `<div class="info-sec"><div class="info-sec-title">🎭 当前状态</div>` +
+        (rows.length ? `<div class="info-list">${rows.map((r) => '<div>' + r + '</div>').join('')}</div>` : '<div class="info-empty">暂无增益 / 减益</div>') +
+        '</div>';
+      return html;
     },
 
     _bindKeys() {
@@ -132,7 +194,7 @@
               <span class="unit-icon">${e.icon}${isWorld ? '<b class="skull">👑</b>' : isBoss ? '<b class="skull">💀</b>' : isElite ? '<b class="skull">⭐</b>' : ''}</span>
               <div class="unit-info">
                 <div class="unit-name ${isBoss ? 'boss-name' : ''}" ${e.mSkills && e.mSkills.length ? `title="技能：${U.esc(e.mSkills.map((sid) => { const s = D.MONSTER_SKILLS[sid]; return s ? s.icon + ' ' + s.name + '（' + s.desc + '）' : ''; }).join(' / '))}"` : ''}>${U.esc(e.name)}${isWorld ? '<span class="tag world-tag">世界首领</span>' : isBoss ? '<span class="tag boss-tag">首领</span>' : isElite ? '<span class="tag elite-tag">精英</span>' : ''}</div>
-                <div class="unit-lvl">${isRaidBoss ? '💀' : 'Lv.' + e.level} ${e.world ? ' · 世界首领' : e.boss ? ' · 首领' : ''}${e.boss || e.world ? ' · 悬停看技能' : ''}</div>
+                <div class="unit-lvl">${isRaidBoss ? '💀' : 'Lv.' + e.level} ${e.world ? ' · 世界首领' : e.boss ? ' · 首领' : ''}${e.boss || e.world ? (U.isTouch() ? ' · 长按看技能' : ' · 悬停看技能') : ''}</div>
               </div>
               ${cc}
             </div>
@@ -190,17 +252,41 @@
           ${combo}
           <div class="unit-buffs">${this._buffChips(unit, false)}</div>
           ${this._passiveBadges(unit)}
+          ${this._autoCastBar(unit)}
           <div class="float-layer" data-float="${unit.key}"></div>
         </div>`;
     },
 
-    // 被动技能常驻标识(仅玩家卡牌):水印式图标行,悬停查看效果说明
+    // 被动技能常驻标识(仅玩家卡牌):水印式图标行 + 专属效果角标,悬停/长按查看效果说明
     _passiveBadges(unit) {
       if (unit.isPet) return '';
       const list = (unit.learned || []).map((id) => D.SKILLS[id]).filter((s) => s && s.passive);
       if (!list.length) return '';
-      return `<div class="passive-bar">${list.map((s) =>
-        `<span class="passive-chip" title="${U.esc(s.name)}（被动 · 常驻）：${U.esc(s.desc)}">${s.icon}<b class="pp-mark">常</b></span>`).join('')}</div>`;
+      return `<div class="passive-bar">${list.map((s) => {
+        const b = PASSIVE_BADGE(s.mod || {});
+        const badge = b ? `<b class="pp-badge ${b.cls}" title="${U.esc(b.label)}">${b.icon}${U.esc(b.label)}</b>` : '';
+        return `<span class="passive-chip" title="${U.esc(s.name)}（被动 · 常驻）：${U.esc(s.desc)}">${s.icon}<b class="pp-mark">常</b>${badge}</span>`;
+      }).join('')}</div>`;
+    },
+
+    // 自动施放技能标识(仅玩家卡牌):减益/DOT 类技能每回合自动释放,不占技能栏;带冷却角标
+    _autoCastBar(unit) {
+      if (unit.isPet) return '';
+      const list = (unit.learned || []).map((id) => D.SKILLS[id]).filter((s) => s && s.autoCast && !s.passive);
+      if (!list.length) return '';
+      const bd = W.Combat && W.Combat.battle;
+      const firstAlive = bd ? bd.enemies.find((e) => e.hp > 0) : null;
+      return `<div class="auto-bar">${list.map((s) => {
+        const cd = (unit.cd && unit.cd[s.id]) || 0;
+        const b = AUTO_BADGE(s);
+        const badge = b ? `<b class="pp-badge ${b.cls}" title="${U.esc(b.label)}">${b.icon}${U.esc(b.label)}</b>` : '';
+        // 右侧状态角标:冷却中显冷却回合,生效中显「生效」(DOT/减益挂在首个存活敌人身上)
+        const active = !!firstAlive && (
+          (firstAlive.dots || []).some((d) => d.key === s.id)
+          || !!(s.debuff && (firstAlive.buffs || []).some((x) => x.key === s.debuff.key)));
+        const state = cd > 0 ? `<b class="pp-badge cd-badge">${cd}</b>` : (active ? '<b class="pp-badge on-badge">生效</b>' : '');
+        return `<span class="passive-chip auto-chip" title="${U.esc(s.name)}（自动释放 · 不占回合）：${U.esc(s.desc)}">${s.icon}<b class="pp-mark auto">自动</b>${badge}${state}</span>`;
+      }).join('')}</div>`;
     },
 
     _resBar(unit) {
@@ -236,8 +322,8 @@
       const b = this.battle;
       const p = b.player;
       const canUse = W.Combat.canUse.bind(W.Combat);
-      // 被动技能效果常驻,不占用技能栏
-      const skillList = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && !s.passive);
+      // 被动技能效果常驻、减益/DOT 类技能自动释放,均不占用技能栏
+      const skillList = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && !s.passive && !s.autoCast);
       // 普通动作
       let html = `
         <button class="skill-btn action" data-act="attack" title="普通攻击"><span class="sk-icon">⚔️</span><span class="sk-name">攻击</span></button>
@@ -289,8 +375,15 @@
       if (!b || !this.els.scrollbar) return;
       const player = b.player;
       const scrolls = Object.values(D.ITEMS).filter((it) => it.scroll && W.Char.Inventory.count(char, it.id) > 0);
-      const potions = Object.values(D.ITEMS).filter((it) => it.consumable && (it.consumable.heal || it.consumable.mana) && W.Char.Inventory.count(char, it.id) > 0)
-        .sort((a, b) => (b.consumable.heal || 0) - (a.consumable.heal || 0));
+      // 排序:先「有回血效果」按当前实际上限量降序(百分比药水随上限实时变化,Q 永远是回血最多的那瓶),
+      // 纯法力药水排在最后(救不了命),彼此按回蓝量降序 —— 与固定值时代「喝血优先」的顺序一致。
+      const potRank = (it) => {
+        const cons = it.consumable;
+        const heal = U.consAmount(cons, 'heal', player.hpMax);
+        return heal ? [0, -heal] : [1, -U.consAmount(cons, 'mana', player.manaMax)];
+      };
+      const potions = Object.values(D.ITEMS).filter((it) => it.consumable && U.consHasEffect(it.consumable) && W.Char.Inventory.count(char, it.id) > 0)
+        .sort((a, b) => { const ra = potRank(a), rb = potRank(b); return (ra[0] - rb[0]) || (ra[1] - rb[1]); });
       if (!scrolls.length && !potions.length) { this.els.scrollbar.innerHTML = ''; this.els.scrollbar.style.display = 'none'; return; }
       this.els.scrollbar.style.display = '';
       const coll = this._itemsCollapsed;
@@ -304,12 +397,16 @@
       for (let pi = 0; pi < potions.length; pi++) {
         const it = potions[pi];
         const n = W.Char.Inventory.count(char, it.id);
-        const needHeal = !!(it.consumable.heal && player.hp < player.hpMax);
-        const needMana = !!(it.consumable.mana && player.mana < player.manaMax);
+        const needHeal = !!(U.consAmount(it.consumable, 'heal', player.hpMax) && player.hp < player.hpMax);
+        const needMana = !!(U.consAmount(it.consumable, 'mana', player.manaMax) && player.mana < player.manaMax);
         const full = !needHeal && !needMana;
         const off = (cd > 0 || full);
         const tag = cd > 0 ? `冷却 ${cd}` : (full ? '已满' : `×${n}`);
-        const effect = [it.consumable.heal ? `恢复 ${it.consumable.heal} 生命` : '', it.consumable.mana ? `恢复 ${it.consumable.mana} 法力` : ''].filter(Boolean).join(' · ');
+        // 效果文案:百分比口径 + 当前等级的实际数值(让玩家知道这瓶能回多少)
+        const effect = [
+          it.consumable.healPct || it.consumable.heal ? `${U.consEffectText(it.consumable, 'heal')}（约 ${U.consAmount(it.consumable, 'heal', player.hpMax)}）` : '',
+          it.consumable.manaPct || it.consumable.mana ? `${U.consEffectText(it.consumable, 'mana')}（约 ${U.consAmount(it.consumable, 'mana', player.manaMax)}）` : '',
+        ].filter(Boolean).join(' · ');
         const hkTip = (!coll && pi < 4) ? `；按 ${HOTKEY[pi]} 键一键使用` : '';
         const title = `${U.esc(it.name)}：${effect}（战斗内免费使用，不消耗回合；冷却 ${W.Combat.POTION_CD_ROUNDS} 回合）${hkTip}`;
         if (coll) {
@@ -372,6 +469,43 @@
   };
 
   const CC_ICON = { stun: '💫', sheep: '🐑', fear: '😱', root: '🌿' };
+  // 被动专属角标:按 effect 类型给减伤/免控/吸血/控场/起始护盾/自动标记一个彩色角标(优先级从高到低)
+  const PASSIVE_BADGE = (mod) => {
+    if (mod.startCc) return { icon: '💫', label: '控场', cls: 'pp-badge-control' };
+    if (mod.dmgTaken) return { icon: '🛡️', label: '减伤', cls: 'pp-badge-dmg' };
+    if (mod.ccReduce) return { icon: '🧠', label: '免控', cls: 'pp-badge-cc' };
+    if (mod.lifesteal) return { icon: '🩸', label: '吸血', cls: 'pp-badge-leech' };
+    if (mod.startShield != null || mod.startShieldSp != null) return { icon: '❄️', label: '护盾', cls: 'pp-badge-shield' };
+    if (mod.markTaken) return { icon: '🎯', label: '印记', cls: 'pp-badge-mark' };
+    return null;
+  };
+  // 自动释放技能专属角标:按「效果类型」给持续伤害/减益一个彩色角标(与被动角标同一套视觉)
+  // 优先输出「元素类型 + 作用范围」,其次输出减益种类,保证一眼看出这发自动技能造成什么
+  const AUTO_BADGE = (skill) => {
+    const d = skill.dot;
+    if (d) {
+      const byType = {
+        physical: { icon: '🩸', label: '流血', cls: 'pp-badge-bleed' },
+        nature: { icon: '☠️', label: '中毒', cls: 'pp-badge-poison' },
+        shadow: { icon: '💀', label: '诅咒', cls: 'pp-badge-curse' },
+        fire: { icon: '🔥', label: '灼烧', cls: 'pp-badge-fire' },
+        frost: { icon: '❄️', label: '冰寒', cls: 'pp-badge-frost' },
+        holy: { icon: '✨', label: '圣灼', cls: 'pp-badge-holy' },
+        arcane: { icon: '🔮', label: '奥法', cls: 'pp-badge-arcane' },
+      }[d.type || 'physical'] || { icon: '☠️', label: '持续', cls: 'pp-badge-dot' };
+      return skill.aoe ? { icon: '🌐', label: '群体' + byType.label, cls: byType.cls } : byType;
+    }
+    if (skill.debuff) {
+      const byKey = {
+        takenPct: { icon: '🎯', label: '易伤', cls: 'pp-badge-mark' },
+        atk: { icon: '🥶', label: '降攻', cls: 'pp-badge-frost' },
+        healTaken: { icon: '🩹', label: '抑疗', cls: 'pp-badge-heal' },
+        armor: { icon: '🪓', label: '破甲', cls: 'pp-badge-armor' },
+      }[skill.debuff.key] || { icon: '💀', label: '减益', cls: 'pp-badge-dot' };
+      return skill.aoe ? { icon: '🌐', label: '群体' + byKey.label, cls: byKey.cls } : byKey;
+    }
+    return null;
+  };
   const CC_CN = { stun: '眩晕', sheep: '变形', fear: '恐惧', root: '定身' };
   const BUFF_ICON = { atk: '⚔️', armor: '🛡️', invuln: '🌟', onHit: '🔥', thorns: '🌵', stealth: '🌒', bear: '🐻', ccImmune: '🧠', evocation: '🌌', defend: '🛡️', enrage: '😡', warcry: '📢', slow: '❄️', pom: '🧘', dodgePct: '💨', petBuff: '🐾', crippling: '🕸️', hunters_mark: '🎯', sc_atk: '⚔️', sc_armor: '🛡️', sc_crit: '🎯', sc_dodge: '💨', eye_burn: '👁️', wing_crush: '🪽', corruption: '🩸', flurry_crush: '🗡️', slime_acid: '☠️', worgen_curse: '🐺', quake_armor: '🌍', sand_blind: '🌀', death_siphon: '💀', arcane_drain: '🔮' };
   const DOT_ICON = { physical: '🩸', fire: '🔥', frost: '❄️', nature: '☠️', shadow: '🌑', arcane: '🔮', holy: '✨' };

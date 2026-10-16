@@ -65,24 +65,38 @@
       };
     },
 
+    // 低等级存档覆盖高等级存档检测:返回槽内存档等级(覆盖 = 丢高等级进度,需二次确认),否则 0
+    downgradeSlotLevel(slot) {
+      const c = this.character;
+      const s = this.saveSlots[slot];
+      if (!c || !s) return 0;
+      const lv = this.slotSummary(s).level;
+      return lv > c.level ? lv : 0;
+    },
+
     // 存档槽行 HTML(世界界面/标题界面的存档管理共用,按钮集由 opts 控制)
-    // opts: { cur, save, load, del, primary: 'save'|'load' }
+    // opts: { cur, save, load, del, primary: 'save'|'load', downLv: 槽内存档等级(仅当高于当前角色时传入) }
     saveRowHtml(s, i, opts) {
       opts = opts || {};
       const sm = this.slotSummary(s);
+      const downLv = opts.downLv || 0;
       const srcTag = sm.src === 'auto'
         ? '<span class="tag save-src-auto">🤖 自动</span>'
         : '<span class="tag save-src-manual">🖐️ 手动</span>';
       let actions = '';
-      if (opts.save) actions += `<button class="btn small ${opts.primary === 'save' ? 'gold' : ''}" data-save="${i}">${opts.cur ? '覆盖' : '写入'}</button>`;
+      if (opts.save) {
+        const label = downLv ? `⚠ 覆盖 Lv.${downLv}` : (opts.cur ? '覆盖' : '写入');
+        actions += `<button class="btn small ${downLv ? 'danger' : (opts.primary === 'save' ? 'gold' : '')}" data-save="${i}"${downLv ? ` data-down-lv="${downLv}"` : ''}>${label}</button>`;
+      }
       if (opts.load) actions += `<button class="btn small ${opts.primary === 'load' ? 'gold' : 'ghost'}" data-load="${i}">读取</button>`;
       if (opts.del) actions += `<button class="btn small danger" data-del="${i}">删除</button>`;
       return `
-        <div class="save-row ${opts.cur ? 'cur' : ''}">
+        <div class="save-row${opts.cur ? ' cur' : ''}${downLv ? ' downgrade' : ''}">
           <div class="save-info">
             <div class="save-name">${W.Utils.esc(s.name)} <span class="tag">${W.Utils.esc(s.raceCN)} ${W.Utils.esc(s.classCN)} Lv.${sm.level}</span></div>
             <div class="save-meta">💰 金币 ${W.Utils.plainMoney(sm.gold)} · 📍 ${W.Utils.esc(sm.zoneCN)}</div>
             <div class="save-meta">${srcTag} <span class="save-time">${W.Utils.fmtRelTime(sm.savedAt)}</span></div>
+            ${downLv ? `<div class="save-warn">⚠ 槽内存档 Lv.${downLv}，高于当前角色 —— 覆盖会丢掉高等级进度，需再点一次确认</div>` : ''}
           </div>
           <div class="save-actions">${actions}</div>
         </div>`;
@@ -94,7 +108,9 @@
       const c = this.character;
       if (!c) return -1;
       // 以 姓名+职业+种族 识别同一角色,尽可能避免同名同职业的不同角色互相覆盖
-      const sameChar = (e) => e && e.name === c.name && e.data && e.data.classId === c.classId && e.data.race === c.race;
+      // 同时要求槽内存档等级不高于当前角色:自动存档无声,不得顶掉高等级进度(手动覆盖另有二次确认)
+      const sameChar = (e) => e && e.name === c.name && e.data && e.data.classId === c.classId && e.data.race === c.race
+        && this.slotSummary(e).level <= c.level;
       if (sameChar(this.saveSlots[this._saveSlot])) return this._saveSlot;
       for (let i = 0; i < C.MAX_SLOTS; i++) if (sameChar(this.saveSlots[i])) return i;
       for (let i = 0; i < C.MAX_SLOTS; i++) if (!this.saveSlots[i]) return i;
@@ -242,6 +258,56 @@
         '</div>', { title, close: false });
       const m = $('#modal-root');
       m.querySelector('[data-yes]').addEventListener('click', () => { UI.closeModal(); onYes && onYes(); });
+    },
+
+    /* 详情弹窗(长按查看技能/状态):统一入口,便于测试与复用 */
+    openInfo(title, html) {
+      UI.openModal(
+        '<div class="info-box">' + html + '</div>' +
+        '<div class="modal-actions"><button class="btn gold" data-close>知道了</button></div>',
+        { title: title || '详情' });
+    },
+
+    /* 长按查看详情:触屏没有悬停,title 提示完全看不到,统一改为长按弹出
+     * 委托绑定在容器上(innerHTML 重建后依然生效),resolver 可选:
+     * 返回 { title, html } 时用自定义内容(如敌方首领技能/单位状态),返回空则回退到元素自身的 title。
+     * 长按已弹详情时吞掉这一次 click,避免同时施放技能 / 切换目标。 */
+    bindInfoPress(root, resolver, hitSelector) {
+      if (!root || (root.dataset && root.dataset.infoPress === '1')) return;
+      if (root.dataset) root.dataset.infoPress = '1';
+      // 可长按的目标:默认只看带 title 的元素;resolver 可扩到无 title 的交互体(如单位卡牌/技能按钮)
+      const HIT = hitSelector || '[title]';
+      const HOLD_MS = 450, MOVE_TOL = 12;
+      let timer = null, sx = 0, sy = 0, fired = false;
+      const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+      root.addEventListener('pointerdown', (e) => {
+        if (e.button && e.button > 0) return; // 仅左键/触摸
+        const el = e.target && e.target.closest ? e.target.closest(HIT) : null;
+        if (!el) return;
+        if (!resolver && !el.title) return;
+        sx = e.clientX; sy = e.clientY; fired = false;
+        cancel();
+        timer = setTimeout(() => {
+          timer = null; fired = true;
+          const custom = resolver ? resolver(el) : null;
+          if (custom && custom.html) UI.openInfo(custom.title, custom.html);
+          else UI.openInfo('详情', '<div class="info-text">' + W.Utils.esc(el.title) + '</div>');
+        }, HOLD_MS);
+      });
+      // 手指移动视为滚动/滑动,取消长按(避免滑动列表时误弹详情)
+      root.addEventListener('pointermove', (e) => {
+        if (!timer) return;
+        if (Math.abs(e.clientX - sx) > MOVE_TOL || Math.abs(e.clientY - sy) > MOVE_TOL) cancel();
+      });
+      root.addEventListener('pointerup', cancel);
+      root.addEventListener('pointercancel', cancel);
+      root.addEventListener('pointerleave', cancel);
+      root.addEventListener('click', (e) => {
+        if (!fired) return;
+        fired = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }, true);
     },
 
     /* 轻提示 */

@@ -10,7 +10,7 @@
     GAME_TITLE: '魔兽世界·战大陆',
     SAVE_KEY: 'wow_web_save_v1',
     SAVE_VERSION: 2,        // 存档格式版本(存档槽已扩容至 10)
-    LEVEL_CAP: 60,          // 等级上限(地图已扩充至 60 级)
+    LEVEL_CAP: 70,          // 等级上限(燃烧的远征:外域已扩充至 70 级)
     MAX_SLOTS: 10,         // 存档槽位
     ENCOUNTER_CHANCE: 0.55, // 野外探索遇怪概率
     ELITE_RESPAWN_MS: 5 * 60 * 1000, // 稀有精英击败后刷新周期(5 分钟)
@@ -19,6 +19,9 @@
     PERFECT_STAT_MULT: 1.5,   // 极品装备属性倍率
     LEGENDARY_PERFECT_CHANCE: 0.15, // 橙色传说装备掉落时附加极品属性的概率
     POST_BATTLE_HP_PCT: 0.2,  // 战斗胜利后自动恢复最大生命的比例(不占用回合)
+    POST_BATTLE_MP_PCT: 0.2,  // 战斗胜利后自动恢复最大法力的比例(与生命同步回复,不占用回合)
+    MONSTER_HP_MULT: 1.1,     // 怪物生命全局难度系数(被动体系调整后统一校准;见 scripts/sim-balance.js)
+    MONSTER_ATK_MULT: 1.05,   // 怪物攻击全局难度系数
     DROP_EQUIP_BOOST: 1.6,    // 地图怪物装备掉落率倍率(大幅提升)
     TOUCH_SWIPE_THRESHOLD: 40, // 触屏滑动手势判定阈值(px),小于该距离视为点击
     SKILL_PAGE_SIZE: 8,        // 技能书每页技能条数(触屏左右滑动翻页)
@@ -62,6 +65,7 @@
 
     // 成长
     EXP_CURVE: 24,         // expNeeded(lvl) = floor(EXP_CURVE * lvl^1.7 + 12 * lvl)
+    OUTLAND_CURVE: 0.35,   // 61 级起每级在此基础上叠乘 (1 + 0.35*(lvl-60)):外域任务经验丰厚,升级曲线相应抬高
     REVIVE_HP_PCT: 0.2,    // 死亡复活后生命
     GOLD_DROP_RATE: 0.9,
     MAXLVL_EXP_GOLD: 0.2,  // 满级后每点经验转换的铜金币(少量补偿,如 450 经验 ≈ 90 铜)
@@ -86,6 +90,15 @@
   W.Utils = {
     clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); },
     clamp01(v) { return W.Utils.clamp(v, 0, 1); },
+    // ---- 视口 / 设备判定(世界界面与战斗界面按此分叉布局) ----
+    // 复用 setup:无 matchMedia 的环境(旧浏览器/测试桩)一律按桌面处理,不抛错
+    mediaHit(query) {
+      try { return !!(window.matchMedia && window.matchMedia(query).matches); } catch (e) { return false; }
+    },
+    // 窄屏(手机竖屏):世界界面侧栏折叠、信息密度收紧
+    isNarrow(maxPx) { return W.Utils.mediaHit('(max-width: ' + (maxPx || 640) + 'px)'); },
+    // 触屏设备:无悬停能力,title 提示失效,改走「长按查看详情」
+    isTouch() { return W.Utils.mediaHit('(hover: none)'); },
     fmt(n) { return Math.floor(n).toLocaleString('en-US'); },
     // 铜币 -> "1金 23银 45铜"
     money(copper) {
@@ -138,6 +151,35 @@
         (label != null ? '<div class="bar-label">' + label + '</div>' : '') + '</div>';
     },
 
+    // ---- 消耗品回复量(药水/食物统一口径) ----
+    // 现版本以百分比为主(healPct / manaPct),按使用者的最大生命/法力实时换算,
+    // 因此同一瓶药水在任何等级都保持同一份强度占比;仍兼容旧版固定值 heal / mana 作为回退。
+    // kind = 'heal' | 'mana';max = 使用者的 hpMax / manaMax
+    consAmount(cons, kind, max) {
+      if (!cons) return 0;
+      const pct = cons[kind + 'Pct'];
+      if (pct) {
+        // 无该资源池(如战士/盗贼的法力上限为 0)时不产生回复量,避免算出 1 点假资源
+        const m = max || 0;
+        return m > 0 ? Math.max(1, Math.round(m * pct)) : 0;
+      }
+      if (kind === 'heal') return cons.heal || 0;
+      return cons.mana || 0;
+    },
+    // 该消耗品是否有回复效果(战斗道具栏与背包的过滤条件)
+    consHasEffect(cons) {
+      return !!(cons && (cons.healPct || cons.manaPct || cons.heal || cons.mana));
+    },
+    // 效果文案(商店/背包/战斗按钮共用):百分比优先
+    consEffectText(cons, kind) {
+      if (!cons) return '';
+      const label = kind === 'heal' ? '生命' : '法力';
+      const pct = cons[kind + 'Pct'];
+      if (pct) return '恢复 ' + Math.round(pct * 100) + '% ' + label;
+      const flat = kind === 'heal' ? cons.heal : cons.mana;
+      return flat ? '恢复 ' + flat + ' ' + label : '';
+    },
+
     // 触屏滑动手势判定:返回 'left' | 'right' | 'up' | 'down' | 'tap'
     // 规则:先过阈值,再按占优轴(≥1.2 倍)判定,斜向滑动不误判
     swipeVerdict(dx, dy, threshold) {
@@ -168,7 +210,11 @@
   };
 
   // 经验需求曲线
+  // 1-60 级沿用经典曲线;61-70 级(外域)在此基础上叠乘抬升,
+  // 保证「任务经验总量 ≈ 85-100% 升级总需求」——远征内容丰厚但不足以一路直冲满级。
   W.Utils.expNeeded = function (level) {
-    return Math.floor(W.Config.EXP_CURVE * Math.pow(level, 1.7) + 12 * level);
+    const base = W.Config.EXP_CURVE * Math.pow(level, 1.7) + 12 * level;
+    const over = Math.max(0, level - 60);
+    return Math.floor(base * (1 + W.Config.OUTLAND_CURVE * over));
   };
 })();

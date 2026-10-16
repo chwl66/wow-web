@@ -6,6 +6,7 @@
   const C = W.Config;
   const U = W.Utils;
   const RNG = W.RNG;
+  const CC_CN = { stun: '眩晕', sheep: '变形', fear: '恐惧', root: '定身' };
 
   const World = {
     els: {},
@@ -16,15 +17,37 @@
       this.els.zone = root.querySelector('.zone-panel');
       this.els.side = root.querySelector('.side-panel');
       this._bindActions();
+      // 触屏长按查看详情(副本战前预览 / 精英与首领行 / 旅行路径的 title 提示在触屏看不到)
+      W.UI.bindInfoPress(root);
+      // 横竖屏 / 窗口尺寸跨越断点时才重渲染(窄屏侧栏折叠态需要跟着变)
+      // 幂等:与 _bindActions 同理,重复 init 不重复注册,避免多次触发同一回调
+      this._compact = U.isNarrow();
+      const onViewport = () => this._onViewportChange();
+      window.addEventListener('resize', onViewport);
+      window.addEventListener('orientationchange', onViewport);
+    },
+
+    _onViewportChange() {
+      const compact = U.isNarrow();
+      if (compact === this._compact) return;
+      this._compact = compact;
+      const vw = document.getElementById('view-world');
+      if (vw && vw.classList.contains('active') && W.State.character) this.render();
     },
 
     _bindActions() {
+      // 幂等:重复 init(如 DOMContentLoaded 触发两次)时不重复绑定,否则展开/收起类按钮会被连点两次
+      if (this._bound) return;
+      this._bound = true;
       this.els.root.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-act]');
         if (!btn) return;
         W.Audio.click();
         const act = btn.dataset.act;
-        if (act === 'explore') this.explore();
+        if (act === 'more') this.toggleSubnav();
+        else if (act === 'side-toggle') { this._sideOpen = !this._sideOpen; this.render(); }
+        else if (act === 'gm') this.openGM();
+        else if (act === 'explore') this.explore();
         else if (act === 'shop') this.openShop();
         else if (act === 'inn') this.openInn();
         else if (act === 'quests') this.openQuestBoard();
@@ -45,6 +68,21 @@
         else if (act === 'settings') this.openSettings();
         else if (act === 'title') this.backToTitle();
       });
+    },
+
+    /* ---------- 页脚菜单:一级 / 二级(更多) ---------- */
+    // force 为布尔时直接设定展开状态,否则切换
+    toggleSubnav(force) {
+      const sub = document.getElementById('world-subnav');
+      if (!sub) return;
+      const open = typeof force === 'boolean' ? force : !!sub.hidden;
+      sub.hidden = !open;
+      const btn = this.els.root && this.els.root.querySelector('[data-act="more"]');
+      if (btn) {
+        btn.classList.toggle('active', open);
+        btn.innerHTML = open ? '↩️ 收起' : '✨ 更多';
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
     },
 
     showWorld() {
@@ -206,10 +244,16 @@
       const petsBtn = document.querySelector('[data-act="pets"]');
       if (petsBtn) petsBtn.style.display = char.classId === 'hunter' ? '' : 'none';
 
+      // GM 模式:启用后露出二级菜单里的调试入口,未启用时收起二级菜单
+      const gmOn = W.Char.GM.on(char);
+      const gmBtn = this.els.root ? this.els.root.querySelector('[data-act="gm"]') : null;
+      if (gmBtn) gmBtn.hidden = !gmOn;
+      if (!gmOn) this.toggleSubnav(false);
+
       // 头部
       this.els.header.innerHTML = `
         <div class="wh-left">
-          <div class="wh-name">${U.esc(char.name)} <span class="wh-class" style="background:linear-gradient(135deg,${cls.colors[0]},${cls.colors[1]})">${cls.name}</span></div>
+          <div class="wh-name">${U.esc(char.name)}${gmOn ? '<span class="wh-gm" title="GM 调试模式已启用">🛠️ GM</span>' : ''} <span class="wh-class" style="background:linear-gradient(135deg,${cls.colors[0]},${cls.colors[1]})">${cls.name}</span></div>
           <div class="wh-sub">${race.name} · ${cls.en} · 阵营：${char.faction === 'alliance' ? '联盟' : '部落'} · Lv.${char.level}</div>
         </div>
         <div class="wh-right">
@@ -218,7 +262,7 @@
         </div>
         <div class="wh-bars">
           ${char.level >= W.Config.LEVEL_CAP
-            ? '<div class="wh-maxlv">🏆 已至巅峰 · 满级 Lv.60</div>'
+            ? `<div class="wh-maxlv">🏆 已至巅峰 · 满级 Lv.${W.Config.LEVEL_CAP}</div>`
             : `<div class="wh-expbar">${U.bar(char.exp / U.expNeeded(char.level), 'exp', `经验 ${U.fmt(char.exp)} / ${U.fmt(U.expNeeded(char.level))}`)}</div>`}
         </div>`;
 
@@ -250,14 +294,10 @@
         ${isDungeon ? '' : this._capitalRaidLine(char, zone)}`;
 
       // 侧栏:任务 + 状态摘要
-      const quests = this._questSummary(char);
-      this.els.side.innerHTML = `
-        <div class="panel quest-panel">
-          <div class="panel-title">📜 任务日志</div>
-          ${quests || '<div class="empty">当前区域暂无任务</div>'}
-        </div>
-        <div class="panel stat-panel">
-          <div class="panel-title">📊 角色状态</div>
+      // 手机竖屏(≤640px)折叠成一行摘要——实测竖屏侧栏整体落在首屏之外(top 565 / docH 1003 > 844),
+      // 折叠后世界界面一屏放下;任务详情仍可从「📜 任务板」与底部「📋 状态」一键进入。
+      const quests = this._questSummary(char) || '<div class="empty">当前区域暂无任务</div>';
+      const statGrid = `
           <div class="stat-grid">
             <div><span>生命</span><b>${Math.ceil(char.hp)}/${c.hpMax}</b></div>
             ${c.manaMax ? `<div><span>法力</span><b>${Math.ceil(char.mana)}/${c.manaMax}</b></div>` : ''}
@@ -265,12 +305,42 @@
             <div><span>护甲</span><b>${c.armor}</b></div>
             <div><span>暴击</span><b>${(c.crit * 100).toFixed(1)}%</b></div>
             <div><span>闪避</span><b>${(c.dodge * 100).toFixed(1)}%</b></div>
+          </div>`;
+      const statFoot = `<div class="stat-foot">击杀 ${char.kills} · 死亡 ${char.deaths}</div>`;
+      const statTalent = char.level >= 10
+        ? `<div class="stat-talents">🌟 天赋 <b>${W.Char.pointsSpent(char)}</b>/${W.Char.talentPointsAt(char.level)}${W.Char.getUnspent(char) > 0 ? ' <span class="tag gold-tag">可分配</span>' : ''}</div>`
+        : `<div class="stat-talents dim">🌟 天赋系统 10 级解锁</div>`;
+      if (U.isNarrow()) {
+        const open = !!this._sideOpen;
+        const activeCount = W.Char.QuestLog.active(char).length;
+        this.els.side.innerHTML = `
+          <div class="panel side-compact">
+            <button class="panel-title side-toggle" data-act="side-toggle" aria-expanded="${open ? 'true' : 'false'}">
+              📜 任务 ${activeCount} · 📊 状态摘要
+              <span class="side-arrow">${open ? '▾ 收起' : '▸ 展开'}</span>
+            </button>
+            <div class="side-body"${open ? '' : ' hidden'}>
+              <div class="panel-title sub">📜 任务日志</div>
+              ${quests}
+              <div class="panel-title sub">📊 角色状态</div>
+              ${statGrid}
+              ${statFoot}
+              ${statTalent}
+            </div>
+          </div>`;
+      } else {
+        this.els.side.innerHTML = `
+          <div class="panel quest-panel">
+            <div class="panel-title">📜 任务日志</div>
+            ${quests}
           </div>
-          <div class="stat-foot">击杀 ${char.kills} · 死亡 ${char.deaths}</div>
-          ${char.level >= 10
-            ? `<div class="stat-talents">🌟 天赋 <b>${W.Char.pointsSpent(char)}</b>/${W.Char.talentPointsAt(char.level)}${W.Char.getUnspent(char) > 0 ? ' <span class="tag gold-tag">可分配</span>' : ''}</div>`
-            : `<div class="stat-talents dim">🌟 天赋系统 10 级解锁</div>`}
-        </div>`;
+          <div class="panel stat-panel">
+            <div class="panel-title">📊 角色状态</div>
+            ${statGrid}
+            ${statFoot}
+            ${statTalent}
+          </div>`;
+      }
     },
 
     _questSummary(char) {
@@ -352,6 +422,7 @@
         <div class="dm-preview-title">⚔️ 首领战前预览</div>
         <div class="dm-boss">${boss.icon} <b>${U.esc(boss.name)}</b><span class="tag ${dungeon.raid ? 'raid-tag' : 'd5-tag'}">${dungeon.raid ? '团本' : '5人本'}</span><span class="tag boss-tag">${dungeon.raid ? '💀' : 'Lv.' + boss.level} 最终首领</span></div>
         ${skills ? `<div class="dm-skills">${skills}</div>` : ''}
+        ${skills && U.isTouch() ? '<div class="dm-touch-note">💡 长按技能标签查看说明</div>' : ''}
         ${sigLine}
         <button class="btn util-btn act-manual" data-act="dungeon-manual">📖 查看完整副本手册</button>
       </div>`;
@@ -398,10 +469,12 @@
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
       const dungeon = zone.dungeon ? D.DUNGEONS[zone.dungeon] : null;
-      // 战后休整:自动恢复一定比例最大生命(野外战斗的消耗得到部分恢复)
+      // 战后休整:自动恢复一定比例最大生命与法力(生命/法力同步回复,野外战斗的消耗得到部分恢复)
       const cc = W.Char.computed(char);
       const hpRestored = Math.max(0, Math.min(cc.hpMax - char.hp, Math.floor(cc.hpMax * C.POST_BATTLE_HP_PCT)));
       char.hp = Math.min(cc.hpMax, char.hp + hpRestored);
+      const mpRestored = cc.manaMax > 0 ? Math.max(0, Math.min(cc.manaMax - (char.mana || 0), Math.floor(cc.manaMax * C.POST_BATTLE_MP_PCT))) : 0;
+      if (mpRestored > 0) char.mana = Math.min(cc.manaMax, (char.mana || 0) + mpRestored);
       let modal = `
         <div class="victory">
           <div class="victory-title">🏆 战斗胜利！</div>
@@ -409,7 +482,7 @@
             ? `<div class="reward-row">经验 <b class="gold-text">+${b.rewards.xp}</b></div>`
             : (b.rewards.xpGold ? `<div class="reward-row">经验 <b class="gold-text">+${b.rewards.xp}</b> → 💰 已转为 <b>${U.plainMoney(b.rewards.xpGold)}</b></div>` : '')}
           <div class="reward-row">金钱 <b>${U.money(b.rewards.gold)}</b></div>
-          ${!dungeon && hpRestored > 0 ? `<div class="reward-row">🍖 战后休整：恢复 <b style="color:#6fdc8c">${hpRestored}</b> 点生命</div>` : ''}
+          ${!dungeon && (hpRestored > 0 || mpRestored > 0) ? `<div class="reward-row">🍖 战后休整：恢复 <b style="color:#6fdc8c">${hpRestored}</b> 点生命${mpRestored > 0 ? `、<b style="color:#6fa8dc">${mpRestored}</b> 点法力` : ''}</div>` : ''}
           ${(b.rewards.drops || []).map((iid) => { const it = D.ITEMS[iid]; return it ? `<div class="reward-row drop-row">🎒 拾取 <b style="color:${U.QUALITY_COLOR[it.quality]}">${it.icon} ${U.esc(it.name)}</b></div>` : ''; }).join('')}`;
 
       // 任务完成提示
@@ -575,8 +648,9 @@
     },
 
     // 副本通关宝箱:固定材料(数据驱动 DUNGEONS.chest) + 随机金币;背包满时材料跳过并提示
+    // 注:chest 允许省略 items / gold(旧副本数据只写其一),缺省时退回默认材料空表与保底金币区间,避免结算抛错
     _dungeonChest(char, dungeon) {
-      const c = dungeon.chest || { items: [], gold: [600, 1200] };
+      const c = dungeon.chest || {};
       const rows = [];
       let skipped = false;
       for (const [iid, n] of (c.items || [])) {
@@ -587,7 +661,8 @@
         rows.push(`${it.icon}${U.esc(it.name)}×${n}`);
       }
       if (skipped) W.UI.toast('🎒 背包已满，部分宝箱材料未能拾取', 'warn');
-      const gold = Math.floor(RNG.int(c.gold[0], c.gold[1]) * W.Char.computed(char).goldMult);
+      const goldRange = Array.isArray(c.gold) ? c.gold : [600, 1200];
+      const gold = Math.floor(RNG.int(goldRange[0], goldRange[1]) * W.Char.computed(char).goldMult);
       char.gold += gold;
       rows.push(`金币 ${U.plainMoney(gold)}`);
       return rows.join(' · ');
@@ -603,32 +678,128 @@
       }).join('、');
     },
 
+    /* ---------- 等级段分区(商店 / 背包共用) ----------
+     * 装备按 10 级一档分区展示并标注当前等级段,让玩家一眼看到「这个段位有什么可换」。 */
+    BAND_SIZE: 10,
+    SLOT_ORDER: ['weapon', 'offhand', 'head', 'chest', 'gloves', 'legs', 'boots', 'cloak', 'neck', 'ring', 'trinket', 'consumable', 'material', 'bag', 'mount'],
+    QUAL_RANK: { gray: 0, white: 1, green: 2, blue: 3, epic: 4, purple: 4, legendary: 5, orange: 5 },
+    // 等级所属段:{ lo, hi, label } — 1-10 / 11-20 / …… / 51-60 / 61-70
+    _lvBand(level) {
+      const step = this.BAND_SIZE;
+      const lo = Math.floor((Math.max(1, level || 1) - 1) / step) * step + 1;
+      return { lo, hi: lo + step - 1, label: `${lo}-${lo + step - 1}` };
+    },
+    // 装备类物品(有装备槽、能穿):材料/消耗品/毒药/背包不参与等级段分区
+    _isGearItem(it) {
+      return !!(it && it.slot && !it.poison && it.slot !== 'consumable' && it.slot !== 'material' && it.slot !== 'bag' && it.slot !== 'mount');
+    },
+    // 商店/背包统一排序:装备在前(等级升序 → 品质降序 → 槽位顺序) → 消耗品/材料统一收尾
+    _cmpItem(a, b) {
+      const ga = this._isGearItem(a) ? 0 : 1, gb = this._isGearItem(b) ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      const la = a.level || 0, lb = b.level || 0;
+      if (la !== lb) return la - lb;
+      const qa = this.QUAL_RANK[a.quality] || 0, qb = this.QUAL_RANK[b.quality] || 0;
+      if (qa !== qb) return qb - qa;
+      const ia = this.SLOT_ORDER.indexOf(a.slot), ib = this.SLOT_ORDER.indexOf(b.slot);
+      if (ia !== ib) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    },
+    // 等级段分组渲染:levelOf 返回 0 的条目(材料/消耗品)归入收尾分区;当前等级段标题高亮
+    _bandedHtml(entries, levelOf, rowOf) {
+      const cur = this._lvBand(W.State.character.level).label;
+      let html = '', band = null;
+      let buf = [];
+      const flush = () => {
+        if (!buf.length) return;
+        const isBand = /^\d/.test(band);
+        const isCur = isBand && band === cur;
+        html += `<div class="lv-band-title${isCur ? ' cur' : ''}"><span>▸ ${band}${isBand ? ' 级' : ''}</span>` +
+          `<span class="band-count">${buf.length} 件</span>${isCur ? '<span class="tag caneq-tag">当前等级段</span>' : ''}</div>` + buf.join('');
+        buf = [];
+      };
+      for (const e of entries) {
+        const lv = levelOf(e);
+        const b = lv > 0 ? this._lvBand(lv).label : '消耗品 / 材料';
+        if (b !== band) { flush(); band = b; }
+        const row = rowOf(e);
+        if (row) buf.push(row);
+      }
+      flush();
+      return html;
+    },
+
+    // 背包筛选开关:当前等级段 / 仅可装备(两个可叠加,「全部」一键清除);只作用于背包,不影响商店
+    _bagFilter: { band: false, equip: false },
+    _bagFilterOn() { return !!(this._bagFilter.band || this._bagFilter.equip); },
+    // 单条背包物品是否通过当前筛选
+    _bagFilterMatch(char, s) {
+      const it = D.ITEMS[s.id];
+      if (!it || !this._bagFilterOn()) return true;
+      // 筛选只认装备:材料/消耗品/毒药在筛选态下隐藏,避免「只看当前等级段」仍被药水淹没
+      if (!this._isGearItem(it)) return false;
+      if (this._bagFilter.band && this._lvBand(it.level).label !== this._lvBand(char.level).label) return false;
+      if (this._bagFilter.equip && (it.level || 0) > char.level) return false;
+      return true;
+    },
+    // 筛选芯片计数:全部(堆叠条数) / 当前等级段 / 可装备
+    _bagFilterCounts(char) {
+      const inv = W.Char.Inventory.list(char);
+      const band = this._lvBand(char.level).label;
+      let inBand = 0, canEq = 0;
+      for (const s of inv) {
+        const it = D.ITEMS[s.id];
+        if (!it || !this._isGearItem(it)) continue;
+        if (this._lvBand(it.level).label === band) inBand++;
+        if ((it.level || 0) <= char.level) canEq++;
+      }
+      return { all: inv.length, inBand, canEq };
+    },
+    // 筛选芯片文案(整弹窗渲染与就地刷新共用同一口径)
+    _bagFilterLabel(k, n) {
+      return k === 'all' ? `全部（${n}）` : k === 'band' ? `当前等级段（${n}）` : `✓ 可装备（${n}）`;
+    },
+    // 附:{band:'当前等级段',equip:'仅可装备'} → 单一开关取反,其余保持
+    _bagFilterToggle(k) {
+      const f = this._bagFilter;
+      this._bagFilter = k === 'all' ? { band: false, equip: false }
+        : k === 'band' ? { band: !f.band, equip: f.equip }
+          : { band: f.band, equip: !f.equip };
+      return this._bagFilter;
+    },
+    // 出售/筛选后就地刷新等级段分区:重算件数并移除已空的分区标题(不整弹窗重绘)
+    _bagRefreshBands(m) {
+      for (const t of [...m.querySelectorAll('.lv-band-title')]) {
+        let n = 0;
+        for (let el = t.nextElementSibling; el && !el.classList.contains('lv-band-title'); el = el.nextElementSibling) {
+          if (el.classList.contains('bag-row')) n++;
+        }
+        const c = t.querySelector('.band-count');
+        if (c) c.textContent = n + ' 件';
+        if (!n) t.remove();
+      }
+    },
+
     /* ---------- 商店 ---------- */
     openShop() {
       // 重绘后的滚动位置由 UI.openModal 统一保持(同标题弹窗刷新不跳回顶部)
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
       const stock = zone.shop || [];
-      const list = stock.filter((id) => {
-        const it = D.ITEMS[id];
-        return it && it.level <= char.level + 3;
-      });
-      const inv = W.Char.Inventory.list(char);
+      // 等级段展示:等级升序 → 品质降序 → 槽位,再按 10 级一档分区
+      const list = stock.map((id) => D.ITEMS[id])
+        .filter((it) => it && it.level <= char.level + 3)
+        .sort((a, b) => this._cmpItem(a, b));
+      const band = this._lvBand(char.level);
+      const curN = list.filter((it) => this._isGearItem(it) && this._lvBand(it.level).label === band.label).length;
+      const inv = W.Char.Inventory.list(char).slice().sort((a, b) => this._cmpItem(D.ITEMS[a.id] || {}, D.ITEMS[b.id] || {}));
       let html = `<div class="shop-head"><span class="shop-title">🛒 ${U.esc(zone.shopName)}</span><span class="shop-gold">💰 金币 ${U.money(char.gold)}</span></div>`;
-      html += `<div class="shop-buy"><div class="sub-title">🛒 购买商品<span class="sub-note">${list.length} 件</span></div>`;
+      html += `<div class="shop-buy"><div class="sub-title">🛒 购买商品<span class="sub-note">${list.length} 件 · 当前等级段 ${band.label} 级可换 ${curN} 件</span></div>`;
       if (!list.length) html += '<div class="empty">这里没有适合你的商品</div>';
-      for (const id of list) {
-        const it = D.ITEMS[id];
-        const afford = char.gold >= it.buy;
-        html += this._itemRow(it, 'buy', afford);
-      }
+      html += this._bandedHtml(list, (it) => (this._isGearItem(it) ? it.level : 0), (it) => this._itemRow(it, 'buy', char.gold >= it.buy));
       html += '</div><div class="shop-sell"><div class="sub-title">💰 出售背包物品<span class="sub-note">${inv.length} 件</span></div>';
       if (!inv.length) html += '<div class="empty">背包空空如也</div>';
-      for (const s of inv) {
-        const it = D.ITEMS[s.id];
-        if (!it) continue;
-        html += this._itemRow(it, 'sell', true, s.count);
-      }
+      html += this._bandedHtml(inv, (s) => { const it = D.ITEMS[s.id]; return it && this._isGearItem(it) ? it.level : 0; }, (s) => this._itemRow(D.ITEMS[s.id], 'sell', true, s.count));
       html += '</div>';
       W.UI.openModal(html, { title: '商店 · ' + zone.shopName });
       this._bindShop();
@@ -645,8 +816,12 @@
         if (it.stats.crit) parts.push('暴击 +' + Math.round(it.stats.crit * m * 100) + '%');
       }
       if (it.consumable) {
-        if (it.consumable.heal) parts.push('恢复 ' + it.consumable.heal + ' 生命');
-        if (it.consumable.mana) parts.push('恢复 ' + it.consumable.mana + ' 法力');
+        // 药水/食物按百分比口径展示(见 Utils.consEffectText):
+        // 「恢复 25% 生命」而非「恢复 90 生命」——固定值随等级稀释,百分比在任何等级都准确
+        const ht = U.consEffectText(it.consumable, 'heal');
+        const mt = U.consEffectText(it.consumable, 'mana');
+        if (ht) parts.push(ht);
+        if (mt) parts.push(mt);
       }
       if (it.slot === 'bag') parts.push(`🎒 使用后容量 +${it.bagSize} 格`);
       return parts;
@@ -705,11 +880,18 @@
       const parts = this._itemStatsParts(it);
       let statsHtml = parts.length ? `<div class="item-stats">${U.esc(parts.join(' · '))}</div>` : '';
       const price = mode === 'buy' ? it.buy : Math.max(1, Math.floor((it.sell != null ? it.sell : it.buy * 0.4)));
+      // 等级标签:装备行显示 Lv,购买区对超出等级的额外提示(与背包标记口径一致)
+      const char = W.State.character;
+      let lvTag = '';
+      if (this._isGearItem(it)) {
+        lvTag = ` <span class="tag lv-tag">Lv${it.level}</span>`;
+        if (mode === 'buy' && char && char.level < it.level) lvTag += ` <span class="tag needlv-tag">🔒 需要${it.level}级</span>`;
+      }
       return `
         <div class="item-row" data-item="${it.id}" data-mode="${mode}">
           <span class="item-icon">${it.icon}</span>
           <div class="item-info">
-            <div class="item-name" style="color:${nameColor}">${U.esc(it.name)}${it.quality !== 'white' ? ` <span class="tag q-${it.quality}">${it.quality === 'green' ? '优秀' : it.quality === 'blue' ? '精良' : it.quality === 'legendary' ? '传说' : '史诗'}</span>` : ''}${count ? ` <span class="item-count">×${count}</span>` : ''}</div>
+            <div class="item-name" style="color:${nameColor}">${U.esc(it.name)}${it.quality !== 'white' ? ` <span class="tag q-${it.quality}">${it.quality === 'green' ? '优秀' : it.quality === 'blue' ? '精良' : it.quality === 'legendary' ? '传说' : '史诗'}</span>` : ''}${lvTag}${count ? ` <span class="item-count">×${count}</span>` : ''}</div>
             ${statsHtml}
           </div>
           <div class="item-price">${mode === 'buy' ? U.money(price) : '+ ' + U.money(price)}</div>
@@ -1200,7 +1382,7 @@
             <span class="ach-icon">${done ? a.icon : '🔒'}</span>
             <div class="ach-info">
               <div class="ach-name">${U.esc(a.name)}${dtag}${goBtn}${done ? ' <span class="tag ach-tag">已达成</span>' : ''}</div>
-              <div class="ach-desc">${U.esc(a.desc)}${a.count > 1 && a.id !== 'ach_level_60' ? `（${Math.min(prog, a.count)}/${a.count}）` : ''}</div>
+              <div class="ach-desc">${U.esc(a.desc)}${a.count > 1 && !/^ach_level_/.test(a.id) ? `（${Math.min(prog, a.count)}/${a.count}）` : ''}</div>
               <div class="ach-reward">🎁 ${rewardTxt || '—'}</div>
             </div>
             ${done ? `<span class="ach-point">✔</span>` : `<div class="ach-progress"><div class="ach-progress-fill" style="width:${Math.min(100, Math.round(prog / a.count * 100))}%"></div></div>`}
@@ -1217,6 +1399,26 @@
       if (!body) return;
       body.innerHTML = this._achRowsHtml(char, st);
       body.querySelectorAll('[data-ach-go]').forEach((btn) => btn.addEventListener('click', () => this._achGoDungeon(char, btn.dataset.achGo)));
+    },
+
+    /* 图鉴行的「招牌掉落」预览:列出该首领的史诗/传说掉落并标注是否已获得(含新增传说防具) */
+    _codexDropHtml(char, mid) {
+      const list = (D.DROPS[mid] || []).filter(([iid]) => {
+        const it = D.ITEMS[iid];
+        return it && (it.quality === 'epic' || it.quality === 'purple' || it.quality === 'legendary');
+      });
+      if (!list.length) return '';
+      const seen = {};
+      const chips = list.map(([iid]) => {
+        if (seen[iid]) return '';
+        seen[iid] = 1;
+        const it = D.ITEMS[iid];
+        const eq = Object.values(char.equipment || {}).includes(iid);
+        const own = eq || W.Char.Inventory.count(char, iid) > 0;
+        const col = U.QUALITY_COLOR[it.quality] || '#fff';
+        return `<span class="cx-drop${own ? ' owned' : ''}" data-drop="${iid}" style="color:${col}" title="${U.esc(it.name)}${own ? ' · 已获得' : ''}">${it.icon}${U.esc(it.name)}${own ? ' ✔' : ''}</span>`;
+      }).join('');
+      return `<div class="cx-drops"><span class="cx-drops-label">🎁 招牌掉落</span>${chips}</div>`;
     },
 
     /* ---------- 首领图鉴 ---------- */
@@ -1239,6 +1441,7 @@
               <div class="cx-info">
                 <div class="cx-name">${U.esc(m.name)} <span class="tag boss-tag">未击杀</span></div>
                 <div class="cx-desc">${U.esc(r.source)} · Lv.${m.level}${m.title ? ' · ' + U.esc(m.title) : ''}</div>
+                ${this._codexDropHtml(char, r.mid)}
               </div>
               <span class="cx-note">🔒 尚未击败</span>
             </div>`;
@@ -1248,6 +1451,7 @@
             <div class="cx-info">
               <div class="cx-name">${U.esc(m.name)} <span class="tag cx-tag-${r.src}">${srcName[r.src]}</span></div>
               <div class="cx-desc">${U.esc(r.source)} · Lv.${m.level} · 首杀 ${e.firstAt ? U.fmtRelTime(e.firstAt) : '—'}</div>
+              ${this._codexDropHtml(char, r.mid)}
             </div>
             <div class="cx-stats">
               <div class="cx-stat">⚔️ 击杀 <b>${e.kills}</b> 次</div>
@@ -1391,6 +1595,14 @@
         let bagHtml = '';
         if (!item) {
           const cands = this._slotCandidates(char, slot);
+          // 双槽互斥提示:另一格已戴同名戒指/饰品时说明原因(而非默不作声地没有候选)
+          const sibSlot = { ring1: 'ring2', ring2: 'ring1', trinket1: 'trinket2', trinket2: 'trinket1' }[slot];
+          const baseSlot = (slot === 'ring1' || slot === 'ring2') ? 'ring' : (slot === 'trinket1' || slot === 'trinket2') ? 'trinket' : slot;
+          const sibId = sibSlot ? char.equipment[sibSlot] : null;
+          const sibName = sibId && D.ITEMS[sibId] && D.ITEMS[sibId].slot === baseSlot ? D.ITEMS[sibId].name : null;
+          if (!cands.length && sibName) {
+            bagHtml = `<span class="eq-empty">另一格已戴「${U.esc(sibName)}」，双槽不可重复</span>`;
+          }
           if (cands.length) {
             const { it, perf } = cands[0];
             const canEq = char.level >= (it.level || 0);
@@ -1496,7 +1708,9 @@
       if (poBtn) poBtn.addEventListener('click', () => this._openPassiveOverview());
       // 空槽位候选直接装备(与背包装备同一入口,联动一致)
       m.querySelectorAll('[data-eq-from-bag]').forEach((btn) => btn.addEventListener('click', () => {
-        const [slot, id, perf] = btn.dataset.eqFromBag.split(':');
+        const [, id, perf] = btn.dataset.eqFromBag.split(':');
+        const issue = W.Char.Equipment.equipIssue(char, id, perf === '1');
+        if (issue) { W.UI.toast(issue, 'warn'); return; }
         if (W.Char.Equipment.equip(char, id, perf === '1')) { W.Audio.click(); W.UI.toast(`装备了 ${D.ITEMS[id].name}`, 'ok'); }
         else W.UI.toast('装备失败', 'warn');
         this.openStatus();
@@ -1542,9 +1756,17 @@
       if (mod.startShield != null) parts.push('战斗开始护盾 ' + mod.startShield + '+' + (mod.startShieldSp || 0) + '×法强');
       if (mod.shieldHeal != null && mod.startShield == null) parts.push('受击回血 ' + mod.shieldHeal);
       if (mod.markTaken != null) parts.push('标记易伤 +' + pct(mod.markTaken));
+      if (mod.startCc) {
+        const ccs = Array.isArray(mod.startCc) ? mod.startCc : [mod.startCc];
+        parts.push('开战自动控场 ' + ccs.map((x) => (CC_CN[x.type] || x.type) + ' ' + x.rounds + ' 回合').join('、'));
+      }
       if (mod.petAtkPct != null) parts.push('宠物攻击 +' + pct(mod.petAtkPct));
       if (mod.onHit != null) parts.push('攻击附加 ' + mod.onHit + ' 神圣');
       if (mod.thorns != null) parts.push('反弹 ' + mod.thorns + ' 近战伤害');
+      if (mod.dmgTaken != null) parts.push('受伤 -' + pct(mod.dmgTaken));
+      if (mod.healPct != null) parts.push('治疗效果 +' + pct(mod.healPct));
+      if (mod.ccReduce != null) parts.push('受控时间 -' + pct(mod.ccReduce));
+      if (mod.lifesteal != null) parts.push('吸血 ' + pct(mod.lifesteal));
       return parts;
     },
     // 单行:来源标签 / 习得状态 / 实时加成(当前角色已习得)或基础数值;天赋被动附来源系与解锁点数提示
@@ -1618,11 +1840,11 @@
         const sum = {};
         for (const s of skills) {
           const m = s.mod || {};
-          for (const k of ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'petAtkPct']) {
+          for (const k of ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'petAtkPct', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal']) {
             if (m[k] != null) sum[k] = (sum[k] || 0) + m[k];
           }
         }
-        const labelOf = { atkPct: '攻击', armorPct: '护甲', crit: '暴击', dodge: '闪避', hit: '命中', spellPowerPct: '法强', manaRegenPct: '法力回复', petAtkPct: '宠物攻击' };
+        const labelOf = { atkPct: '攻击', armorPct: '护甲', crit: '暴击', dodge: '闪避', hit: '命中', spellPowerPct: '法强', manaRegenPct: '法力回复', petAtkPct: '宠物攻击', dmgTaken: '减伤', healPct: '治疗', ccReduce: '免控', lifesteal: '吸血' };
         const pct = (v) => (Math.round(v * 1000) / 10) + '%';
         const refChips = Object.keys(sum).map((k) => `<span class="po-sum-chip ref">${labelOf[k]} +${pct(sum[k])}</span>`).join('');
         if (refChips) sumHtml = `<div class="po-summary ref"><div class="po-sum-title">📊 被动加成参考合计<span class="po-sum-sub">基础数值 · 切回当前职业查看实时</span></div><div class="po-vals">${refChips}</div></div>`;
@@ -1672,12 +1894,15 @@
     // 状态面板装备栏:某空槽位的背包候选(双戒指/双饰品映射到基础槽;判定与背包 _isBagEquipped 一致;可装备者优先,同级按物品等级降序)
     _slotCandidates(char, slot) {
       const base = slot === 'ring1' || slot === 'ring2' ? 'ring' : slot === 'trinket1' || slot === 'trinket2' ? 'trinket' : slot;
+      const sibling = { ring1: 'ring2', ring2: 'ring1', trinket1: 'trinket2', trinket2: 'trinket1' }[slot];
       const out = [];
       const seen = {};
       for (const s of W.Char.Inventory.list(char)) {
         const it = D.ITEMS[s.id];
         if (!it || it.poison || it.slot !== base) continue;
         if (this._isBagEquipped(char, it, !!s.perf)) continue;
+        // 同名戒指/饰品已戴在另一格:不可再填入(双槽不重复;换极品请回背包直接装备升级原槽位)
+        if (sibling && char.equipment[sibling] === s.id) continue;
         const key = s.id + '|' + (s.perf ? 1 : 0);
         if (seen[key]) continue;
         seen[key] = 1;
@@ -1731,6 +1956,16 @@
       const bagMaxed = bagCap >= (C.BAG_MAX || 999);
       let html = `<div class="bag-info">背包 ${inv.length} / ${bagCap}${eqCount ? ` · 已装备 ${eqCount} 件不占背包` : ''}${bagMaxed ? ' · <span class="dim">容量已满</span>' : ''} · 金币 ${U.money(char.gold)}</div>`;
       html += `<div class="bag-info dim">🎒 背包扩容：可在主城商人处购买背包（亚麻背包 +10 / 毛皮背包 +15 / 旅行者背包 +20），在背包中使用即可永久扩容</div>`;
+      // 筛选芯片:当前等级段 / 仅可装备(可叠加),让高级背包一眼定位「现在能换上什么」
+      const fc = this._bagFilterCounts(char);
+      const fOn = this._bagFilterOn();
+      const shown = fOn ? inv.filter((s) => this._bagFilterMatch(char, s)) : inv.slice();
+      const fChip = (k, n, active) => `<button class="btn tiny chip${active ? ' active' : ''}" data-bag-filter="${k}" aria-pressed="${active ? 'true' : 'false'}">${this._bagFilterLabel(k, n)}</button>`;
+      html += `<div class="bag-filter">
+        <span class="bf-label">🔍 筛选</span>
+        ${fChip('all', fc.all, !fOn)}${fChip('band', fc.inBand, this._bagFilter.band)}${fChip('equip', fc.canEq, this._bagFilter.equip)}
+        <span class="bf-note">${fOn ? `已过滤：显示 ${shown.length} / ${inv.length} 件（仅装备）` : '按等级段分区展示 · 装备在前'}</span>
+      </div>`;
       // 一键分解入口:批量分解全部绿色装备
       const greenN = W.Char.Forge.disenchantCount(char, 'green');
       // 批量出售:按品质 / 按槽位两组可配置芯片(史诗=epic+purple 合并展示)
@@ -1763,10 +1998,10 @@
         }
         html += '</div>';
       }
-      if (!inv.length) html += '<div class="empty">背包空空如也</div>';
-      for (const s of inv) {
+      // 等级段分区:装备按其等级归段(同段内等级升序 → 品质降序),消耗品/材料统一收尾
+      const buildBagRow = (s) => {
         const it = D.ITEMS[s.id];
-        if (!it) continue;
+        if (!it) return '';
         // 已装备判定需精确到极品状态(普通/极品同 id 互为换装)
         const equipped = this._isBagEquipped(char, it, !!s.perf);
         const u = W.Char.Forge.get(char, it.id);
@@ -1818,11 +2053,11 @@
             ? this._compareEquip(it, u, D.ITEMS[curId], W.Char.Forge.get(char, curId), s.perf, !!(char.eqPerf && char.eqPerf[curSlot]))
             : '<div class="item-compare new">✨ 该槽位空闲 · 装备即可生效</div>';
         }
-        html += `
+        return `
           <div class="bag-row">
             <span class="item-icon">${it.icon}</span>
             <div class="item-info">
-              <div class="item-name" style="color:${U.QUALITY_COLOR[it.quality]}">${U.esc(it.name)}${s.perf ? ' <span class="tag perf-tag">✨ 极品</span>' : ''} <span class="item-count">×${s.count}</span>${equipped ? ' <span class="tag eq-tag">已装备</span>' : ''}${this._canEquipMark(char, it, equipped)}</div>
+              <div class="item-name" style="color:${U.QUALITY_COLOR[it.quality]}">${U.esc(it.name)}${s.perf ? ' <span class="tag perf-tag">✨ 极品</span>' : ''}${this._isGearItem(it) ? ` <span class="tag lv-tag">Lv${it.level}</span>` : ''} <span class="item-count">×${s.count}</span>${equipped ? ' <span class="tag eq-tag">已装备</span>' : ''}${this._canEquipMark(char, it, equipped)}</div>
               ${statsParts.length ? `<div class="item-stats">${U.esc(statsParts.join(' · '))}</div>` : ''}
               ${it.setId && D.SETS[it.setId] ? (() => {
                 const set = D.SETS[it.setId];
@@ -1839,14 +2074,23 @@
             <button class="btn tiny ghost item-sell" data-sell-bag="${it.id}" data-perf="${s.perf ? 1 : 0}" title="出售获得 ${U.plainMoney(sellPrice)}">💰 卖 ${U.plainMoney(sellPrice)}</button>
             ${btnHtml}
           </div>`;
-      }
+      };
+      if (!inv.length) html += '<div class="empty">背包空空如也</div>';
+      else if (!shown.length) html += `<div class="empty">没有符合筛选条件的物品（共 ${inv.length} 件已隐藏）</div>`;
+      else html += this._bandedHtml(shown.slice().sort((a, b) => this._cmpItem(D.ITEMS[a.id] || {}, D.ITEMS[b.id] || {})),
+        (s) => { const it = D.ITEMS[s.id]; return it && this._isGearItem(it) ? it.level : 0; }, buildBagRow);
       W.UI.openModal(html, { title: '背包' });
       const m = document.getElementById('modal-root');
       m.querySelectorAll('[data-use]').forEach((btn) => btn.addEventListener('click', () => {
         const it = D.ITEMS[btn.dataset.use];
         if (it.slot === 'consumable') {
           const ok = W.Char.Equipment.use(char, it.id);
-          if (!ok) { W.UI.toast(it.consumable.heal && it.consumable.mana ? '状态已满' : '无法使用', 'warn'); return; }
+          if (!ok) {
+            const cons = it.consumable;
+            const dual = !!(cons.healPct || cons.heal) && !!(cons.manaPct || cons.mana); // 双效药水才有“状态已满”一说
+            W.UI.toast(dual ? '状态已满' : '无法使用', 'warn');
+            return;
+          }
           W.Audio.heal();
         } else if (it.slot === 'bag') {
           // 背包物品:使用后永久扩充容量
@@ -1855,7 +2099,10 @@
           W.Audio.heal();
           W.UI.toast(`🎒 背包容量 +${r.add} 格，现为 ${r.size} 格`, 'ok');
         } else {
-          W.Char.Equipment.equip(char, it.id, btn.dataset.perf === '1');
+          const equipPerf = btn.dataset.perf === '1';
+          const issue = W.Char.Equipment.equipIssue(char, it.id, equipPerf);
+          if (issue) { W.UI.toast(issue, 'warn'); return; }
+          W.Char.Equipment.equip(char, it.id, equipPerf);
           W.Audio.click();
         }
         this.openBag();
@@ -1893,21 +2140,45 @@
       this._bindDisenchantAll(m, char, () => this.openBag());
       // 批量出售:局部更新(删多行 + 刷新芯片/信息行),不做整弹窗重绘
       this._bindSellAll(m, char, (stacks) => this._bagSellBatchPartialUpdate(m, char, stacks));
+      // 筛选芯片:改状态后整弹窗重绘(滚动位置由 openModal 保持),筛选态跨操作保留
+      m.querySelectorAll('[data-bag-filter]').forEach((btn) => btn.addEventListener('click', () => {
+        this._bagFilterToggle(btn.dataset.bagFilter);
+        W.Audio.click();
+        this.openBag();
+      }));
     },
 
-    // 背包派生信息就地刷新:空态/信息行/批量出售芯片/一键分解计数(单件与批量出售共用)
+    // 背包派生信息就地刷新:空态/信息行/等级段分区/筛选芯片/批量出售芯片/一键分解计数(单件与批量出售共用)
     _bagRefreshDerived(m, char) {
       const inv = W.Char.Inventory.list(char);
-      // 空态:背包清空时补「空空如也」(与整弹窗渲染时插入位置一致:毒药面板/批量区之后)
-      if (!inv.length && !m.querySelector('.empty')) {
-        const anchor = m.querySelector('.class-panel') || m.querySelector('.bag-batch');
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = '背包空空如也';
-        if (anchor && anchor.nextSibling) anchor.parentNode.insertBefore(empty, anchor.nextSibling);
-        else if (anchor) anchor.parentNode.appendChild(empty);
-        else { const mb = m.querySelector('.modal-body'); if (mb) mb.appendChild(empty); }
-      }
+      const fOn = this._bagFilterOn();
+      // 空态:无可见行时显示「空空如也 / 无符合筛选条件」,有可见行时移除(与整弹窗渲染位置一致:批量区之后)
+      const rows = m.querySelectorAll('.bag-row').length;
+      const empty = m.querySelector('.empty');
+      if (!rows) {
+        const txt = inv.length ? `没有符合筛选条件的物品（共 ${inv.length} 件已隐藏）` : '背包空空如也';
+        if (empty) empty.textContent = txt;
+        else {
+          const anchor = m.querySelector('.class-panel') || m.querySelector('.bag-batch');
+          const div = document.createElement('div');
+          div.className = 'empty';
+          div.textContent = txt;
+          if (anchor && anchor.nextSibling) anchor.parentNode.insertBefore(div, anchor.nextSibling);
+          else if (anchor) anchor.parentNode.appendChild(div);
+          else { const mb = m.querySelector('.modal-body'); if (mb) mb.appendChild(div); }
+        }
+      } else if (empty) empty.remove();
+      // 等级段分区:重算件数 / 移除已空分区(出售后分区计数不再失真)
+      this._bagRefreshBands(m);
+      // 筛选芯片:计数就地同步(激活态与说明行由点击筛选时的整弹窗重绘处理)
+      const fc = this._bagFilterCounts(char);
+      const nOf = { all: fc.all, band: fc.inBand, equip: fc.canEq };
+      m.querySelectorAll('[data-bag-filter]').forEach((chip) => {
+        const k = chip.dataset.bagFilter;
+        chip.textContent = this._bagFilterLabel(k, nOf[k] || 0);
+      });
+      const fnote = m.querySelector('.bf-note');
+      if (fnote) fnote.textContent = fOn ? `已过滤：显示 ${rows} / ${inv.length} 件（仅装备）` : '按等级段分区展示 · 装备在前';
       // 信息行:背包数 + 金币
       const bagCap = W.Char.bagSize(char);
       const bagMaxed = bagCap >= (C.BAG_MAX || 999);
@@ -2517,11 +2788,15 @@
     /* ---------- 技能 ---------- */
     // 技能书单行 HTML(分组标签由调用方按页输出)
     _skillRowHtml(s) {
-      const cost = s.passive ? '<span class="sk-cost-tag passive-tag">被动 · 常驻</span>' : (s.res ? `<span class="sk-cost-tag">${s.res === 'rage' ? '怒气' : s.res === 'energy' ? '能量' : '法力'} ${s.cost || 0}</span>` : '');
+      const cost = s.passive
+        ? '<span class="sk-cost-tag passive-tag">被动 · 常驻</span>'
+        : s.autoCast
+          ? '<span class="sk-cost-tag auto-tag">⚡ 自动释放 · 不占回合</span>'
+          : (s.res ? `<span class="sk-cost-tag">${s.res === 'rage' ? '怒气' : s.res === 'energy' ? '能量' : '法力'} ${s.cost || 0}</span>` : '');
       const cd = s.passive ? '' : (s.cd ? `<span class="sk-cost-tag">冷却 ${s.cd}</span>` : '');
       const treeTag = s.talent ? this._talentTreeOf(s.id) : '';
       return `
-        <div class="skill-row">
+        <div class="skill-row${s.autoCast ? ' auto-skill' : ''}">
           <span class="sk-big-icon">${s.icon}</span>
           <div class="sk-info">
             <div class="sk-name">${U.esc(s.name)} ${cost}${cd}${treeTag}</div>
@@ -2578,7 +2853,7 @@
       const passiveNote = hasPassive
         ? `<div class="passive-note">
             <button class="pn-toggle" type="button" aria-expanded="false" title="展开/收起被动机制说明"><span>💡 <b>被动技能 · 效果常驻</b> <em class="pn-sum">点击查看机制说明</em></span><span class="pn-arrow">▸</span></button>
-            <div class="pn-body" hidden><b>属性类</b>直接计入属性面板：常驻技能（战斗怒吼/盾牌格挡/切割/嗜血/形态等）与<b>天赋爆发</b>（鲁莽/死亡之愿/盾墙/燃烧/奥术强化/复仇之怒/元素掌握/暗影形态/狂暴/猛虎之怒等）——后者按「爆发幅度 × 覆盖率」折算为常驻小加成，无需再手动开启。<b>战斗类</b>常驻触发：正义圣印攻击附加神圣伤害、荆棘术反弹近战伤害；<b>起始护盾</b>：萨满「大地之盾」、法师「寒冰护体」、圣骑士「神圣防护」在<b>战斗开始时</b>自动获得吸收护盾（大地之盾受击还会回血）；<b>自动标记</b>：猎人「猎人印记」在战斗开始时自动标记首个敌人，提高其受到的伤害；<b>宠物强化</b>：猎人「狂野怒火」、术士「恶魔狂暴」使宠物攻击力常驻提高。对应天赋（强化战斗怒吼/强化切割等）会进一步增强被动效果，战斗界面玩家卡牌下方会显示当前生效的被动图标。<button class="btn tiny gold pn-overview">♾️ 查看被动效果总览</button></div>
+            <div class="pn-body" hidden><b>属性类</b>直接计入属性面板：常驻技能（战斗怒吼/盾牌格挡/切割/嗜血/形态等）与<b>天赋爆发</b>（鲁莽/死亡之愿/盾墙/燃烧/奥术强化/复仇之怒/元素掌握/暗影形态/狂暴/猛虎之怒等）——后者按「爆发幅度 × 覆盖率」折算为常驻小加成，无需再手动开启。<b>战斗类</b>常驻触发：正义圣印攻击附加神圣伤害、荆棘术反弹近战伤害；<b>起始护盾</b>：萨满「大地之盾」、法师「寒冰护体」、圣骑士「神圣防护」在<b>战斗开始时</b>自动获得吸收护盾（大地之盾受击还会回血）；<b>自动标记</b>：猎人「猎人印记」、术士「暗影诅咒」、德鲁伊「精灵之火」在战斗开始时自动标记首个敌人，提高其受到的伤害；<b>控场</b>：法师「变羊术/冰霜新星」、术士/牧师/战士的「恐惧」类、盗贼「闷棍」、猎人「冰冻陷阱/翼龙钉刺」、圣骑士「忏悔」、牛头人「战争践踏」在<b>战斗开始时</b>自动控制首个敌人（被动控场不因受到伤害解除）；<b>防御与资源类</b>也会转常驻：圣骑士「圣盾术」/ 法师「寒冰屏障」降低所受伤害、法师「唤醒」与萨满「法力之潮」提高法力恢复、圣骑士「圣疗术」提高治疗量、盗贼「冷血/疾跑/冲动/预备」提升暴击与攻击、侏儒「逃命专家」与亡灵「亡灵意志」缩短受控时间、亡灵「吞噬尸体」提供吸血、矮人「石像形态」与暗夜精灵「影遁」分别提升护甲与闪避；<b>宠物强化</b>：猎人「狂野怒火」、术士「恶魔狂暴」使宠物攻击力常驻提高。对应天赋（强化战斗怒吼/强化切割等）会进一步增强被动效果，战斗界面玩家卡牌下方会显示当前生效的被动图标。<button class="btn tiny gold pn-overview">♾️ 查看被动效果总览</button></div>
           </div>`
         : '';
 
@@ -2588,10 +2863,20 @@
         <div class="pn-body" hidden>副手是<b>主手武器之外</b>的独立装备槽（不占背包、不与武器冲突），<b>任何职业</b>都能装备，可正常<b>强化 + 附魔</b>。三类副手各有侧重：<b>🛡️ 盾牌</b>（兽皮圆盾→龙鳞守卫）高护甲 + 耐力，高级盾牌额外带力量/闪避，适合<b>战士 / 圣骑士</b>等前排；<b>🔪 副刃</b>（猎手短刃/剃刀副刃）敏捷，剃刀副刃附加暴击，适合<b>盗贼 / 猎人</b>；<b>🌙 圣物</b>（月神圣物/日神圣物）智力 + 精神，日神圣物附加暴击，适合<b>萨满 / 德鲁伊 / 牧师 / 法师 / 术士</b>等施法职业；<b>📖 加丁的黑暗密典</b>（通灵学院掉落）智力 + 精神。12 级起各区域商贩与怪物掉落均有产出，缺副手时优先光顾对应等级区的商店。</div>
       </div>`;
 
+      // 自动释放技能说明(习得纯减益/DOT 类技能时展示,可折叠)
+      const autoList = (char.learnedSkills || []).map((sid) => D.SKILLS[sid]).filter((s) => s && s.autoCast && !s.passive);
+      const autoNote = autoList.length
+        ? `<div class="off-note auto-note">
+            <button class="of-toggle" type="button" aria-expanded="false" title="展开/收起自动释放机制说明"><span>⚡ <b>自动释放技能</b> <em class="pn-sum">点击查看机制说明</em></span><span class="pn-arrow">▸</span></button>
+            <div class="pn-body" hidden>你已习得的减益 / 持续伤害技能（${autoList.map((s) => U.esc(s.icon + s.name)).join('、')}）<b>不需要手动点击</b>：每回合开始时（含第 1 回合）自动对敌人释放，<b>不占回合、不消耗资源</b>；仅受技能自身冷却与「目标身上效果仍在」限制——等效果结束后会自动补上下一发。战斗界面玩家卡牌下方以青色「自动」角标展示当前生效的自动技能（角标数字为剩余冷却）</div>
+          </div>`
+        : '';
+
       W.UI.openModal(
         this._classPanel(char) +
         `<div class="skills-note">${U.esc(cls.desc)}</div>` +
         offNote +
+        autoNote +
         passiveNote +
         `<div class="skill-pages">${pagesHtml}</div>` +
         nav +
@@ -2600,16 +2885,17 @@
       this._skillPage = 0;
 
       const m = document.getElementById('modal-root');
-      // 副手装备说明:点击标题栏展开/收起
-      const ofToggle = m.querySelector('.of-toggle');
-      if (ofToggle) ofToggle.addEventListener('click', () => {
-        const body = ofToggle.closest('.off-note').querySelector('.pn-body');
+      // 副手装备 / 自动释放说明:点击标题栏展开/收起(可折叠说明共用一套样式)
+      m.querySelectorAll('.of-toggle').forEach((ofToggle) => ofToggle.addEventListener('click', () => {
+        const note = ofToggle.closest('.off-note');
+        const body = note && note.querySelector('.pn-body');
+        if (!body) return;
         const open = body.hidden;
         body.hidden = !open;
         ofToggle.classList.toggle('open', open);
         ofToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         W.Audio.click();
-      });
+      }));
       // 被动机制说明:点击标题栏展开/收起(减少面板占用)
       const pnToggle = m.querySelector('.pn-toggle');
       if (pnToggle) pnToggle.addEventListener('click', () => {
@@ -2731,7 +3017,8 @@
         const s = slots[i];
         const isCur = W.State._saveSlot === i;
         if (s) {
-          html += W.State.saveRowHtml(s, i, { cur: isCur, save: true, load: true, del: true });
+          // 低等级覆盖高等级:行内警示 + 覆盖按钮转危险态并走二次确认(等级不高于当前角色时保持原样)
+          html += W.State.saveRowHtml(s, i, { cur: isCur, save: true, load: true, del: true, downLv: W.State.downgradeSlotLevel(i) });
         } else {
           html += `
             <div class="save-row empty">
@@ -2744,6 +3031,18 @@
       W.UI.openModal(html, { title: '存档管理' });
       const m = document.getElementById('modal-root');
       m.querySelectorAll('[data-save]').forEach((btn) => btn.addEventListener('click', () => {
+        // 低等级存档覆盖高等级存档:两段式确认(首次点击进入确认态,3 秒未点自动恢复)
+        if (btn.dataset.downLv && !btn.dataset.confirm) {
+          btn.dataset.confirm = '1';
+          if (!btn.dataset.orig) btn.dataset.orig = btn.textContent;
+          btn.textContent = `⚠ 确认覆盖 Lv.${btn.dataset.downLv}？`;
+          btn.classList.add('danger');
+          if (btn._t) clearTimeout(btn._t);
+          btn._t = setTimeout(() => this._saveConfirmReset(btn), 3000);
+          W.UI.toast(`槽内存档为 Lv.${btn.dataset.downLv}，高于当前角色，再点一次才会覆盖`, 'warn');
+          return;
+        }
+        this._saveConfirmReset(btn);
         // 落盘失败时 persist() 已弹出空间已满的警告,这里只负责不再谎报「已保存」
         if (W.State.save(parseInt(btn.dataset.save, 10))) {
           W.Audio.levelup();
@@ -2766,6 +3065,16 @@
       }));
     },
 
+    // 存档覆盖确认态复位(超时未点 / 真正覆盖前):恢复原文案与样式,清除计时器
+    _saveConfirmReset(btn) {
+      if (!btn) return;
+      if (btn._t) clearTimeout(btn._t);
+      if (btn.dataset.orig) btn.textContent = btn.dataset.orig;
+      delete btn.dataset.orig;
+      btn.dataset.confirm = '';
+      btn.classList.remove('danger');
+    },
+
     /* ============ 设置:UI 偏好统一管理 ============ */
     openSettings() {
       // 音效(标题界面/设置面板双向同步) 与 战斗道具栏折叠(战斗内开关/设置面板双向同步)
@@ -2773,6 +3082,7 @@
       let soundMuted = readPref(W.Audio.SOUND_KEY);
       let itemsCollapsed = W.BattleView ? readPref(W.BattleView.COLLAPSE_KEY) : false;
       const sw = (key, on) => `<button type="button" class="set-switch${on ? ' on' : ''}" data-set="${key}" role="switch" aria-checked="${on}" title="${on ? '点击关闭' : '点击开启'}"><i></i></button>`;
+      const gmOn = W.Char.GM.on(W.State.character);
       const html = `
         <div class="set-group">
           <div class="set-group-title">🎛️ 界面与声音</div>
@@ -2800,6 +3110,16 @@
             </div>
             <button type="button" class="btn gold small" data-set-update>🔄 检查更新</button>
           </div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">🛠️ GM 调试模式</div>
+          <div class="set-row" data-set-row="gm">
+            <div class="set-info">
+              <div class="set-name">🛠️ 启用 GM 模式</div>
+              <div class="set-desc">开启后世界界面「✨ 更多」菜单出现 <b>GM 模式</b>入口：无敌 / 一击必杀 / 无限资源 / 等级与金币 / 传送等调试功能（随存档保存）</div>
+            </div>
+            ${sw('gm', gmOn)}
+          </div>
         </div>`;
       W.UI.openModal(html, { title: '设置' });
       const m = document.getElementById('modal-root');
@@ -2818,8 +3138,18 @@
             itemsCollapsed = !itemsCollapsed;
             if (W.BattleView) W.BattleView._itemsCollapsed = itemsCollapsed;
             try { localStorage.setItem(W.BattleView.COLLAPSE_KEY, itemsCollapsed ? '1' : '0'); } catch (e) { /* ignore */ }
+          } else if (key === 'gm') {
+            const g = W.Char.GM.of(W.State.character);
+            g.enabled = !g.enabled;
+            // 关闭 GM 时同时关掉各项作弊开关,避免残留
+            if (!g.enabled) { g.god = false; g.oneShot = false; g.infinite = false; }
+            W.Char.GM.log(W.State.character, 'toggle', g.enabled ? '启用 GM 调试模式' : '关闭 GM 调试模式（各项作弊开关已归零）');
+            W.UI.toast(g.enabled ? 'GM 模式已开启，可在「✨ 更多」菜单进入' : 'GM 模式已关闭', g.enabled ? 'ok' : 'warn');
+            if (W.World) W.World.render();
           }
-          swEl.classList.toggle('on', key === 'sound' ? !soundMuted : itemsCollapsed);
+          if (key === 'sound') swEl.classList.toggle('on', !soundMuted);
+          else if (key === 'gm') swEl.classList.toggle('on', W.Char.GM.on(W.State.character));
+          else swEl.classList.toggle('on', itemsCollapsed);
           if (swEl.getAttribute) swEl.setAttribute('aria-checked', swEl.classList.contains('on') ? 'true' : 'false');
           W.Audio.click();
         });
@@ -2837,6 +3167,216 @@
           });
         });
       }
+    },
+
+    /* ============ GM 模式(调试) ============ */
+    openGM() {
+      const char = W.State.character;
+      const g = W.Char.GM.of(char);
+      if (!g.enabled) { W.UI.toast('GM 模式未启用：请到「设置」中开启', 'warn'); return; }
+      const c = W.Char.computed(char);
+      const sw = (key, on) => `<button type="button" class="set-switch${on ? ' on' : ''}" data-gm-sw="${key}" role="switch" aria-checked="${on ? 'true' : 'false'}" title="${on ? '点击关闭' : '点击开启'}"><i></i></button>`;
+      const row = (key, name, desc) => `
+          <div class="set-row" data-gm-row="${key}">
+            <div class="set-info">
+              <div class="set-name">${name}</div>
+              <div class="set-desc">${desc}</div>
+            </div>
+            ${sw(key, !!g[key])}
+          </div>`;
+      const zones = Object.keys(D.ZONES).map((id) => `<option value="${id}"${id === char.zone ? ' selected' : ''}>${U.esc(D.ZONES[id].name)}（推荐 Lv.${D.ZONES[id].level}）</option>`).join('');
+      const html = `
+        <div class="gm-banner">🛠️ GM 调试模式已启用 · 改动立即生效并随存档保存，可在「设置」中关闭</div>
+        <div class="set-group">
+          <div class="set-group-title">⚡ 战斗增益</div>
+          ${row('god', '🛡️ 无敌模式', '玩家受到的任何伤害归零（含持续伤害、反噬与自伤）')}
+          ${row('oneShot', '💀 一击必杀', '玩家造成的任意伤害直接清空敌人生命')}
+          ${row('infinite', '♾️ 无限资源', '技能无视法力/怒气/能量/连击/碎片消耗，且不进入冷却')}
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">🎁 快捷操作</div>
+          <div class="gm-actions">
+            <button class="btn small" data-gm-act="levelup">⬆️ 等级 +1</button>
+            <button class="btn small" data-gm-act="maxlevel">🏆 直接满级（Lv.${W.Config.LEVEL_CAP}）</button>
+            <button class="btn small" data-gm-act="gold">💰 金币 +10000</button>
+            <button class="btn small" data-gm-act="restore">💚 回满生命与法力</button>
+            <button class="btn small" data-gm-act="skills">📖 学会全部技能</button>
+            <button class="btn small" data-gm-act="talents">🌟 天赋三系点满</button>
+            <button class="btn small" data-gm-act="elite">👑 重置精英/首领刷新</button>
+            <button class="btn small" data-gm-act="dungeon">🚪 重置副本进度</button>
+          </div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">🧭 传送</div>
+          <div class="gm-travel">
+            <select data-gm-zone>${zones}</select>
+            <button class="btn small gold" data-gm-act="travel">🧭 传送到该区域</button>
+          </div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">📊 当前状态</div>
+          <div class="gm-stats">等级 Lv.${char.level} · 生命 ${Math.ceil(char.hp)}/${c.hpMax} · ${c.manaMax ? `法力 ${Math.ceil(char.mana)}/${c.manaMax} · ` : ''}金币 ${U.money(char.gold)} · 已学技能 ${(char.learnedSkills || []).length} 个</div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-title">📜 调试日志（共 ${W.Char.GM.logs(char).length} 条，仅保留最近 ${W.Char.GM.LOG_MAX} 条）</div>
+          <div class="gm-log" data-gm-log>${this._gmLogHtml(6)}</div>
+          <div class="gm-actions" style="margin-top:10px">
+            <button class="btn small" data-gm-act="log-all">📜 查看全部日志</button>
+            <button class="btn small danger" data-gm-act="log-clear">🧹 清空日志</button>
+          </div>
+        </div>`;
+      W.UI.openModal(html, { title: 'GM 模式' });
+      const m = document.getElementById('modal-root');
+      m.querySelectorAll('[data-gm-sw]').forEach((el) => el.addEventListener('click', () => {
+        const k = el.dataset.gmSw;
+        g[k] = !g[k];
+        el.classList.toggle('on', g[k]);
+        el.setAttribute('aria-checked', g[k] ? 'true' : 'false');
+        W.Audio.click();
+        const label = { god: '无敌模式', oneShot: '一击必杀', infinite: '无限资源' }[k] || k;
+        W.Char.GM.log(char, 'toggle', `${label} ${g[k] ? '开启' : '关闭'}`);
+        W.UI.toast(`GM · ${label} 已${g[k] ? '开启' : '关闭'}`, 'ok');
+        this._renderGmLog();
+      }));
+      m.querySelectorAll('[data-gm-act]').forEach((btn) => btn.addEventListener('click', () => this._gmAction(btn.dataset.gmAct)));
+    },
+
+    // 调试日志时间格式(绝对时间,便于事后核对)
+    _gmTime(t) {
+      const d = new Date(t || 0);
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    },
+    _gmKindCN(kind) { return ({ toggle: '开关', action: '操作', travel: '传送', battle: '战斗' }[kind] || '操作'); },
+    // 调试日志列表 HTML(limit 为 0/缺省时展示全部)
+    _gmLogHtml(limit) {
+      const list = W.Char.GM.logs(W.State.character);
+      if (!list.length) return '<div class="gm-log-empty">暂无调试记录 —— 每次启用开关、快捷操作与传送都会记录在这里</div>';
+      const rows = (limit && limit > 0 ? list.slice(0, limit) : list);
+      return rows.map((e) => `<div class="gm-log-row"><span class="gm-log-time">${this._gmTime(e.t)}</span><span class="gm-log-kind">${this._gmKindCN(e.kind)}</span><span class="gm-log-text">${U.esc(e.text)}</span></div>`).join('')
+        + (limit && list.length > limit ? `<div class="gm-log-more">… 还有 ${list.length - limit} 条，点「查看全部日志」展开</div>` : '');
+    },
+    // 就地在面板内刷新日志区(不重绘整个弹窗,保留滚动位置)
+    _renderGmLog() {
+      const box = document.querySelector('[data-gm-log]');
+      if (box) box.innerHTML = this._gmLogHtml(6);
+    },
+    // 完整调试日志面板
+    openGMLog() {
+      const char = W.State.character;
+      const html = `
+        <div class="gm-banner">📜 ${U.esc(char.name)} 的 GM 调试记录 · 共 ${W.Char.GM.logs(char).length} 条（最新在前，随存档保存，最多保留最近 ${W.Char.GM.LOG_MAX} 条）</div>
+        <div class="gm-log gm-log-full">${this._gmLogHtml(0)}</div>
+        <div class="gm-actions" style="margin-top:12px">
+          <button class="btn small gold" data-gm-log-back>↩️ 返回 GM 面板</button>
+          <button class="btn small danger" data-gm-log-clear>🧹 清空日志</button>
+        </div>`;
+      W.UI.openModal(html, { title: 'GM 调试日志' });
+      const m = document.getElementById('modal-root');
+      const back = m.querySelector('[data-gm-log-back]');
+      if (back) back.addEventListener('click', () => { W.Audio.click(); this.openGM(); });
+      const clr = m.querySelector('[data-gm-log-clear]');
+      if (clr) clr.addEventListener('click', () => W.UI.confirm('清空调试日志', '将删除该存档的全部 GM 调试记录。', () => {
+        W.Char.GM.clearLog(char);
+        W.UI.toast('调试日志已清空', 'ok');
+        this._renderGmLog();
+        this.openGMLog();
+      }));
+    },
+
+    // GM 快捷操作
+    _gmAction(act) {
+      const char = W.State.character;
+      // 调试日志专用操作(不写回日志自身,避免“看日志”也刷日志)
+      if (act === 'log-all') { this.openGMLog(); return; }
+      if (act === 'log-clear') {
+        W.UI.confirm('清空调试日志', '将删除该存档的全部 GM 调试记录（不影响其它进度）。', () => {
+          W.Char.GM.clearLog(char);
+          W.UI.toast('调试日志已清空', 'ok');
+          this.openGM();
+        });
+        return;
+      }
+      const sel = document.querySelector('[data-gm-zone]');
+      // 属性变化后同步上限并夹紧当前值(升级/点天赋会改变最大生命/法力)
+      const refresh = () => {
+        const c = W.Char.computed(char);
+        char.hpMax = c.hpMax; char.manaMax = c.manaMax;
+        char.hp = Math.min(Math.max(char.hp || 1, 1), c.hpMax);
+        char.mana = Math.min(char.mana || 0, c.manaMax);
+      };
+      if (act === 'levelup') {
+        W.Char.addExp(char, W.Char.expNeeded(char.level));
+        W.Char.ensureClassFeatures(char); refresh();
+        W.Char.GM.log(char, 'action', `等级 +1 → Lv.${char.level}`);
+        W.Audio.levelup();
+        W.UI.toast(`GM · 等级提升至 Lv.${char.level}`, 'ok');
+      } else if (act === 'maxlevel') {
+        const fromLv = char.level;
+        char.level = W.Config.LEVEL_CAP; char.exp = 0;
+        W.Char.ensureClassFeatures(char); refresh();
+        W.Char.GM.log(char, 'action', `直接满级：Lv.${fromLv} → Lv.${char.level}`);
+        W.Audio.levelup();
+        W.UI.toast(`GM · 已直接满级 Lv.${char.level}`, 'ok');
+      } else if (act === 'gold') {
+        char.gold += 10000;
+        W.Char.GM.log(char, 'action', `金币 +10000（当前 ${U.money(char.gold)}）`);
+        W.Audio.levelup();
+        W.UI.toast('GM · 金币 +10000', 'ok');
+      } else if (act === 'restore') {
+        const c = W.Char.computed(char);
+        char.hp = c.hpMax; char.mana = c.manaMax;
+        char.rage = 0; char.energy = W.Config.ENERGY_MAX;
+        W.Char.GM.log(char, 'action', `回满生命与法力（${char.hp}/${char.hpMax}${c.manaMax ? ` · ${char.mana}/${c.manaMax}` : ''}）`);
+        W.Audio.heal();
+        W.UI.toast('GM · 生命与法力已回满', 'ok');
+      } else if (act === 'skills') {
+        for (const sid in D.SKILLS) {
+          const s = D.SKILLS[sid];
+          if (!s || (!s.cls && !s.race)) continue;
+          if (s.cls && s.cls !== char.classId) continue;
+          if (s.race && s.race !== char.race) continue;
+          if (!char.learnedSkills.includes(sid)) char.learnedSkills.push(sid);
+        }
+        refresh();
+        W.Char.GM.log(char, 'action', `学会全部技能（共 ${char.learnedSkills.length} 个）`);
+        W.Audio.spell();
+        W.UI.toast(`GM · 已学会全部技能（共 ${char.learnedSkills.length} 个）`, 'ok');
+      } else if (act === 'talents') {
+        char.talents = char.talents || {};
+        for (const tree of (D.TALENTS[char.classId] || [])) {
+          char.talents[tree.id] = char.talents[tree.id] || {};
+          for (const node of tree.talents) {
+            char.talents[tree.id][node.id] = node.max;
+            if (node.active && !char.learnedSkills.includes(node.active)) char.learnedSkills.push(node.active);
+          }
+        }
+        refresh();
+        W.Char.GM.log(char, 'action', '天赋三系点满');
+        W.Audio.levelup();
+        W.UI.toast('GM · 天赋三系已点满', 'ok');
+      } else if (act === 'elite') {
+        char.elites = {}; char.worldBosses = {};
+        W.Char.GM.log(char, 'action', '重置精英与世界首领刷新计时');
+        W.UI.toast('GM · 稀有精英与世界首领刷新计时已重置', 'ok');
+      } else if (act === 'dungeon') {
+        char.dungeon = null; char.capitalRaid = null;
+        W.Char.GM.log(char, 'action', '重置副本与突袭进度');
+        W.UI.toast('GM · 副本与突袭进度已重置', 'ok');
+      } else if (act === 'travel') {
+        const zoneId = sel && sel.value;
+        if (!zoneId || !D.ZONES[zoneId]) return;
+        const fromZone = (D.ZONES[char.zone] || {}).name || char.zone;
+        char.zone = zoneId; char.dungeon = null;
+        this._hintedZone = null;
+        W.Char.GM.log(char, 'travel', `传送：${fromZone} → ${D.ZONES[zoneId].name}`);
+        W.UI.toast(`GM · 已传送至${D.ZONES[zoneId].name}`, 'ok');
+        this.render();
+        this.openGM();
+        return;
+      }
+      this.render();
+      this.openGM();
     },
 
     backToTitle() {

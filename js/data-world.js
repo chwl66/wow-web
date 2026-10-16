@@ -206,11 +206,11 @@
     naxx_spider:      M('naxx_spider', '织网蛛魔', '🕷️', 57, 1150, [126, 166], 100, 430, 358, 'beast', ['m_poison', 'm_bite']),
     naxx_plague:      M('naxx_plague', '瘟疫蛆虫', '🐛', 58, 1200, [128, 170], 96, 445, 370, 'undead', ['m_poison', 'm_bash', 'm_rend']),
     naxx_knight:      M('naxx_knight', '天启骑士', '🐴', 58, 1180, [132, 172], 112, 448, 372, 'undead', ['m_charge', 'm_rend', 'm_war_cry']),
-    naxx_elite:       M('naxx_elite', '萨菲隆之影', '🐉', 59, 3050, [150, 198], 118, 1650, 1100, 'undead', ['m_frost', 'm_breath', 'm_enrage'], { elite: 1, title: '纳克萨玛斯 · 精英' }),
-    kelthuzad:        M('kelthuzad', '克尔苏加德', '💀', 60, 3650, [150, 198], 115, 5200, 4200, 'undead', ['m_frost_chain', 'm_frost', 'm_summon', 'm_enrage'], { elite: 1, boss: 1, title: '纳克萨玛斯 · 最终首领' }),
+    naxx_elite:       M('naxx_elite', '萨菲隆之影', '🐉', 59, 4270, [180, 238], 118, 1650, 1100, 'undead', ['m_frost', 'm_breath', 'm_enrage'], { elite: 1, title: '纳克萨玛斯 · 精英' }),
+    kelthuzad:        M('kelthuzad', '克尔苏加德', '💀', 60, 6130, [197, 259], 115, 5200, 4200, 'undead', ['m_frost_chain', 'm_frost', 'm_summon', 'm_enrage'], { elite: 1, boss: 1, title: '纳克萨玛斯 · 最终首领' }),
     /* 世界首领(定时刷新,不可随机遭遇) */
-    kazzak:           M('kazzak', '卡扎克', '👹', 60, 3750, [146, 190], 115, 6000, 5000, 'demon', ['m_shadow', 'm_enrage', 'm_war_cry'], { boss: 1, world: 1, title: '燃烧平原 · 深渊魔王' }),
-    azuregos:         M('azuregos', '艾萨拉绿龙', '🐉', 58, 3350, [138, 182], 104, 5500, 4600, 'dragon', ['m_frost', 'm_breath', 'm_enrage'], { boss: 1, world: 1, title: '冬泉谷 · 蓝龙之王' }),
+    kazzak:           M('kazzak', '卡扎克', '👹', 60, 8180, [223, 290], 115, 6000, 5000, 'demon', ['m_shadow', 'm_enrage', 'm_war_cry'], { boss: 1, world: 1, title: '燃烧平原 · 深渊魔王' }),
+    azuregos:         M('azuregos', '艾萨拉绿龙', '🐉', 58, 7300, [210, 277], 104, 5500, 4600, 'dragon', ['m_frost', 'm_breath', 'm_enrage'], { boss: 1, world: 1, title: '冬泉谷 · 蓝龙之王' }),
     /* 深入敌营 · 暴风城守卫(部落突袭) */
     sw_guard:         M('sw_guard', '暴风城卫兵', '🛡️', 40, 1100, [76, 100], 60, 1800, 1400, 'humanoid', ['m_charge', 'm_rend', 'm_war_cry'], { elite: 1, title: '暴风城 · 城防卫兵' }),
     sw_captain:       M('sw_captain', '暴风城卫队长', '⚔️', 41, 1350, [84, 110], 70, 2300, 1800, 'humanoid', ['m_charge', 'm_rend', 'm_war_cry', 'm_enrage'], { elite: 1, title: '暴风城 · 皇家卫队' }),
@@ -271,38 +271,38 @@
     mc_lava:          M('mc_lava', '熔火犬', '🐕', 60, 1380, [140, 182], 112, 520, 420, 'elemental', ['m_bite', 'm_fireball']),
     mc_giant:         M('mc_giant', '熔核巨人', '🗿', 60, 1450, [145, 188], 128, 530, 430, 'elemental', ['m_charge', 'm_bash', 'm_war_cry']),
     mc_shaman:        M('mc_shaman', '火焰术士', '🧙', 60, 1200, [140, 182], 100, 520, 420, 'humanoid', ['m_fireball', 'm_shadow']),
-    mc_elite:         M('mc_elite', '加尔', '🔥', 60, 3200, [156, 202], 122, 1750, 1200, 'elemental', ['m_fireball', 'm_charge', 'm_enrage'], { elite: 1, title: '熔火之心 · 精英' }),
-    ragnaros:         M('ragnaros', '拉格纳罗斯', '🌋', 60, 4200, [165, 215], 128, 12000, 9000, 'elemental', ['m_lava_burst', 'm_fireball', 'm_war_cry', 'm_enrage'], { elite: 1, boss: 1, title: '熔火之心 · 火焰领主' }),
+    mc_elite:         M('mc_elite', '加尔', '🔥', 60, 4480, [187, 242], 122, 1750, 1200, 'elemental', ['m_fireball', 'm_charge', 'm_enrage'], { elite: 1, title: '熔火之心 · 精英' }),
+    ragnaros:         M('ragnaros', '拉格纳罗斯', '🌋', 60, 7050, [216, 282], 128, 12000, 9000, 'elemental', ['m_lava_burst', 'm_fireball', 'm_war_cry', 'm_enrage'], { elite: 1, boss: 1, title: '熔火之心 · 火焰领主' }),
     /* 黑翼之巢 (60) */
     bwl_drake:        M('bwl_drake', '黑翼幼龙', '🐲', 60, 1360, [141, 183], 114, 520, 420, 'dragon', ['m_breath', 'm_rend']),
     bwl_dragon:       M('bwl_dragon', '黑翼龙人', '🐉', 60, 1420, [144, 187], 122, 530, 430, 'dragon', ['m_breath', 'm_charge']),
     bwl_sorcerer:     M('bwl_sorcerer', '黑翼法师', '🧙', 60, 1210, [141, 183], 100, 520, 420, 'humanoid', ['m_fireball', 'm_shadow']),
-    bwl_elite:        M('bwl_elite', '堕落的瓦拉斯塔兹', '🐲', 60, 3300, [158, 204], 124, 1800, 1250, 'dragon', ['m_breath', 'm_fireball', 'm_enrage'], { elite: 1, title: '黑翼之巢 · 精英' }),
-    nefarian:         M('nefarian', '奈法利安', '🦇', 60, 4150, [163, 213], 125, 12500, 9500, 'dragon', ['m_wing_buffet', 'm_breath', 'm_shadow', 'm_enrage'], { elite: 1, boss: 1, title: '黑翼之巢 · 最终首领' }),
+    bwl_elite:        M('bwl_elite', '堕落的瓦拉斯塔兹', '🐲', 60, 4620, [190, 245], 124, 1800, 1250, 'dragon', ['m_breath', 'm_fireball', 'm_enrage'], { elite: 1, title: '黑翼之巢 · 精英' }),
+    nefarian:         M('nefarian', '奈法利安', '🦇', 60, 6970, [214, 279], 125, 12500, 9500, 'dragon', ['m_wing_buffet', 'm_breath', 'm_shadow', 'm_enrage'], { elite: 1, boss: 1, title: '黑翼之巢 · 最终首领' }),
     /* 奥妮克希亚的巢穴 (60) */
     onx_whelp:        M('onx_whelp', '雏龙', '🐉', 59, 1300, [135, 176], 112, 500, 405, 'dragon', ['m_breath', 'm_bite']),
     onx_guard:        M('onx_guard', '奥妮克希亚卫士', '🗡️', 60, 1390, [140, 182], 118, 520, 420, 'humanoid', ['m_charge', 'm_rend']),
     onx_mage:         M('onx_mage', '黑龙法师', '🧙', 60, 1200, [139, 181], 100, 520, 420, 'humanoid', ['m_fireball', 'm_frost']),
-    onx_elite:        M('onx_elite', '黑衣守卫', '🛡️', 60, 3150, [154, 200], 122, 1700, 1150, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, title: '奥妮克希亚巢穴 · 精英' }),
-    onyxia:           M('onyxia', '奥妮克希亚', '🐲', 60, 3950, [158, 206], 120, 11500, 8800, 'dragon', ['m_deep_breath', 'm_breath', 'm_fireball', 'm_enrage'], { elite: 1, boss: 1, title: '奥妮克希亚的巢穴 · 最终首领' }),
+    onx_elite:        M('onx_elite', '黑衣守卫', '🛡️', 60, 4410, [185, 240], 122, 1700, 1150, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, title: '奥妮克希亚巢穴 · 精英' }),
+    onyxia:           M('onyxia', '奥妮克希亚', '🐲', 60, 6640, [207, 270], 120, 11500, 8800, 'dragon', ['m_deep_breath', 'm_breath', 'm_fireball', 'm_enrage'], { elite: 1, boss: 1, title: '奥妮克希亚的巢穴 · 最终首领' }),
     /* 祖尔格拉布 (60) */
     zg_troll:         M('zg_troll', '祖格巨魔', '🧌', 60, 1370, [140, 182], 112, 520, 420, 'humanoid', ['m_charge', 'm_war_cry']),
     zg_priest:        M('zg_priest', '妖术师', '🧙', 60, 1210, [139, 181], 100, 520, 420, 'humanoid', ['m_shadow', 'm_heal']),
     zg_panther:       M('zg_panther', '祖格猎豹', '🐆', 60, 1330, [142, 184], 108, 520, 420, 'beast', ['m_bite', 'm_rend']),
-    zg_elite:         M('zg_elite', '血领主曼多基尔', '🦅', 60, 3250, [157, 203], 122, 1780, 1220, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, title: '祖尔格拉布 · 精英' }),
-    hakkar:           M('hakkar', '哈卡', '🐍', 60, 4050, [160, 210], 122, 11800, 9200, 'humanoid', ['m_corrupted_blood', 'm_shadow', 'm_poison', 'm_enrage'], { elite: 1, boss: 1, title: '祖尔格拉布 · 血神' }),
+    zg_elite:         M('zg_elite', '血领主曼多基尔', '🦅', 60, 4550, [188, 244], 122, 1780, 1220, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, title: '祖尔格拉布 · 精英' }),
+    hakkar:           M('hakkar', '哈卡', '🐍', 60, 6800, [210, 275], 122, 11800, 9200, 'humanoid', ['m_corrupted_blood', 'm_shadow', 'm_poison', 'm_enrage'], { elite: 1, boss: 1, title: '祖尔格拉布 · 血神' }),
     /* 安其拉废墟 (60) */
     aq_warrior:       M('aq_warrior', '其拉斗士', '🦗', 60, 1380, [141, 183], 116, 520, 420, 'elemental', ['m_charge', 'm_war_cry']),
     aq_observer:      M('aq_observer', '观察者', '👁️', 60, 1220, [140, 182], 102, 520, 420, 'elemental', ['m_shadow', 'm_frost']),
     aq_hiveswarm:     M('aq_hiveswarm', '虫群卫士', '🐜', 60, 1340, [143, 185], 110, 520, 420, 'beast', ['m_bite', 'm_poison']),
-    aq_elite:         M('aq_elite', '库林纳克斯', '🪳', 60, 3180, [155, 201], 120, 1720, 1180, 'beast', ['m_bite', 'm_poison', 'm_enrage'], { elite: 1, title: '安其拉废墟 · 精英' }),
-    rajaxx:           M('rajaxx', '拉贾克斯将军', '⚔️', 60, 3900, [155, 203], 118, 11000, 8600, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, boss: 1, title: '安其拉废墟 · 最终首领' }),
+    aq_elite:         M('aq_elite', '库林纳克斯', '🪳', 60, 4450, [186, 241], 120, 1720, 1180, 'beast', ['m_bite', 'm_poison', 'm_enrage'], { elite: 1, title: '安其拉废墟 · 精英' }),
+    rajaxx:           M('rajaxx', '拉贾克斯将军', '⚔️', 60, 6550, [203, 266], 118, 11000, 8600, 'humanoid', ['m_charge', 'm_war_cry', 'm_enrage'], { elite: 1, boss: 1, title: '安其拉废墟 · 最终首领' }),
     /* 安其拉神殿 (60) */
     aqt_twilight:     M('aqt_twilight', '暮光教徒', '🧙', 60, 1230, [141, 183], 102, 525, 425, 'humanoid', ['m_shadow', 'm_fireball']),
     aqt_anubisath:    M('aqt_anubisath', '阿努比萨斯', '🗿', 60, 1460, [146, 190], 130, 535, 435, 'elemental', ['m_charge', 'm_bash']),
     aqt_eye:          M('aqt_eye', '克苏恩之眼', '👁️', 60, 1240, [142, 184], 104, 525, 425, 'elemental', ['m_shadow', 'm_breath']),
-    aqt_elite:        M('aqt_elite', '维克洛尔大帝', '🪬', 60, 3350, [160, 206], 126, 1850, 1300, 'elemental', ['m_shadow', 'm_charge', 'm_enrage'], { elite: 1, title: '安其拉神殿 · 精英' }),
-    cthun:            M('cthun', '克苏恩', '🫀', 60, 4500, [170, 220], 132, 15000, 12000, 'elemental', ['m_eye_beam', 'm_shadow', 'm_breath', 'm_enrage'], { elite: 1, boss: 1, title: '安其拉神殿 · 千眼之魔' }),
+    aqt_elite:        M('aqt_elite', '维克洛尔大帝', '🪬', 60, 4690, [192, 247], 126, 1850, 1300, 'elemental', ['m_shadow', 'm_charge', 'm_enrage'], { elite: 1, title: '安其拉神殿 · 精英' }),
+    cthun:            M('cthun', '克苏恩', '🫀', 60, 7560, [223, 288], 132, 15000, 12000, 'elemental', ['m_eye_beam', 'm_shadow', 'm_breath', 'm_enrage'], { elite: 1, boss: 1, title: '安其拉神殿 · 千眼之魔' }),
     /* ===== 新增 8 副本 ===== */
     /* 怒焰裂谷 (13-16) */
     rfc_trooper:      M('rfc_trooper', '怒焰狂暴者', '🧌', 13, 240, [28, 38], 22, 105, 82, 'humanoid', ['m_bash', 'm_war_cry']),
@@ -571,7 +571,7 @@
         { enemies: ['jergosh'], name: '最终首领：杰尔戈什·召唤者' },
       ],
       desc: '奥格瑞玛地下的熔岩裂隙，暗影议会在此召唤来自深渊的邪火。',
-      chest: { items: [['m_dust', 2], ['m_essence', 1]] },
+      chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [900, 1500] },
     },
     stockade: {
       id: 'stockade', name: '暴风城监狱', icon: '⛓️', zone: 'stormwind', minLevel: 22, boss: 'thredd',
@@ -582,7 +582,7 @@
         { enemies: ['thredd'], name: '最终首领：巴基·斯奈德' },
       ],
       desc: '暴风城地下的阴暗牢房，迪菲亚暴动分子正谋划越狱。',
-      chest: { items: [['m_dust', 2], ['m_essence', 1]] },
+      chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [1500, 2300] },
     },
     blackfathom_deeps: {
       id: 'blackfathom_deeps', name: '黑暗深渊', icon: '🕳️', zone: 'dustwallow', minLevel: 20, boss: 'akumai',
@@ -593,7 +593,7 @@
         { enemies: ['akumai'], name: '最终首领：阿库麦尔' },
       ],
       desc: '尘泥沼泽深处的无底海渊，暮光之锤在此崇拜深渊中的古老恐惧。',
-      chest: { items: [['m_dust', 2], ['m_essence', 1]] },
+      chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [1400, 2100] },
     },
     gnomeregan: {
       id: 'gnomeregan', name: '诺莫瑞根', icon: '🤖', zone: 'redridge', minLevel: 24, boss: 'thermaplugg',
@@ -604,7 +604,7 @@
         { enemies: ['thermaplugg'], name: '最终首领：瑟玛普拉格' },
       ],
       desc: '侏儒的科技之城毁于辐射灾难，疯狂的机械仍在地下轰鸣。',
-      chest: { items: [['m_dust', 3], ['m_essence', 2]] },
+      chest: { items: [['m_dust', 3], ['m_essence', 2]], gold: [1700, 2500] },
     },
     razorfen_kraul: {
       id: 'razorfen_kraul', name: '剃刀沼泽', icon: '🌾', zone: 'barrens', minLevel: 25, boss: 'charlga',
@@ -615,7 +615,7 @@
         { enemies: ['charlga'], name: '最终首领：卡尔加·刺肋' },
       ],
       desc: '贫瘠之地南部的荆棘迷宫，野猪人部族盘踞其中。',
-      chest: { items: [['m_dust', 3], ['m_essence', 2]] },
+      chest: { items: [['m_dust', 3], ['m_essence', 2]], gold: [1800, 2600] },
     },
     razorfen_downs: {
       id: 'razorfen_downs', name: '剃刀高地', icon: '🥀', zone: 'barrens', minLevel: 33, boss: 'amnennar',
@@ -626,7 +626,7 @@
         { enemies: ['amnennar'], name: '最终首领：阿姆纳尔·冷铸者' },
       ],
       desc: '野猪人圣地的幽暗墓穴，亡灵巫师在此散布瘟疫。',
-      chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]] },
+      chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]], gold: [2300, 3300] },
     },
     scarlet_monastery: {
       id: 'scarlet_monastery', name: '血色修道院', icon: '⛪', zone: 'plaguelands', minLevel: 29, boss: 'whitemane',
@@ -637,7 +637,7 @@
         { enemies: ['whitemane'], name: '最终首领：大检察官怀特迈恩' },
       ],
       desc: '血色十字军的圣殿，狂热的圣光信徒在此审判一切异端。',
-      chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]] },
+      chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]], gold: [2000, 3000] },
     },
     sunken_temple: {
       id: 'sunken_temple', name: '沉没的神庙', icon: '🐍', zone: 'ungoro', minLevel: 45, boss: 'avatar_hakkar',
@@ -648,7 +648,7 @@
         { enemies: ['avatar_hakkar'], name: '最终首领：哈卡的化身' },
       ],
       desc: '巨魔古都阿塔哈卡神庙沉入沼泽，哈卡的血祭仍在黑暗中继续。',
-      chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 2]] },
+      chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 2]], gold: [3600, 5000] },
     },
   };
 
@@ -709,15 +709,15 @@
     searing: Z('searing', '灼热峡谷', '🌋', 'neutral', '34-42',
       '黑铁矮人挖掘出的灼热之地，熔岩河奔流不息，大熔炉的黑烟遮天蔽日。',
       { travel: ['badlands', 'burning'], monsters: ['searing_lava', 'searing_dwarf', 'searing_lizard', 'searing_elemental', 'searing_wolf', 'searing_whelp', 'searing_elite'],
-        quests: ['q_searing_lava', 'q_searing_elite', 'q_searing_dwarf'], shop: ['w_steam_saber', 'w_searing_axe', 'w_flame_staff', 'a_searing_mail', 'a_searing_legs', 'c_great_heal', 'c_great_mana', 'm_essence', 'a_burning_boots', 'a_burning_cloak', 'a_burning_gloves', 'w_off_moon_totem', 'w_off_mithril_shield'] }),
+        quests: ['q_searing_lava', 'q_searing_elite', 'q_searing_dwarf'], shop: ['w_steam_saber', 'w_searing_axe', 'w_searing_staff', 'w_flame_staff', 'a_searing_mail', 'a_searing_legs', 'c_great_heal', 'c_great_mana', 'm_essence', 'a_burning_boots', 'a_burning_cloak', 'a_burning_gloves', 'w_off_moon_totem', 'w_off_mithril_shield'] }),
     burning: Z('burning', '燃烧平原', '🔥', 'neutral', '42-50',
       '黑石山的阴影笼罩着这片焦土，巨龙与黑石兽人把守着通往黑石深渊的道路。',
       { travel: ['searing', 'winterspring', 'blackrock_depths', 'blasted_lands', 'blackrock_spire', 'molten_core'], monsters: ['burning_whelp', 'burning_orc', 'burning_hound', 'burning_dragon', 'burning_elite'],
-        quests: ['q_burning_dragon', 'q_burning_elite', 'q_burning_hound'], shop: ['w_blackrock_sword', 'w_drake_blade', 'a_blackrock_plate', 'a_blackrock_helm', 'c_super_heal', 'c_super_mana', 'c_master_heal', 'c_master_mana', 'm_crystal', 'a_blasted_ring', 'w_off_sun_totem'] }),
+        quests: ['q_burning_dragon', 'q_burning_elite', 'q_burning_hound'], shop: ['w_blackrock_sword', 'w_brd_staff', 'w_drake_blade', 'a_blackrock_plate', 'a_blackrock_helm', 'c_super_heal', 'c_super_mana', 'c_master_heal', 'c_master_mana', 'm_crystal', 'a_blasted_ring', 'w_off_sun_totem'] }),
     winterspring: Z('winterspring', '冬泉谷', '❄️', 'neutral', '50-58',
       '终年积雪的冰川谷地，冰霜巨人行走在暴风雪中，深冬之影在极光下若隐若现。',
       { travel: ['burning', 'naxxramas', 'felwood', 'azshara'], monsters: ['winter_frostwolf', 'winter_yeti', 'winter_owl', 'winter_giant', 'winter_elite'],
-        quests: ['q_winter_giant', 'q_winter_elite', 'q_winter_owl'], shop: ['w_winter_axe', 'w_arcane_blade', 'w_frost_staff', 'a_winter_cloak', 'a_winter_leather', 'a_winter_gloves', 'tr_naaru_tear', 'c_super_heal', 'c_flask', 'c_ultimate_heal', 'c_ultimate_mana', 'm_crystal', 'a_winter_boots', 'w_off_dark_guard'] }),
+        quests: ['q_winter_giant', 'q_winter_elite', 'q_winter_owl'], shop: ['w_winter_axe', 'w_winter_staff', 'w_arcane_blade', 'w_frost_staff', 'a_winter_cloak', 'a_winter_leather', 'a_winter_gloves', 'tr_naaru_tear', 'c_super_heal', 'c_flask', 'c_ultimate_heal', 'c_ultimate_mana', 'm_crystal', 'a_winter_boots', 'w_off_dark_guard'] }),
     blackrock_depths: Z('blackrock_depths', '黑石深渊', '⛏️', 'neutral', '44-52',
       '黑铁矮人的地下要塞，熔炉的火光映照着千年复仇的执念。',
       { travel: ['burning', 'blackwing_lair'], monsters: [], dungeon: 'blackrock_depths', inn: false,
@@ -734,15 +734,15 @@
     tanaris: Z('tanaris', '塔纳利斯', '🏜️', 'neutral', '34-42',
       '一望无际的金色沙海，巨魔古都祖尔法拉克的废墟在烈日下诉说着古老传说。',
       { travel: ['dustwallow', 'ungoro', 'zulfarrak'], monsters: ['tanaris_vulture', 'tanaris_scorpion', 'tanaris_turtle', 'tanaris_wastewalker', 'tanaris_wasp', 'tanaris_hyena', 'tanaris_elite'],
-        quests: ['q_tanaris_scorpion', 'q_tanaris_elite', 'q_tanaris_turtle'], shop: ['w_steam_saber', 'w_searing_axe', 'w_flame_staff', 'a_searing_mail', 'a_searing_legs', 'c_great_heal', 'c_great_mana', 'm_essence', 'a_desert_ring', 'a_desert_neck', 'a_burning_cloak', 'a_burning_gloves', 'w_off_moon_totem', 'w_off_mithril_shield'] }),
+        quests: ['q_tanaris_scorpion', 'q_tanaris_elite', 'q_tanaris_turtle'], shop: ['w_steam_saber', 'w_searing_axe', 'w_searing_staff', 'w_flame_staff', 'a_searing_mail', 'a_searing_legs', 'c_great_heal', 'c_great_mana', 'm_essence', 'a_desert_ring', 'a_desert_neck', 'a_burning_cloak', 'a_burning_gloves', 'w_off_moon_totem', 'w_off_mithril_shield'] }),
     ungoro: Z('ungoro', '安戈洛环形山', '🦕', 'neutral', '42-50',
       '远古陨石坑中的神秘丛林，恐龙与巨型昆虫横行，奇异的能量涌动在这片土地上。',
       { travel: ['tanaris', 'plaguelands', 'silithus', 'sunken_temple'], monsters: ['ungoro_raptor', 'ungoro_gorilla', 'ungoro_dino', 'ungoro_plant', 'ungoro_elite'],
-        quests: ['q_ungoro_dino', 'q_ungoro_elite', 'q_ungoro_gorilla'], shop: ['w_blackrock_sword', 'w_drake_blade', 'a_blackrock_plate', 'a_blackrock_helm', 'c_super_heal', 'c_super_mana', 'c_master_heal', 'c_master_mana', 'm_crystal'] }),
+        quests: ['q_ungoro_dino', 'q_ungoro_elite', 'q_ungoro_gorilla'], shop: ['w_blackrock_sword', 'w_brd_staff', 'w_drake_blade', 'a_blackrock_plate', 'a_blackrock_helm', 'c_super_heal', 'c_super_mana', 'c_master_heal', 'c_master_mana', 'm_crystal'] }),
     plaguelands: Z('plaguelands', '瘟疫之地', '💀', 'neutral', '50-58',
       '被天灾军团腐蚀的荒芜大地，亡灵游荡于毒雾之中，巫妖之影凝视着每一个入侵者。',
       { travel: ['ungoro', 'scholomance', 'eplaguelands', 'scarlet_monastery'], monsters: ['plague_zombie', 'plague_bat', 'plague_knight', 'plague_abomination', 'plague_elite'],
-        quests: ['q_plague_abom', 'q_plague_elite', 'q_plague_bat'], shop: ['w_winter_axe', 'w_arcane_blade', 'w_frost_staff', 'a_winter_cloak', 'a_winter_leather', 'a_winter_gloves', 'c_super_heal', 'c_flask', 'c_ultimate_heal', 'c_ultimate_mana', 'm_crystal'] }),
+        quests: ['q_plague_abom', 'q_plague_elite', 'q_plague_bat'], shop: ['w_winter_axe', 'w_winter_staff', 'w_arcane_blade', 'w_frost_staff', 'a_winter_cloak', 'a_winter_leather', 'a_winter_gloves', 'c_super_heal', 'c_flask', 'c_ultimate_heal', 'c_ultimate_mana', 'm_crystal'] }),
     zulfarrak: Z('zulfarrak', '祖尔法拉克', '🏺', 'neutral', '36-44',
       '沙怒巨魔的古老都城，被诅咒的木乃伊在断壁残垣间守卫着失落的神器。',
       { travel: ['tanaris'], monsters: [], dungeon: 'zulfarrak', inn: false,
@@ -866,7 +866,7 @@
     a_mail:   IT('a_mail', '锁甲战衣', '🦺', 'chest', 'white', 8, { armor: 26, str: 2, stam: 1 }, { buy: 1600 }),
     a_plate:  IT('a_plate', '精钢板甲', '🛡️', 'chest', 'white', 11, { armor: 42, str: 3, stam: 2 }, { buy: 3200 }),
     a_blue:   IT('a_blue', '夜幕胸甲', '🌑', 'chest', 'blue', 15, { armor: 60, agi: 4, stam: 4 }, { buy: 7200, sell: 3600 }),
-    a_helm:   IT('a_helm', '战士头盔', '🪖', 'head', 'green', 10, { armor: 22, str: 2 }, { buy: 1500 }),
+    a_helm:   IT('a_helm', '战士头盔', '🪖', 'head', 'green', 10, { armor: 22, str: 2, stam: 2 }, { buy: 1500 }),
     a_boots:  IT('a_boots', '旅行皮靴', '🥾', 'boots', 'white', 4, { armor: 8, agi: 1 }, { buy: 500 }),
     a_gloves: IT('a_gloves', '作战手套', '🧤', 'gloves', 'white', 6, { armor: 12, str: 1 }, { buy: 900 }),
     a_legs:   IT('a_legs', '守卫护腿', '👖', 'legs', 'green', 12, { armor: 30, stam: 3, str: 1 }, { buy: 3800 }),
@@ -874,18 +874,20 @@
     a_neck:   IT('a_neck', '铜质项链', '📿', 'neck', 'white', 5, { int: 2 }, { buy: 650 }),
     a_ring:   IT('a_ring', '生命之戒', '💍', 'ring', 'green', 9, { stam: 3 }, { buy: 1400 }),
     /* 消耗品 */
-    c_bread:  IT('c_bread', '魔法面包', '🍞', 'consumable', 'white', 1, {}, { consumable: { heal: 20 }, buy: 25 }),
-    c_feast:  IT('c_feast', '香烤大餐', '🍖', 'consumable', 'green', 8, {}, { consumable: { heal: 70 }, buy: 150 }),
-    c_heal:   IT('c_heal', '治疗药水', '🧪', 'consumable', 'green', 10, {}, { consumable: { heal: 90 }, buy: 350 }),
-    c_mana:   IT('c_mana', '法力药水', '💧', 'consumable', 'green', 10, {}, { consumable: { mana: 90 }, buy: 350 }),
-    c_vital:  IT('c_vital', '活力药水', '⚗️', 'consumable', 'blue', 12, {}, { consumable: { heal: 70, mana: 70 }, buy: 600 }),
+    /* 回复类消耗品:一律按「最大生命/法力的百分比」回复(healPct / manaPct)
+     * ——固定值在高等级会被稀释、在低等级又会被越级嗑药滥用,百分比让每档药水在自己等级段保持同一强度占比。 */
+    c_bread:  IT('c_bread', '魔法面包', '🍞', 'consumable', 'white', 1, {}, { consumable: { healPct: 0.10 }, buy: 25 }),
+    c_feast:  IT('c_feast', '香烤大餐', '🍖', 'consumable', 'green', 8, {}, { consumable: { healPct: 0.20 }, buy: 150 }),
+    c_heal:   IT('c_heal', '治疗药水', '🧪', 'consumable', 'green', 10, {}, { consumable: { healPct: 0.25 }, buy: 350 }),
+    c_mana:   IT('c_mana', '法力药水', '💧', 'consumable', 'green', 10, {}, { consumable: { manaPct: 0.15 }, buy: 350 }),
+    c_vital:  IT('c_vital', '活力药水', '⚗️', 'consumable', 'blue', 12, {}, { consumable: { healPct: 0.15, manaPct: 0.10 }, buy: 600 }),
     /* 盗贼毒药 */
     p_instant:   IT('p_instant', '速效毒药', '💉', 'consumable', 'green', 6, {}, { poison: { type: 'instant', per: 12 }, buy: 220, sell: 60 }),
     p_deadly:    IT('p_deadly', '致命毒药', '🩸', 'consumable', 'green', 8, {}, { poison: { type: 'deadly', per: 10, rounds: 3 }, buy: 280, sell: 75 }),
     p_crippling: IT('p_crippling', '致残毒药', '🕸️', 'consumable', 'green', 7, {}, { poison: { type: 'crippling', pct: 0.2, rounds: 2 }, buy: 250, sell: 65 }),
     /* 新装备 */
     w_warblade:    IT('w_warblade', '战刃', '🗡️', 'weapon', 'blue', 14, { dmg: [22, 34], agi: 5, crit: 0.02 }, { buy: 5200, sell: 2600 }),
-    w_dusk_staff:  IT('w_dusk_staff', '暮影法杖', '🪄', 'weapon', 'green', 13, { dmg: [10, 15], int: 5, spi: 3 }, { buy: 3900, sell: 1900 }),
+    w_dusk_staff:  IT('w_dusk_staff', '暮影法杖', '🪄', 'weapon', 'green', 13, { dmg: [12, 18], int: 5, spi: 3 }, { buy: 3900, sell: 1900 }),
     a_circlet:     IT('a_circlet', '奥术头环', '🪖', 'head', 'green', 9, { armor: 14, int: 3, spi: 2 }, { buy: 1900, sell: 950 }),
     a_steel_boots: IT('a_steel_boots', '钢质战靴', '🥾', 'boots', 'green', 13, { armor: 18, str: 2, stam: 1 }, { buy: 3400, sell: 1700 }),
     a_band:        IT('a_band', '猎风指环', '💍', 'ring', 'green', 10, { agi: 3 }, { buy: 1800, sell: 900 }),
@@ -895,7 +897,7 @@
     tr_boar_talisman: IT('tr_boar_talisman', '野猪之牙护符', '🦷', 'trinket', 'green', 12, { stam: 3, agi: 1 }, { buy: 1800, sell: 900 }),
     tr_might_signet:  IT('tr_might_signet', '猛击徽章', '🛡️', 'trinket', 'green', 18, { str: 4, stam: 2 }, { buy: 4600, sell: 2300 }),
     tr_ember_heart:   IT('tr_ember_heart', '余烬之心', '❤️‍🔥', 'trinket', 'green', 26, { int: 4, spi: 3, crit: 0.02 }, { buy: 9800, sell: 4900 }),
-    tr_lucky_clover:  IT('tr_lucky_clover', '幸运四叶草', '🍀', 'trinket', 'blue', 32, { crit: 0.03 }, { buy: 16000, sell: 8000 }),
+    tr_lucky_clover:  IT('tr_lucky_clover', '幸运四叶草', '🍀', 'trinket', 'blue', 32, { crit: 0.03, stam: 5, agi: 2 }, { buy: 16000, sell: 8000 }),
     tr_imperial_seal: IT('tr_imperial_seal', '统御之印', '👑', 'trinket', 'green', 38, { str: 6, stam: 5, crit: 0.01 }, { buy: 26000, sell: 13000 }),
     tr_abyss_eye:     IT('tr_abyss_eye', '深渊之眼', '👁️', 'trinket', 'blue', 46, { int: 7, spi: 6, crit: 0.02 }, { buy: 40000, sell: 14000 }),
     tr_naaru_tear:    IT('tr_naaru_tear', '纳鲁之泪', '💧', 'trinket', 'blue', 54, { stam: 8, int: 8, crit: 0.02 }, { buy: 64000, sell: 16000 }),
@@ -909,19 +911,23 @@
     bg_traveler: IT('bg_traveler', '旅行者背包', '🧳', 'bag', 'blue', 40, {}, { buy: 12000, sell: 3500, bagSize: 20 }),
     /* ===== 高阶武器 (18-58) ===== */
     w_stv_machete:    IT('w_stv_machete', '荆棘砍刀', '🔪', 'weapon', 'green', 18, { dmg: [26, 40], agi: 4, stam: 2 }, { buy: 7800, sell: 3900 }),
-    w_jungle_staff:   IT('w_jungle_staff', '丛林法杖', '🪄', 'weapon', 'green', 20, { dmg: [12, 18], int: 6, spi: 4 }, { buy: 9200, sell: 4600 }),
+    w_jungle_staff:   IT('w_jungle_staff', '丛林法杖', '🪄', 'weapon', 'green', 20, { dmg: [16, 24], int: 6, spi: 4 }, { buy: 9200, sell: 4600 }),
     w_badlands_hammer: IT('w_badlands_hammer', '荒芜战锤', '🔨', 'weapon', 'green', 26, { dmg: [36, 54], str: 6, stam: 3 }, { buy: 14500, sell: 7200 }),
-    w_grim_staff:     IT('w_grim_staff', '幽暗法杖', '🪄', 'weapon', 'green', 28, { dmg: [15, 22], int: 8, spi: 5 }, { buy: 16500, sell: 8200 }),
+    w_grim_staff:     IT('w_grim_staff', '幽暗法杖', '🪄', 'weapon', 'green', 28, { dmg: [22, 30], int: 8, spi: 5 }, { buy: 16500, sell: 8200 }),
     w_steam_saber:    IT('w_steam_saber', '蒸汽之刃', '🗡️', 'weapon', 'blue', 30, { dmg: [40, 60], agi: 8, crit: 0.02 }, { buy: 26000, sell: 13000 }),
     w_searing_axe:    IT('w_searing_axe', '灼热战斧', '🪓', 'weapon', 'green', 34, { dmg: [48, 72], str: 8, stam: 4 }, { buy: 23500, sell: 11700 }),
-    w_flame_staff:    IT('w_flame_staff', '烈焰法杖', '🪄', 'weapon', 'green', 36, { dmg: [18, 26], int: 10, spi: 6 }, { buy: 26000, sell: 13000 }),
+    w_flame_staff:    IT('w_flame_staff', '烈焰法杖', '🪄', 'weapon', 'green', 36, { dmg: [28, 40], int: 10, spi: 6 }, { buy: 26000, sell: 13000 }),
     w_blackrock_sword: IT('w_blackrock_sword', '黑石巨剑', '⚔️', 'weapon', 'blue', 40, { dmg: [56, 84], str: 10, stam: 6 }, { buy: 42000, sell: 21000 }),
     w_drake_blade:    IT('w_drake_blade', '龙鳞之刃', '🐉', 'weapon', 'blue', 44, { dmg: [62, 94], agi: 10, crit: 0.03 }, { buy: 52000, sell: 18200 }),
-    w_frost_staff:    IT('w_frost_staff', '冰霜法杖', '❄️', 'weapon', 'green', 46, { dmg: [22, 32], int: 12, spi: 8 }, { buy: 38000, sell: 13300 }),
+    w_frost_staff:    IT('w_frost_staff', '冰霜法杖', '❄️', 'weapon', 'green', 46, { dmg: [38, 52], int: 12, spi: 8 }, { buy: 38000, sell: 13300 }),
     w_winter_axe:     IT('w_winter_axe', '冬泉战斧', '🪓', 'weapon', 'blue', 50, { dmg: [70, 106], str: 12, stam: 8 }, { buy: 68000, sell: 23800 }),
     w_arcane_blade:   IT('w_arcane_blade', '奥术巨刃', '✨', 'weapon', 'epic', 54, { dmg: [80, 120], str: 14, agi: 6, crit: 0.03 }, { buy: 95000, sell: 23750 }),
     w_silithus_scythe: IT('w_silithus_scythe', '暮光收割者', '☠️', 'weapon', 'epic', 56, { dmg: [85, 128], agi: 14, crit: 0.04, lifesteal: 0.05 }, { buy: 105000, sell: 26250 }),
-    w_ice_guardian:   IT('w_ice_guardian', '冰封守护者', '🧊', 'weapon', 'epic', 58, { dmg: [90, 135], int: 16, spi: 10, crit: 0.03 }, { buy: 120000, sell: 29000 }),
+    w_ice_guardian:   IT('w_ice_guardian', '冰封守护者', '🧊', 'weapon', 'epic', 58, { dmg: [84, 122], int: 16, spi: 10, crit: 0.03 }, { buy: 120000, sell: 29000 }),
+    /* ===== 中期法系武器补充(31-55 段法杖空档:每 5 级段都有可换的法杖) ===== */
+    w_searing_staff:  IT('w_searing_staff', '灼热法杖', '🪄', 'weapon', 'green', 33, { dmg: [24, 36], int: 9, spi: 6 }, { buy: 21000, sell: 5250 }),
+    w_brd_staff:      IT('w_brd_staff', '黑铁符文法杖', '🪄', 'weapon', 'blue', 42, { dmg: [34, 48], int: 11, spi: 7, crit: 0.01 }, { buy: 39000, sell: 9750 }),
+    w_winter_staff:   IT('w_winter_staff', '严冬法杖', '🪄', 'weapon', 'blue', 53, { dmg: [46, 60], int: 13, spi: 9, crit: 0.01 }, { buy: 66000, sell: 16500 }),
     /* ===== 高阶防具 (18-58) ===== */
     a_stv_cloak:      IT('a_stv_cloak', '丛林披风', '🧣', 'cloak', 'green', 18, { armor: 14, agi: 3 }, { buy: 5600, sell: 2800 }),
     a_stv_helm:       IT('a_stv_helm', '猎头者头盔', '🪖', 'head', 'green', 20, { armor: 30, agi: 4, stam: 2 }, { buy: 8600, sell: 4300 }),
@@ -939,12 +945,12 @@
     a_marsh_chest:    IT('a_marsh_chest', '尘泥鳞甲', '🛡️', 'chest', 'green', 28, { armor: 96, str: 5, stam: 4 }, { buy: 9100, sell: 4500 }, { setId: 's_badlands_wall' }),
     a_marsh_boots:    IT('a_marsh_boots', '沼泽皮靴', '🥾', 'boots', 'green', 24, { armor: 22, agi: 4, stam: 1 }, { buy: 6100, sell: 3000 }),
     a_marsh_cloak:    IT('a_marsh_cloak', '尘泥斗篷', '🧥', 'cloak', 'blue', 26, { armor: 16, int: 4, spi: 3 }, { buy: 8900, sell: 4400 }, { setId: 's_marsh_arcane' }),
-    a_stv_ring:       IT('a_stv_ring', '荆棘谷猎戒', '💍', 'ring', 'blue', 25, { agi: 4, crit: 0.02 }, { buy: 9200, sell: 4600 }, { setId: 's_stv_hunter' }),
+    a_stv_ring:       IT('a_stv_ring', '荆棘谷猎戒', '💍', 'ring', 'blue', 25, { agi: 5, crit: 0.02, stam: 2 }, { buy: 9200, sell: 4600 }, { setId: 's_stv_hunter' }),
     a_badlands_ring:  IT('a_badlands_ring', '荒芜之环', '💍', 'ring', 'green', 27, { stam: 5, str: 2 }, { buy: 6300, sell: 3100 }),
     a_marsh_neck:     IT('a_marsh_neck', '沼泽护符', '📿', 'neck', 'green', 29, { spi: 6, int: 3 }, { buy: 7300, sell: 3600 }, { setId: 's_marsh_arcane' }),
     tr_stv_medallion: IT('tr_stv_medallion', '荆棘谷勇士徽章', '🎖️', 'trinket', 'blue', 26, { str: 5, stam: 4, crit: 0.01 }, { buy: 12100, sell: 6000 }, { setId: 's_badlands_wall' }),
     /* ===== 中期套装补充(法系 build) ===== */
-    w_marsh_scepter:  IT('w_marsh_scepter', '尘泥秘法杖', '🪄', 'weapon', 'blue', 28, { dmg: [18, 26], int: 9, spi: 5 }, { buy: 19500, sell: 9700 }, { setId: 's_marsh_arcane' }),
+    w_marsh_scepter:  IT('w_marsh_scepter', '尘泥秘法杖', '🪄', 'weapon', 'blue', 28, { dmg: [24, 34], int: 9, spi: 5 }, { buy: 19500, sell: 9700 }, { setId: 's_marsh_arcane' }),
     a_marsh_robes:    IT('a_marsh_robes', '尘泥法袍', '👘', 'chest', 'blue', 27, { armor: 42, int: 8, spi: 5 }, { buy: 12500, sell: 6200 }, { setId: 's_marsh_arcane' }),
     a_marsh_cord_legs: IT('a_marsh_cord_legs', '尘泥魔纹腿', '👖', 'legs', 'green', 26, { armor: 34, int: 6, spi: 4 }, { buy: 8500, sell: 4200 }, { setId: 's_marsh_arcane' }),
     a_searing_mail:   IT('a_searing_mail', '灼热锁甲', '🦺', 'chest', 'green', 34, { armor: 120, str: 6, stam: 5 }, { buy: 19800, sell: 9900 }),
@@ -960,22 +966,22 @@
     a_plague_cloak:   IT('a_plague_cloak', '瘟疫披风', '🧣', 'cloak', 'blue', 56, { armor: 30, stam: 8, dodge: 0.01 }, { buy: 42000, sell: 10500 }),
     a_emperor_plate:  IT('a_emperor_plate', '帝王板甲', '🛡️', 'chest', 'epic', 58, { armor: 220, str: 12, stam: 10 }, { buy: 95000, sell: 23000 }),
     /* ===== 副本专属装备 (19-60) ===== */
-    w_arugal_staff:   IT('w_arugal_staff', '阿鲁高的巫术法杖', '🪄', 'weapon', 'blue', 24, { dmg: [18, 26], int: 7, spi: 5, crit: 0.02 }, { sell: 7800 }),
+    w_arugal_staff:   IT('w_arugal_staff', '阿鲁高的巫术法杖', '🪄', 'weapon', 'blue', 24, { dmg: [22, 30], int: 7, spi: 5, crit: 0.02 }, { sell: 7800 }),
     a_uld_plate:      IT('a_uld_plate', '阿扎达斯石板甲', '🛡️', 'chest', 'blue', 34, { armor: 110, str: 7, stam: 5 }, { sell: 15000 }),
     a_theradras_crown: IT('a_theradras_crown', '瑟莱德丝的翡翠之冠', '👑', 'head', 'blue', 38, { armor: 78, int: 7, spi: 5, crit: 0.02 }, { sell: 18500 }),
     w_gandling_book:  IT('w_gandling_book', '加丁的黑暗密典', '📖', 'offhand', 'blue', 57, { int: 12, spi: 8, crit: 0.03 }, { sell: 21000 }),
     tr_kelthuzad_heart: IT('tr_kelthuzad_heart', '克尔苏加德的冰霜之心', '❄️', 'trinket', 'epic', 60, { int: 14, spi: 10, crit: 0.03 }, { sell: 26000 }),
     /* ===== 高阶药水 ===== */
-    c_great_heal:     IT('c_great_heal', '强效治疗药水', '🧪', 'consumable', 'green', 20, {}, { consumable: { heal: 200 }, buy: 1200, sell: 300 }),
-    c_great_mana:     IT('c_great_mana', '强效法力药水', '💧', 'consumable', 'green', 20, {}, { consumable: { mana: 200 }, buy: 1200, sell: 300 }),
-    c_super_heal:     IT('c_super_heal', '超级治疗药水', '🧪', 'consumable', 'blue', 35, {}, { consumable: { heal: 450 }, buy: 3200, sell: 800 }),
-    c_super_mana:     IT('c_super_mana', '超级法力药水', '💧', 'consumable', 'blue', 35, {}, { consumable: { mana: 450 }, buy: 3200, sell: 800 }),
-    c_flask:          IT('c_flask', '全能药水', '⚗️', 'consumable', 'epic', 45, {}, { consumable: { heal: 300, mana: 300 }, buy: 7000, sell: 1800 }),
-    c_master_heal:    IT('c_master_heal', '大师治疗药水', '🧪', 'consumable', 'blue', 50, {}, { consumable: { heal: 750 }, buy: 6500, sell: 1600 }),
-    c_master_mana:    IT('c_master_mana', '大师法力药水', '💧', 'consumable', 'blue', 50, {}, { consumable: { mana: 750 }, buy: 6500, sell: 1600 }),
-    c_ultimate_heal:  IT('c_ultimate_heal', '终极治疗药水', '🧪', 'consumable', 'blue', 55, {}, { consumable: { heal: 1200 }, buy: 10500, sell: 2600 }),
-    c_ultimate_mana:  IT('c_ultimate_mana', '终极法力药水', '💧', 'consumable', 'blue', 55, {}, { consumable: { mana: 1200 }, buy: 10500, sell: 2600 }),
-    c_eternal_flask:  IT('c_eternal_flask', '永恒圣水', '⚗️', 'consumable', 'epic', 55, {}, { consumable: { heal: 700, mana: 700 }, buy: 16000, sell: 4000 }),
+    c_great_heal:     IT('c_great_heal', '强效治疗药水', '🧪', 'consumable', 'green', 20, {}, { consumable: { healPct: 0.30 }, buy: 1200, sell: 300 }),
+    c_great_mana:     IT('c_great_mana', '强效法力药水', '💧', 'consumable', 'green', 20, {}, { consumable: { manaPct: 0.20 }, buy: 1200, sell: 300 }),
+    c_super_heal:     IT('c_super_heal', '超级治疗药水', '🧪', 'consumable', 'blue', 35, {}, { consumable: { healPct: 0.40 }, buy: 3200, sell: 800 }),
+    c_super_mana:     IT('c_super_mana', '超级法力药水', '💧', 'consumable', 'blue', 35, {}, { consumable: { manaPct: 0.30 }, buy: 3200, sell: 800 }),
+    c_flask:          IT('c_flask', '全能药水', '⚗️', 'consumable', 'epic', 45, {}, { consumable: { healPct: 0.25, manaPct: 0.15 }, buy: 7000, sell: 1800 }),
+    c_master_heal:    IT('c_master_heal', '大师治疗药水', '🧪', 'consumable', 'blue', 50, {}, { consumable: { healPct: 0.50 }, buy: 6500, sell: 1600 }),
+    c_master_mana:    IT('c_master_mana', '大师法力药水', '💧', 'consumable', 'blue', 50, {}, { consumable: { manaPct: 0.40 }, buy: 6500, sell: 1600 }),
+    c_ultimate_heal:  IT('c_ultimate_heal', '终极治疗药水', '🧪', 'consumable', 'blue', 55, {}, { consumable: { healPct: 0.60 }, buy: 10500, sell: 2600 }),
+    c_ultimate_mana:  IT('c_ultimate_mana', '终极法力药水', '💧', 'consumable', 'blue', 55, {}, { consumable: { manaPct: 0.55 }, buy: 10500, sell: 2600 }),
+    c_eternal_flask:  IT('c_eternal_flask', '永恒圣水', '⚗️', 'consumable', 'epic', 55, {}, { consumable: { healPct: 0.45, manaPct: 0.35 }, buy: 16000, sell: 4000 }),
     /* ===== 战斗增益卷轴(战斗中免费使用,不占回合) ===== */
     s_force:          IT('s_force', '力量卷轴', '📜', 'consumable', 'green', 10, {}, { scroll: { name: '力量祝福', key: 'sc_atk', rounds: 5, buff: { atkPct: 0.2 } }, buy: 400, sell: 80 }),
     s_protect:        IT('s_protect', '保护卷轴', '🛡️', 'consumable', 'green', 12, {}, { scroll: { name: '守护祝福', key: 'sc_armor', rounds: 5, buff: { armorPct: 0.3 } }, buy: 500, sell: 100 }),
@@ -985,41 +991,59 @@
     s_mana:           IT('s_mana', '法力卷轴', '💧', 'consumable', 'green', 12, {}, { scroll: { name: '魔力涌动', key: 'sc_mana', manaPct: 0.3 }, buy: 500, sell: 100 }),
     /* ===== 紫色/橙色传说装备 (30-60) ===== */
     a_titan_guard:    IT('a_titan_guard', '泰坦守护者', '🏛️', 'chest', 'epic', 36, { armor: 130, str: 8, stam: 7 }, { sell: 20000 }),
-    w_verdant_rod:    IT('w_verdant_rod', '翡翠圣杖', '🪄', 'weapon', 'epic', 40, { dmg: [26, 36], int: 11, spi: 8, crit: 0.03 }, { sell: 26000 }),
+    w_verdant_rod:    IT('w_verdant_rod', '翡翠圣杖', '🪄', 'weapon', 'epic', 40, { dmg: [34, 46], int: 11, spi: 8, crit: 0.03 }, { sell: 26000 }),
     a_necropolis_plate: IT('a_necropolis_plate', '天灾板甲', '⚰️', 'chest', 'epic', 57, { armor: 210, str: 11, stam: 9 }, { sell: 34000 }),
-    w_thunderfury:    IT('w_thunderfury', '雷霆之怒', '⚡', 'weapon', 'legendary', 58, { dmg: [88, 132], agi: 16, crit: 0.06 }, { sell: 42500 }),
-    w_sulfuras:       IT('w_sulfuras', '萨弗拉斯之锤', '🔨', 'weapon', 'legendary', 59, { dmg: [92, 138], str: 17, crit: 0.04 }, { sell: 44000 }),
-    w_ashbringer:     IT('w_ashbringer', '灰烬使者', '🔥', 'weapon', 'legendary', 60, { dmg: [95, 142], str: 16, stam: 10, crit: 0.05, lifesteal: 0.05 }, { sell: 48000 }),
-    w_frostmourne:    IT('w_frostmourne', '霜之哀伤', '❄️', 'weapon', 'legendary', 60, { dmg: [100, 150], str: 14, agi: 14, crit: 0.06, lifesteal: 0.08 }, { sell: 60000 }),
+    // 等级上限提到 70 后,外域蓝装会把「传说武器必须领先同线非传说 ≥1.2× 引擎战力」挤到临界,
+    // 故经典传说武器的伤害/属性随外域版本同步上调(伤害曲线每级涨幅仍 ≤60%,不产生断崖)。
+    w_thunderfury:    IT('w_thunderfury', '雷霆之怒', '⚡', 'weapon', 'legendary', 58, { dmg: [136, 200], agi: 42, crit: 0.11, stam: 24 }, { sell: 68000 }),
+    w_sulfuras:       IT('w_sulfuras', '萨弗拉斯之锤', '🔨', 'weapon', 'legendary', 59, { dmg: [156, 228], str: 26, crit: 0.05 }, { sell: 70000 }),
+    w_ashbringer:     IT('w_ashbringer', '灰烬使者', '🔥', 'weapon', 'legendary', 60, { dmg: [158, 232], str: 24, stam: 14, crit: 0.06, lifesteal: 0.06 }, { sell: 74000 }),
+    w_frostmourne:    IT('w_frostmourne', '霜之哀伤', '❄️', 'weapon', 'legendary', 60, { dmg: [164, 236], str: 22, agi: 20, crit: 0.07, lifesteal: 0.08 }, { sell: 88000 }),
     /* 世界首领专属稀有装备 */
-    w_kazzak_blade:   IT('w_kazzak_blade', '卡扎克之刃', '🗡️', 'weapon', 'legendary', 60, { dmg: [90, 124], str: 15, stam: 8, crit: 0.03 }, { sell: 45000 }),
+    w_kazzak_blade:   IT('w_kazzak_blade', '卡扎克之刃', '🗡️', 'weapon', 'legendary', 60, { dmg: [160, 232], str: 24, stam: 12, crit: 0.05 }, { sell: 72000 }),
+    w_atiesh:         IT('w_atiesh', '阿泰丝·守护者之杖', '🔮', 'weapon', 'legendary', 60, { dmg: [122, 180], int: 24, spi: 16, crit: 0.04 }, { sell: 86000 }, { setId: 's_oldgod' }),
     tr_abyssal_signet: IT('tr_abyssal_signet', '深渊徽记', '💀', 'trinket', 'epic', 60, { str: 9, stam: 6, crit: 0.03 }, { sell: 21000 }),
     a_emerald_drake_helm: IT('a_emerald_drake_helm', '翡翠龙鳞之盔', '🐉', 'head', 'epic', 58, { armor: 82, int: 10, spi: 6, crit: 0.02 }, { sell: 19000 }),
-    w_azure_staff:    IT('w_azure_staff', '艾萨拉寒冰法杖', '🧊', 'weapon', 'epic', 58, { dmg: [66, 92], int: 13, spi: 6, crit: 0.02 }, { sell: 22500 }),
+    w_azure_staff:    IT('w_azure_staff', '艾萨拉寒冰法杖', '🧊', 'weapon', 'epic', 58, { dmg: [76, 106], int: 15, spi: 11, crit: 0.03 }, { sell: 22500 }),
+    /* ===== 传说防具与首饰(橙色不再只是武器:泰坦铸卫 · 物理/敏捷 | 上古低语 · 法系) ===== */
+    a_titan_crown:     IT('a_titan_crown', '泰坦守望之冠', '👑', 'head', 'legendary', 60, { armor: 110, str: 13, agi: 11, stam: 11, crit: 0.03 }, { sell: 46000 }, { setId: 's_titan' }),
+    a_titan_plate:     IT('a_titan_plate', '泰坦铸卫胸甲', '🛡️', 'chest', 'legendary', 60, { armor: 270, str: 18, agi: 10, stam: 14, crit: 0.02 }, { sell: 52000 }, { setId: 's_titan' }),
+    a_titan_gauntlets: IT('a_titan_gauntlets', '泰坦铸卫护手', '🧤', 'gloves', 'legendary', 60, { armor: 150, str: 13, agi: 10, stam: 12 }, { sell: 38000 }, { setId: 's_titan' }),
+    a_titan_leggings:  IT('a_titan_leggings', '泰坦铸卫护腿', '👖', 'legs', 'legendary', 60, { armor: 185, str: 13, agi: 9, stam: 11 }, { sell: 42000 }, { setId: 's_titan' }),
+    a_titan_boots:     IT('a_titan_boots', '泰坦铸卫长靴', '🥾', 'boots', 'legendary', 60, { armor: 135, str: 10, agi: 8, stam: 11 }, { sell: 34000 }, { setId: 's_titan' }),
+    a_titan_cloak:     IT('a_titan_cloak', '泰坦披风', '🧣', 'cloak', 'legendary', 60, { armor: 62, agi: 11, stam: 5, dodge: 0.015 }, { sell: 30000 }, { setId: 's_titan' }),
+    a_titan_ring:      IT('a_titan_ring', '泰坦之环', '💍', 'ring', 'legendary', 60, { stam: 14, str: 10, agi: 9, crit: 0.025 }, { sell: 32000 }, { setId: 's_titan' }),
+    a_titan_neck:      IT('a_titan_neck', '泰坦守望者坠饰', '📿', 'neck', 'legendary', 60, { stam: 8, str: 6, agi: 6, crit: 0.01 }, { sell: 31000 }, { setId: 's_titan' }),
+    w_off_titan_wall:  IT('w_off_titan_wall', '泰坦壁垒', '🛡️', 'offhand', 'legendary', 60, { armor: 36, stam: 13, str: 9, dodge: 0.015 }, { sell: 36000 }, { setId: 's_titan' }),
+    a_oldgod_hood:     IT('a_oldgod_hood', '上古低语兜帽', '🪖', 'head', 'legendary', 60, { armor: 96, int: 20, spi: 13, stam: 6, crit: 0.03 }, { sell: 44000 }, { setId: 's_oldgod' }),
+    a_oldgod_robe:     IT('a_oldgod_robe', '上古低语法袍', '👘', 'chest', 'legendary', 60, { armor: 180, int: 31, spi: 20, stam: 10, crit: 0.03 }, { sell: 50000 }, { setId: 's_oldgod' }),
+    a_oldgod_gloves:   IT('a_oldgod_gloves', '上古低语护手', '🧤', 'gloves', 'legendary', 60, { armor: 126, int: 15, spi: 10, stam: 5, crit: 0.02 }, { sell: 37000 }, { setId: 's_oldgod' }),
+    a_oldgod_legs:     IT('a_oldgod_legs', '上古低语护腿', '👖', 'legs', 'legendary', 60, { armor: 196, int: 25, spi: 18, stam: 8, crit: 0.03 }, { sell: 41000 }, { setId: 's_oldgod' }),
+    a_oldgod_boots:    IT('a_oldgod_boots', '上古低语之靴', '🥾', 'boots', 'legendary', 60, { armor: 130, int: 14, spi: 10, stam: 5 }, { sell: 33000 }, { setId: 's_oldgod' }),
     /* 60 级高级装备(新区域/新副本) */
-    w_doom_cleaver:   IT('w_doom_cleaver', '末日战斧', '🪓', 'weapon', 'blue', 56, { dmg: [64, 90], str: 9, stam: 5 }, { buy: 52000, sell: 13000 }),
-    w_silithid_stinger: IT('w_silithid_stinger', '其拉毒刺', '🐝', 'weapon', 'blue', 58, { dmg: [70, 96], agi: 10, crit: 0.02 }, { buy: 64000, sell: 16000 }),
-    w_necropolis_staff: IT('w_necropolis_staff', '天灾法杖', '🪄', 'weapon', 'blue', 58, { dmg: [58, 82], int: 10, spi: 6 }, { buy: 60000, sell: 15000 }),
+    w_doom_cleaver:   IT('w_doom_cleaver', '末日战斧', '🪓', 'weapon', 'blue', 56, { dmg: [74, 106], str: 12, stam: 8, crit: 0.01 }, { buy: 52000, sell: 13000 }),
+    w_silithid_stinger: IT('w_silithid_stinger', '其拉毒刺', '🐝', 'weapon', 'blue', 58, { dmg: [76, 108], agi: 11, crit: 0.02 }, { buy: 64000, sell: 16000 }),
+    w_necropolis_staff: IT('w_necropolis_staff', '天灾法杖', '🪄', 'weapon', 'blue', 58, { dmg: [58, 82], int: 15, spi: 9 }, { buy: 60000, sell: 15000 }),
     a_blasted_plate:  IT('a_blasted_plate', '诅咒板甲', '⚰️', 'chest', 'blue', 52, { armor: 175, str: 8, stam: 6 }, { buy: 48000, sell: 12000 }),
     a_felwood_robe:   IT('a_felwood_robe', '费伍德法袍', '🧥', 'chest', 'blue', 54, { armor: 120, int: 9, spi: 7 }, { buy: 52000, sell: 13000 }),
     a_silithid_chitin: IT('a_silithid_chitin', '甲虫壳胸甲', '🪲', 'chest', 'blue', 58, { armor: 195, stam: 9, str: 7 }, { buy: 68000, sell: 17000 }),
     a_epl_helm:       IT('a_epl_helm', '天灾颅盔', '💀', 'head', 'blue', 58, { armor: 85, str: 8, stam: 5 }, { buy: 56000, sell: 14000 }),
-    tr_blasted_seal:  IT('tr_blasted_seal', '诅咒之印', '🔮', 'trinket', 'blue', 52, { str: 6, stam: 5 }, { buy: 40000, sell: 10000 }),
-    w_drakkisath_axe: IT('w_drakkisath_axe', '达基萨斯战斧', '🪓', 'weapon', 'epic', 57, { dmg: [78, 108], str: 12, crit: 0.03 }, { sell: 24000 }),
+    tr_blasted_seal:  IT('tr_blasted_seal', '诅咒之印', '🔮', 'trinket', 'blue', 52, { str: 7, stam: 6, crit: 0.01 }, { buy: 40000, sell: 10000 }),
+    w_drakkisath_axe: IT('w_drakkisath_axe', '达基萨斯战斧', '🪓', 'weapon', 'epic', 57, { dmg: [86, 118], str: 13, crit: 0.04 }, { sell: 24000 }),
     w_rivendare_blade: IT('w_rivendare_blade', '瑞文戴尔之剑', '🗡️', 'weapon', 'epic', 58, { dmg: [82, 112], str: 11, stam: 7, crit: 0.03 }, { sell: 26000 }),
-    w_immolthar_staff: IT('w_immolthar_staff', '伊莫塔尔法杖', '🪄', 'weapon', 'epic', 56, { dmg: [60, 84], int: 11, spi: 7, crit: 0.02 }, { sell: 22000 }),
-    a_drakkisath_plate: IT('a_drakkisath_plate', '达基萨斯板甲', '🛡️', 'chest', 'epic', 57, { armor: 200, str: 10, stam: 8 }, { sell: 25000 }),
+    w_immolthar_staff: IT('w_immolthar_staff', '伊莫塔尔法杖', '🪄', 'weapon', 'epic', 56, { dmg: [60, 84], int: 14, spi: 8, crit: 0.02 }, { sell: 22000 }),
+    a_drakkisath_plate: IT('a_drakkisath_plate', '达基萨斯板甲', '🛡️', 'chest', 'epic', 57, { armor: 205, str: 10, stam: 9, crit: 0.01 }, { sell: 25000 }),
     a_rivendare_helm: IT('a_rivendare_helm', '瑞文戴尔之盔', '🎩', 'head', 'epic', 58, { armor: 95, str: 9, stam: 6 }, { sell: 24000 }),
     tr_immolthar_eye: IT('tr_immolthar_eye', '伊莫塔尔之眼', '👁️', 'trinket', 'epic', 56, { int: 10, spi: 5, crit: 0.03 }, { sell: 21000 }),
-    w_ragnaros_hand:  IT('w_ragnaros_hand', '拉格纳罗斯之手', '🔥', 'weapon', 'legendary', 60, { dmg: [98, 142], str: 18, crit: 0.05 }, { sell: 55000 }, { setId: 's_mc' }),
-    w_nefarian_blade: IT('w_nefarian_blade', '奈法利安之刃', '🦇', 'weapon', 'legendary', 60, { dmg: [95, 138], agi: 17, crit: 0.06 }, { sell: 52500 }, { setId: 's_bwl' }),
-    a_onyxia_scale:   IT('a_onyxia_scale', '奥妮克希亚鳞甲', '🐲', 'chest', 'epic', 60, { armor: 215, str: 12, stam: 9 }, { sell: 31000 }, { setId: 's_onyx' }),
+    w_ragnaros_hand:  IT('w_ragnaros_hand', '拉格纳罗斯之手', '🔥', 'weapon', 'legendary', 60, { dmg: [162, 234], str: 26, crit: 0.06 }, { sell: 76000 }, { setId: 's_mc' }),
+    w_nefarian_blade: IT('w_nefarian_blade', '奈法利安之刃', '🦇', 'weapon', 'legendary', 60, { dmg: [168, 242], agi: 30, crit: 0.08 }, { sell: 74000 }, { setId: 's_bwl' }),
+    a_onyxia_scale:   IT('a_onyxia_scale', '奥妮克希亚鳞甲', '🐲', 'chest', 'epic', 60, { armor: 230, str: 13, stam: 10, crit: 0.01 }, { sell: 31000 }, { setId: 's_onyx' }),
     tr_hakkar_heart:  IT('tr_hakkar_heart', '哈卡之心', '❤️', 'trinket', 'epic', 60, { stam: 12, crit: 0.03 }, { sell: 29000 }, { setId: 's_zg' }),
     a_cthun_armor:    IT('a_cthun_armor', '克苏恩之躯', '🫀', 'chest', 'epic', 60, { armor: 225, int: 14, spi: 8 }, { sell: 34000 }),
-    tr_cthun_eye:     IT('tr_cthun_eye', '克苏恩之眼', '👁️', 'trinket', 'legendary', 60, { int: 15, spi: 8, crit: 0.05 }, { sell: 60000 }, { setId: 's_aq' }),
+    tr_cthun_eye:     IT('tr_cthun_eye', '克苏恩之眼', '👁️', 'trinket', 'legendary', 60, { int: 28, spi: 20, crit: 0.1 }, { sell: 60000 }, { setId: 's_aq' }),
 
     /* ===== 深入敌营 · 限定装备(敌方主城突袭奖励) ===== */
-    w_royal_blade:    IT('w_royal_blade', '皇家裁决之剑', '⚔️', 'weapon', 'epic', 42, { dmg: [56, 84], str: 9, crit: 0.02 }, { sell: 19000 }),
+    w_royal_blade:    IT('w_royal_blade', '皇家裁决之剑', '⚔️', 'weapon', 'epic', 42, { dmg: [58, 86], str: 9, crit: 0.03 }, { sell: 19000 }),
     a_royal_plate:    IT('a_royal_plate', '皇家卫队胸甲', '🛡️', 'chest', 'epic', 42, { armor: 168, str: 10, stam: 8 }, { sell: 15000 }),
     tr_royal_signet:  IT('tr_royal_signet', '暴风城皇家徽记', '🏅', 'trinket', 'epic', 42, { int: 8, spi: 6, crit: 0.02 }, { sell: 12000 }),
     w_warchief_axe:   IT('w_warchief_axe', '大酋长战斧', '🪓', 'weapon', 'epic', 42, { dmg: [58, 86], str: 10, crit: 0.02 }, { sell: 19000 }),
@@ -1027,14 +1051,14 @@
     tr_warchief_totem: IT('tr_warchief_totem', '大酋长战旗', '🚩', 'trinket', 'epic', 42, { agi: 8, stam: 6, crit: 0.02 }, { sell: 12000 }),
 
     /* ===== 套装装备(T1-T4) ===== */
-    a_mc_crown:       IT('a_mc_crown', '熔火领主之冠', '👑', 'head', 'epic', 60, { armor: 92, str: 9, stam: 7, crit: 0.01 }, { sell: 26000 }, { setId: 's_mc' }),
+    a_mc_crown:       IT('a_mc_crown', '熔火领主之冠', '👑', 'head', 'epic', 60, { armor: 92, str: 9, stam: 7, crit: 0.02 }, { sell: 26000 }, { setId: 's_mc' }),
     a_mc_plate:       IT('a_mc_plate', '熔火之心胸甲', '🛡️', 'chest', 'epic', 60, { armor: 245, str: 13, stam: 10 }, { sell: 32000 }, { setId: 's_mc' }),
     a_mc_gauntlets:   IT('a_mc_gauntlets', '熔火之拳', '🧤', 'gloves', 'epic', 60, { armor: 132, str: 8, agi: 6, stam: 5 }, { sell: 21500 }, { setId: 's_mc' }),
-    a_mc_leggings:    IT('a_mc_leggings', '熔火护腿', '👖', 'legs', 'epic', 60, { armor: 168, str: 10, stam: 8 }, { sell: 23500 }, { setId: 's_mc' }),
+    a_mc_leggings:    IT('a_mc_leggings', '熔火护腿', '👖', 'legs', 'epic', 60, { armor: 168, str: 10, stam: 8, crit: 0.01 }, { sell: 23500 }, { setId: 's_mc' }),
     a_mc_boots:       IT('a_mc_boots', '熔火长靴', '🥾', 'boots', 'epic', 60, { armor: 118, stam: 7, int: 5, spi: 4 }, { sell: 19500 }, { setId: 's_mc' }),
     a_bwl_crown:      IT('a_bwl_crown', '黑翼王冠', '👑', 'head', 'epic', 60, { armor: 96, agi: 10, stam: 7, crit: 0.02 }, { sell: 28000 }, { setId: 's_bwl' }),
     a_bwl_plate:      IT('a_bwl_plate', '黑翼板甲', '🛡️', 'chest', 'epic', 60, { armor: 250, agi: 9, str: 9, stam: 8 }, { sell: 33000 }, { setId: 's_bwl' }),
-    a_bwl_gauntlets:  IT('a_bwl_gauntlets', '黑翼护手', '🧤', 'gloves', 'epic', 60, { armor: 136, agi: 8, crit: 0.02 }, { sell: 22500 }, { setId: 's_bwl' }),
+    a_bwl_gauntlets:  IT('a_bwl_gauntlets', '黑翼护手', '🧤', 'gloves', 'epic', 60, { armor: 136, agi: 12, stam: 7, crit: 0.02 }, { sell: 22500 }, { setId: 's_bwl' }),
     a_bwl_leggings:   IT('a_bwl_leggings', '黑翼护腿', '👖', 'legs', 'epic', 60, { armor: 172, agi: 9, stam: 7 }, { sell: 24500 }, { setId: 's_bwl' }),
     a_bwl_boots:      IT('a_bwl_boots', '黑翼长靴', '🥾', 'boots', 'epic', 60, { armor: 122, agi: 7, stam: 5 }, { sell: 20500 }, { setId: 's_bwl' }),
     a_onyx_crown:     IT('a_onyx_crown', '奥妮克希亚之冠', '👑', 'head', 'epic', 60, { armor: 98, str: 10, stam: 8, crit: 0.01 }, { sell: 29000 }, { setId: 's_onyx' }),
@@ -1052,7 +1076,7 @@
     a_aq_leggings:    IT('a_aq_leggings', '安其拉护腿', '👖', 'legs', 'epic', 60, { armor: 176, stam: 10, int: 8 }, { sell: 25500 }, { setId: 's_aq' }),
     a_aq_boots:       IT('a_aq_boots', '安其拉远征靴', '🥾', 'boots', 'epic', 60, { armor: 126, stam: 8, spi: 5 }, { sell: 21500 }, { setId: 's_aq' }),
     /* ===== 新增 8 副本 Boss 掉落 ===== */
-    w_rfc_ritual_dagger: IT('w_rfc_ritual_dagger', '怒焰仪式之刃', '🔪', 'weapon', 'green', 16, { dmg: [24, 36], agi: 3, stam: 2 }, { sell: 3200 }),
+    w_rfc_ritual_dagger: IT('w_rfc_ritual_dagger', '怒焰仪式之刃', '🔪', 'weapon', 'green', 16, { dmg: [26, 38], agi: 4, stam: 2 }, { sell: 3200 }),
     w_skd_shiv:         IT('w_skd_shiv', '暗巷刺刀', '🗡️', 'weapon', 'blue', 26, { dmg: [36, 54], agi: 6, crit: 0.02 }, { sell: 6800 }),
     a_bfd_coral:        IT('a_bfd_coral', '深渊珊瑚护符', '📿', 'neck', 'blue', 26, { int: 5, spi: 4, stam: 2 }, { sell: 5600 }),
     w_gno_blast_gun:    IT('w_gno_blast_gun', '辐射光枪', '🔫', 'weapon', 'epic', 30, { dmg: [44, 66], agi: 8, crit: 0.03 }, { sell: 11000 }),
@@ -1128,6 +1152,21 @@
       ],
     },
     /* ===== 中期套装(21-30 段,2/3 件激活,对应三系 build) ===== */
+    /* ===== 传说套装(60 级终局:23 件传说自成一档,2/4 件激活) ===== */
+    s_titan: {
+      id: 's_titan', name: '泰坦铸卫 (传说)', source: '熔火之心 / 黑翼之巢 / 奥妮克希亚的巢穴 / 祖尔格拉布 / 安其拉神殿 / 纳克萨玛斯 / 世界首领', icon: '🏛️', pieces: ['a_titan_crown', 'a_titan_plate', 'a_titan_gauntlets', 'a_titan_leggings', 'a_titan_boots', 'a_titan_cloak', 'a_titan_ring', 'a_titan_neck', 'w_off_titan_wall'],
+      bonuses: [
+        { need: 2, text: '全属性 +12 · 生命上限 +200', stats: { str: 12, agi: 12, stam: 12, int: 12, spi: 12, hp: 200 } },
+        { need: 4, text: '攻击力 +8% · 暴击 +4% · 吸血 5% · 受到伤害 -5%', stats: { atkPct: 0.08, crit: 0.04, lifesteal: 0.05, dmgTaken: 0.05 } },
+      ],
+    },
+    s_oldgod: {
+      id: 's_oldgod', name: '上古低语 (传说)', source: '安其拉神殿 / 纳克萨玛斯 / 世界首领', icon: '🐛', pieces: ['w_atiesh', 'a_oldgod_hood', 'a_oldgod_robe', 'a_oldgod_gloves', 'a_oldgod_legs', 'a_oldgod_boots'],
+      bonuses: [
+        { need: 2, text: '智力 +20 · 法术强度 +12%', stats: { int: 20, spellPowerPct: 0.12 } },
+        { need: 4, text: '暴击 +4% · 治疗量 +10% · 吸血 4%', stats: { crit: 0.04, healPct: 0.10, lifesteal: 0.04 } },
+      ],
+    },
     s_stv_hunter: {
       id: 's_stv_hunter', name: '荆棘谷猎手', source: '荆棘谷', icon: '🐆', pieces: ['w_stv_cutlass', 'w_marsh_bow', 'a_stv_chest', 'a_stv_gloves', 'a_stv_ring'],
       bonuses: [
@@ -1203,7 +1242,7 @@
   // target+count: 判定条件(次数/特定id); reward: {gold, exp, items[]} 解锁时自动发放
   D.ACHIEVEMENTS = {
     ach_dungeon_1:  { id: 'ach_dungeon_1', name: '初次试炼', icon: '⛩️', cat: 'dungeon', type: 'dungeon', desc: '通关任意一个 5 人副本', count: 1, reward: { gold: 5000, exp: 5000, items: ['c_vital', 'm_dust'] } },
-    ach_dungeon_all: { id: 'ach_dungeon_all', name: '副本征服者', icon: '🏰', cat: 'dungeon', type: 'dungeon', desc: '通关全部 26 个副本', count: 26, reward: { gold: 50000, exp: 50000, items: ['tr_abyss_eye', 'm_crystal'] } },
+    ach_dungeon_all: { id: 'ach_dungeon_all', name: '副本征服者', icon: '🏰', cat: 'dungeon', type: 'dungeon', desc: '通关全部 50 个副本', count: 50, reward: { gold: 50000, exp: 50000, items: ['tr_abyss_eye', 'm_crystal'] } },
     ach_elite_1:    { id: 'ach_elite_1', name: '精英猎手', icon: '👑', cat: 'boss', type: 'elite', desc: '首次击杀稀有精英', count: 1, reward: { gold: 3000, exp: 3000, items: ['m_essence'] } },
     ach_elite_10:   { id: 'ach_elite_10', name: '精英克星', icon: '💀', cat: 'boss', type: 'elite', desc: '击杀 10 名稀有精英', count: 10, reward: { gold: 12000, exp: 12000, items: ['m_crystal'] } },
     ach_wboss_1:    { id: 'ach_wboss_1', name: '世界之敌', icon: '🌍', cat: 'boss', type: 'worldboss', target: 'kazzak', desc: '击败卡扎克', count: 1, reward: { gold: 15000, exp: 15000, items: ['a_onyxia_scale', 'm_crystal'] } },
@@ -1215,6 +1254,10 @@
     ach_kill_100:   { id: 'ach_kill_100', name: '百人斩', icon: '⚔️', cat: 'combat', type: 'kill', desc: '累计击杀 100 个怪物', count: 100, reward: { gold: 8000, exp: 8000, items: ['c_vital', 'm_dust'] } },
     ach_level_60:   { id: 'ach_level_60', name: '满级传说', icon: '🚀', cat: 'level', desc: '角色达到 60 级', count: 60, reward: { gold: 50000, exp: 0, items: ['tr_abyssal_signet', 'm_crystal'] } },
     ach_set_4:      { id: 'ach_set_4', name: '套装收集者', icon: '👑', cat: 'set', desc: '同时装备 4 件套装', count: 4, reward: { gold: 20000, exp: 20000, items: ['m_crystal'] } },
+    /* ===== 橙色传说相关成就(cond 由 character.js checkSpecial 判定) ===== */
+    ach_legend_1:   { id: 'ach_legend_1', name: '传说初临', icon: '🟠', cat: 'set', cond: 'legend', desc: '获得任意一件橙色传说装备', count: 1, reward: { gold: 20000, exp: 20000, items: ['m_crystal'] } },
+    ach_set_legend: { id: 'ach_set_legend', name: '登峰造极', icon: '🏛️', cat: 'set', cond: 'legendset', desc: '同时装备 4 件传说套装（泰坦铸卫 / 上古低语）', count: 4, reward: { gold: 60000, exp: 60000, items: ['a_titan_ring', 'm_crystal'] } },
+    ach_codex_all:  { id: 'ach_codex_all', name: '群首猎尽', icon: '👹', cat: 'boss', cond: 'codex', desc: '击败首领图鉴中的全部首领', count: 1, reward: { gold: 80000, exp: 80000, items: ['a_oldgod_boots', 'm_crystal'] } },
   };
   // 26 座副本通关成就(数据驱动生成:每副本一项,带 target 供直达入口;奖励随副本等级分档)
   (function () {
@@ -1303,19 +1346,19 @@
     searing_lava:     [['c_great_heal', 0.2], ['m_essence', 0.35], ['a_burning_boots', 0.25]],
     searing_dwarf:    [['a_searing_legs', 0.22], ['c_great_mana', 0.18], ['m_essence', 0.3], ['a_burning_gloves', 0.25], ['w_off_mithril_shield', 0.2]],
     searing_lizard:   [['a_ring', 0.25], ['c_great_heal', 0.18], ['m_essence', 0.35], ['a_burning_boots', 0.25]],
-    searing_elemental: [['w_searing_axe', 0.2], ['a_searing_mail', 0.22], ['c_vital', 0.2], ['m_essence', 0.35], ['tr_imperial_seal', 0.12], ['a_burning_cloak', 0.2], ['w_off_moon_totem', 0.2]],
+    searing_elemental: [['w_searing_axe', 0.2], ['w_searing_staff', 0.2], ['a_searing_mail', 0.22], ['c_vital', 0.2], ['m_essence', 0.35], ['tr_imperial_seal', 0.12], ['a_burning_cloak', 0.2], ['w_off_moon_totem', 0.2]],
     searing_elite:    [['w_steam_saber', 0.55], ['a_searing_mail', 0.5], ['c_vital', 0.6], ['m_essence', 0.7], ['m_crystal', 0.6], ['tr_imperial_seal', 0.35], ['a_burning_gloves', 0.5], ['a_desert_neck', 0.4]],
     /* 燃烧平原 */
     burning_whelp:    [['c_super_heal', 0.18], ['m_essence', 0.3], ['a_blasted_ring', 0.2], ['c_master_heal', 0.15]],
     burning_orc:      [['a_blackrock_helm', 0.2], ['c_super_mana', 0.18], ['m_essence', 0.35], ['w_off_sun_totem', 0.25]],
     burning_hound:    [['c_vital', 0.2], ['m_crystal', 0.1], ['m_essence', 0.35], ['a_blasted_ring', 0.2], ['w_off_sun_totem', 0.2]],
     burning_dragon:   [['w_drake_blade', 0.18], ['c_super_heal', 0.18], ['m_crystal', 0.12], ['m_essence', 0.35], ['tr_abyss_eye', 0.1], ['w_off_dragon_shield', 0.4], ['c_ultimate_heal', 0.15]],
-    burning_elite:    [['w_blackrock_sword', 0.55], ['a_blackrock_plate', 0.5], ['c_vital', 0.6], ['m_crystal', 0.7], ['m_essence', 0.7], ['tr_abyss_eye', 0.35]],
+    burning_elite:    [['w_blackrock_sword', 0.55], ['w_brd_staff', 0.5], ['a_blackrock_plate', 0.5], ['c_vital', 0.6], ['m_crystal', 0.7], ['m_essence', 0.7], ['tr_abyss_eye', 0.35]],
     /* 冬泉谷 */
     winter_frostwolf: [['c_super_heal', 0.2], ['a_winter_cloak', 0.22], ['m_crystal', 0.1], ['a_winter_boots', 0.25], ['c_master_heal', 0.18]],
     winter_yeti:      [['c_vital', 0.2], ['a_winter_leather', 0.2], ['m_crystal', 0.12]],
     winter_owl:       [['c_super_mana', 0.2], ['m_crystal', 0.12], ['m_essence', 0.3], ['a_winter_boots', 0.25]],
-    winter_giant:     [['w_winter_axe', 0.22], ['a_winter_gloves', 0.2], ['c_vital', 0.2], ['m_crystal', 0.15], ['tr_naaru_tear', 0.1], ['w_off_dark_guard', 0.3]],
+    winter_giant:     [['w_winter_axe', 0.22], ['w_winter_staff', 0.2], ['a_winter_gloves', 0.2], ['c_vital', 0.2], ['m_crystal', 0.15], ['tr_naaru_tear', 0.1], ['w_off_dark_guard', 0.3]],
     winter_elite:     [['w_arcane_blade', 0.6], ['a_winter_leather', 0.5], ['c_vital', 0.6], ['m_crystal', 0.8], ['m_essence', 0.7], ['tr_naaru_tear', 0.35]],
     /* 千针石林 */
     needle_vulture:   [['c_heal', 0.2], ['a_stv_cloak', 0.2], ['m_dust', 0.3]],
@@ -1336,7 +1379,7 @@
     marsh_turtle:      [['c_great_heal', 0.2], ['m_essence', 0.3], ['a_marsh_chest', 0.2], ['w_off_iron_shield', 0.2]],
     marsh_raptor:      [['c_great_heal', 0.2], ['m_essence', 0.3], ['w_marsh_bow', 0.18], ['a_marsh_boots', 0.22]],
     searing_wolf:      [['c_great_heal', 0.2], ['m_essence', 0.35], ['w_searing_axe', 0.15], ['a_burning_gloves', 0.22]],
-    searing_whelp:     [['c_great_heal', 0.2], ['m_essence', 0.4], ['w_flame_staff', 0.2], ['a_searing_legs', 0.2]],
+    searing_whelp:     [['c_great_heal', 0.2], ['m_essence', 0.4], ['w_flame_staff', 0.2], ['w_searing_staff', 0.18], ['a_searing_legs', 0.2]],
     tanaris_wasp:      [['c_great_heal', 0.2], ['m_essence', 0.35], ['w_stv_cutlass', 0.18], ['a_stv_ring', 0.18]],
     tanaris_hyena:     [['c_great_heal', 0.18], ['m_essence', 0.35], ['w_badlands_cleaver', 0.2], ['a_badlands_hood', 0.2]],
     tanaris_scorpion: [['c_great_mana', 0.18], ['m_essence', 0.35], ['a_desert_ring', 0.2]],
@@ -1353,7 +1396,7 @@
     plague_zombie:    [['c_super_heal', 0.2], ['m_crystal', 0.1], ['m_essence', 0.3]],
     plague_bat:       [['c_super_mana', 0.2], ['a_winter_cloak', 0.2], ['m_crystal', 0.1]],
     plague_knight:    [['a_winter_leather', 0.2], ['c_vital', 0.2], ['m_crystal', 0.12]],
-    plague_abomination: [['w_winter_axe', 0.22], ['c_vital', 0.2], ['m_crystal', 0.15]],
+    plague_abomination: [['w_winter_axe', 0.22], ['w_winter_staff', 0.2], ['c_vital', 0.2], ['m_crystal', 0.15]],
     plague_elite:     [['w_arcane_blade', 0.6], ['a_winter_gloves', 0.5], ['c_vital', 0.6], ['m_crystal', 0.8], ['m_essence', 0.7]],
     /* 黑石深渊 */
     brd_guard:        [['c_super_heal', 0.2], ['a_blackrock_helm', 0.25], ['m_essence', 0.4]],
@@ -1393,11 +1436,11 @@
     naxx_spider:      [['c_vital', 0.2], ['a_winter_cloak', 0.18], ['m_crystal', 0.2]],
     naxx_plague:      [['c_heal', 0.2], ['a_winter_leather', 0.18], ['m_crystal', 0.2]],
     naxx_knight:      [['c_feast', 0.2], ['w_drake_blade', 0.12], ['m_crystal', 0.25]],
-    naxx_elite:       [['w_drake_blade', 0.6], ['a_dragonscale', 0.5], ['m_crystal', 0.6]],
-    kelthuzad:        [['tr_kelthuzad_heart', 0.8], ['a_dragonscale', 0.6], ['w_frostmourne', 0.05], ['w_ashbringer', 0.03], ['m_crystal', 1], ['m_essence', 0.7]],
+    naxx_elite:       [['w_drake_blade', 0.6], ['a_dragonscale', 0.5], ['a_titan_ring', 0.03], ['a_oldgod_gloves', 0.03], ['a_oldgod_legs', 0.03], ['m_crystal', 0.6]],
+    kelthuzad:        [['tr_kelthuzad_heart', 0.8], ['a_dragonscale', 0.6], ['w_frostmourne', 0.05], ['w_ashbringer', 0.03], ['a_oldgod_gloves', 0.08], ['a_oldgod_legs', 0.06], ['w_off_titan_wall', 0.08], ['m_crystal', 1], ['m_essence', 0.7]],
     /* 世界首领:稀有装备掉落(必定双倍奥术水晶) */
-    kazzak:           [['w_kazzak_blade', 0.15], ['tr_abyssal_signet', 0.5], ['a_necropolis_plate', 0.35], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.8]],
-    azuregos:         [['a_emerald_drake_helm', 0.4], ['w_azure_staff', 0.25], ['a_winter_cloak', 0.5], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.8]],
+    kazzak:           [['w_kazzak_blade', 0.15], ['tr_abyssal_signet', 0.5], ['a_necropolis_plate', 0.35], ['a_titan_neck', 0.1], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.8]],
+    azuregos:         [['a_emerald_drake_helm', 0.4], ['w_azure_staff', 0.25], ['a_winter_cloak', 0.5], ['a_oldgod_boots', 0.08], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.8]],
     /* 新区域怪物掉落 */
     bl_hellhound:     [['c_super_heal', 0.2], ['a_blasted_plate', 0.18], ['m_essence', 0.35], ['m_crystal', 0.08], ['a_blasted_legs', 0.2], ['c_master_heal', 0.18]],
     bl_mauler:        [['w_doom_cleaver', 0.2], ['a_felwood_robe', 0.18], ['m_essence', 0.35], ['m_crystal', 0.08], ['a_blasted_neck', 0.2]],
@@ -1443,33 +1486,34 @@
     mc_lava:          [['c_flask', 0.22], ['a_silithid_chitin', 0.18], ['m_essence', 0.5], ['m_crystal', 0.12]],
     mc_giant:         [['a_blasted_plate', 0.2], ['w_doom_cleaver', 0.18], ['m_essence', 0.5], ['m_crystal', 0.12]],
     mc_shaman:        [['w_necropolis_staff', 0.22], ['c_flask', 0.2], ['m_essence', 0.5], ['m_crystal', 0.12]],
-    mc_elite:         [['a_onyxia_scale', 0.4], ['w_ragnaros_hand', 0.08], ['m_crystal', 0.9], ['m_essence', 0.8]],
-    ragnaros:         [['w_ragnaros_hand', 0.35], ['a_onyxia_scale', 0.7], ['tr_hakkar_heart', 0.4], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
+    mc_elite:         [['a_onyxia_scale', 0.4], ['w_ragnaros_hand', 0.08], ['a_titan_plate', 0.03], ['a_titan_leggings', 0.03], ['m_crystal', 0.9], ['m_essence', 0.8]],
+    ragnaros:         [['w_ragnaros_hand', 0.35], ['a_onyxia_scale', 0.7], ['tr_hakkar_heart', 0.4], ['a_titan_plate', 0.07], ['a_titan_leggings', 0.07], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
     bwl_drake:        [['c_flask', 0.22], ['a_epl_helm', 0.18], ['m_essence', 0.5], ['m_crystal', 0.12]],
     bwl_dragon:       [['a_onyxia_scale', 0.16], ['w_doom_cleaver', 0.2], ['m_essence', 0.5], ['m_crystal', 0.12]],
     bwl_sorcerer:     [['w_necropolis_staff', 0.22], ['c_flask', 0.2], ['m_essence', 0.5], ['m_crystal', 0.12]],
-    bwl_elite:        [['a_onyxia_scale', 0.45], ['w_nefarian_blade', 0.08], ['m_crystal', 0.9], ['m_essence', 0.8]],
-    nefarian:         [['w_nefarian_blade', 0.35], ['a_onyxia_scale', 0.7], ['tr_cthun_eye', 0.35], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
-    onx_whelp:        [['c_super_heal', 0.22], ['a_silithid_chitin', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
-    onx_guard:        [['w_silithid_stinger', 0.2], ['a_epl_helm', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
-    onx_mage:         [['w_necropolis_staff', 0.22], ['c_flask', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
-    onx_elite:        [['a_onyxia_scale', 0.45], ['w_rivendare_blade', 0.4], ['m_crystal', 0.9], ['m_essence', 0.8]],
-    onyxia:           [['a_onyxia_scale', 0.75], ['w_rivendare_blade', 0.5], ['tr_hakkar_heart', 0.4], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
+    bwl_elite:        [['a_onyxia_scale', 0.45], ['w_nefarian_blade', 0.08], ['a_titan_gauntlets', 0.03], ['a_titan_boots', 0.03], ['m_crystal', 0.9], ['m_essence', 0.8]],
+    nefarian:         [['w_nefarian_blade', 0.35], ['a_onyxia_scale', 0.7], ['tr_cthun_eye', 0.35], ['a_titan_gauntlets', 0.08], ['a_titan_boots', 0.08], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
+    // 奥妮克希亚的巢穴无中途首领(单独成阵),套装散件改由副本内小怪与精英产出
+    onx_whelp:        [['c_super_heal', 0.22], ['a_silithid_chitin', 0.18], ['a_onyx_boots', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
+    onx_guard:        [['w_silithid_stinger', 0.2], ['a_epl_helm', 0.2], ['a_onyx_cloak', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
+    onx_mage:         [['w_necropolis_staff', 0.22], ['c_flask', 0.2], ['a_onyx_gauntlets', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
+    onx_elite:        [['a_onyxia_scale', 0.45], ['a_onyx_crown', 0.35], ['w_rivendare_blade', 0.4], ['a_titan_crown', 0.03], ['a_titan_cloak', 0.03], ['m_crystal', 0.9], ['m_essence', 0.8]],
+    onyxia:           [['a_onyxia_scale', 0.75], ['w_rivendare_blade', 0.5], ['tr_hakkar_heart', 0.4], ['a_onyx_leggings', 0.35], ['a_titan_crown', 0.07], ['a_titan_cloak', 0.08], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
     zg_troll:         [['c_flask', 0.22], ['a_silithid_chitin', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
     zg_priest:        [['w_necropolis_staff', 0.22], ['a_epl_helm', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
     zg_panther:       [['w_silithid_stinger', 0.2], ['c_super_heal', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
     zg_elite:         [['tr_hakkar_heart', 0.45], ['w_nefarian_blade', 0.06], ['m_crystal', 0.9], ['m_essence', 0.8]],
-    hakkar:           [['tr_hakkar_heart', 0.7], ['a_cthun_armor', 0.5], ['w_ragnaros_hand', 0.2], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
+    hakkar:           [['tr_hakkar_heart', 0.7], ['a_cthun_armor', 0.5], ['w_ragnaros_hand', 0.2], ['a_titan_ring', 0.08], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
     aq_warrior:       [['c_flask', 0.22], ['a_silithid_chitin', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
     aq_observer:      [['w_necropolis_staff', 0.22], ['a_epl_helm', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
     aq_hiveswarm:     [['w_silithid_stinger', 0.2], ['c_super_heal', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
-    aq_elite:         [['a_cthun_armor', 0.4], ['tr_cthun_eye', 0.3], ['m_crystal', 0.9], ['m_essence', 0.8]],
+    aq_elite:         [['a_cthun_armor', 0.4], ['tr_cthun_eye', 0.3], ['a_oldgod_hood', 0.03], ['a_oldgod_robe', 0.03], ['m_crystal', 0.9], ['m_essence', 0.8]],
     rajaxx:           [['a_cthun_armor', 0.65], ['tr_cthun_eye', 0.45], ['w_nefarian_blade', 0.15], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 0.9]],
     aqt_twilight:     [['w_necropolis_staff', 0.22], ['c_flask', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
     aqt_anubisath:    [['a_cthun_armor', 0.14], ['w_doom_cleaver', 0.2], ['m_essence', 0.45], ['m_crystal', 0.12]],
     aqt_eye:          [['w_necropolis_staff', 0.22], ['a_epl_helm', 0.18], ['m_essence', 0.45], ['m_crystal', 0.12]],
-    aqt_elite:        [['a_cthun_armor', 0.45], ['tr_cthun_eye', 0.35], ['m_crystal', 0.9], ['m_essence', 0.8]],
-    cthun:            [['tr_cthun_eye', 0.6], ['a_cthun_armor', 0.7], ['w_ragnaros_hand', 0.25], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 1]],
+    aqt_elite:        [['a_cthun_armor', 0.45], ['tr_cthun_eye', 0.35], ['a_oldgod_hood', 0.03], ['a_oldgod_robe', 0.03], ['a_oldgod_boots', 0.03], ['a_titan_neck', 0.03], ['m_crystal', 0.9], ['m_essence', 0.8]],
+    cthun:            [['tr_cthun_eye', 0.6], ['a_cthun_armor', 0.7], ['w_ragnaros_hand', 0.25], ['w_atiesh', 0.06], ['a_oldgod_hood', 0.07], ['a_oldgod_robe', 0.07], ['m_crystal', 1], ['m_crystal', 1], ['m_essence', 1]],
     /* ===== 新增 8 副本掉落 ===== */
     rfc_trooper:      [['c_heal', 0.15], ['a_cloth', 0.15], ['m_dust', 0.35]],
     rfc_cultist:      [['c_mana', 0.15], ['a_circlet', 0.12], ['m_dust', 0.35]],
@@ -1520,31 +1564,31 @@
   Object.assign(D.ITEMS, {
     /* 暴风城(联盟) */
     r_sw_sword:   RP('r_sw_sword', '暴风城卫兵长剑', '⚔️', 'weapon', 'blue', 14, { dmg: [24, 36], stam: 3, agi: 2 }, 12000, 'sw', 'honored'),
-    r_sw_cloak:   RP('r_sw_cloak', '暴风城荣誉披风', '🧣', 'cloak', 'blue', 12, { armor: 12, stam: 4, agi: 3 }, 9000, 'sw', 'honored'),
+    r_sw_cloak:   RP('r_sw_cloak', '暴风城荣誉披风', '🧣', 'cloak', 'blue', 12, { armor: 12, stam: 2, agi: 1 }, 9000, 'sw', 'honored'),
     r_sw_plate:   RP('r_sw_plate', '暴风城骑士板甲', '🛡️', 'chest', 'purple', 18, { armor: 42, str: 6, stam: 6 }, 26000, 'sw', 'revered'),
-    r_sw_ring:    RP('r_sw_ring', '暴风城皇家徽记', '💍', 'ring', 'purple', 16, { crit: 0.03, stam: 5, agi: 4 }, 22000, 'sw', 'revered'),
+    r_sw_ring:    RP('r_sw_ring', '暴风城皇家徽记', '💍', 'ring', 'purple', 16, { crit: 0.02, stam: 2, agi: 2 }, 22000, 'sw', 'revered'),
     r_sw_horse:   RP('r_sw_horse', '暴风城军马', '🐎', 'mount', 'epic', 10, {}, 80000, 'sw', 'exalted'),
     /* 奥格瑞玛(部落) */
     r_og_axe:     RP('r_og_axe', '奥格瑞玛战斧', '🪓', 'weapon', 'blue', 14, { dmg: [26, 38], str: 3, stam: 2 }, 12000, 'og', 'honored'),
     r_og_helm:    RP('r_og_helm', '奥格瑞玛战盔', '🪖', 'head', 'blue', 12, { armor: 24, stam: 5 }, 9000, 'og', 'honored'),
     r_og_mail:    RP('r_og_mail', '奥格瑞玛督军胸甲', '🦺', 'chest', 'purple', 18, { armor: 40, str: 5, stam: 6, agi: 2 }, 26000, 'og', 'revered'),
-    r_og_trinket: RP('r_og_trinket', '大酋长的怒火', '🔥', 'trinket', 'purple', 16, { crit: 0.03, stam: 5, str: 3 }, 22000, 'og', 'revered'),
+    r_og_trinket: RP('r_og_trinket', '大酋长的怒火', '🔥', 'trinket', 'purple', 16, { crit: 0.02, stam: 2, str: 2 }, 22000, 'og', 'revered'),
     r_og_wolf:    RP('r_og_wolf', '奥格瑞玛座狼', '🐺', 'mount', 'epic', 10, {}, 80000, 'og', 'exalted'),
     /* 银色黎明(中立) */
     r_ag_chest:   RP('r_ag_chest', '银色黎明胸甲', '🥋', 'chest', 'blue', 56, { armor: 74, stam: 12, int: 8 }, 42000, 'argent', 'honored'),
-    r_ag_staff:   RP('r_ag_staff', '银色黎明法杖', '🪄', 'weapon', 'blue', 56, { dmg: [52, 78], int: 10, spi: 8 }, 46000, 'argent', 'honored'),
+    r_ag_staff:   RP('r_ag_staff', '银色黎明法杖', '🪄', 'weapon', 'blue', 56, { dmg: [52, 78], int: 13, spi: 9 }, 46000, 'argent', 'honored'),
     r_ag_helm:    RP('r_ag_helm', '银色黎明指挥官之盔', '👑', 'head', 'purple', 58, { armor: 52, stam: 14, str: 10 }, 90000, 'argent', 'revered'),
     r_ag_ring:    RP('r_ag_ring', '银色黎明的胜利', '💍', 'ring', 'purple', 58, { crit: 0.04, stam: 8, agi: 6 }, 80000, 'argent', 'revered'),
     r_ag_charger: RP('r_ag_charger', '银色战马', '🐴', 'mount', 'epic', 55, {}, 180000, 'argent', 'exalted'),
     /* 塞纳里奥议会(中立) */
     r_ce_gloves:  RP('r_ce_gloves', '塞纳里奥治疗手套', '🧤', 'gloves', 'blue', 58, { armor: 34, int: 12, spi: 10 }, 46000, 'cenarion', 'honored'),
-    r_ce_sword:   RP('r_ce_sword', '塞纳里奥之刃', '🗡️', 'weapon', 'blue', 58, { dmg: [56, 84], agi: 10, stam: 10 }, 50000, 'cenarion', 'honored'),
-    r_ce_cloak:   RP('r_ce_cloak', '塞纳里奥议会披风', '🧣', 'cloak', 'purple', 60, { armor: 22, agi: 10, int: 10, stam: 8 }, 95000, 'cenarion', 'revered'),
+    r_ce_sword:   RP('r_ce_sword', '塞纳里奥之刃', '🗡️', 'weapon', 'blue', 58, { dmg: [74, 104], agi: 11, stam: 10 }, 50000, 'cenarion', 'honored'),
+    r_ce_cloak:   RP('r_ce_cloak', '塞纳里奥议会披风', '🧣', 'cloak', 'purple', 60, { armor: 22, agi: 6, int: 5, stam: 3 }, 95000, 'cenarion', 'revered'),
     r_ce_ring:    RP('r_ce_ring', '自然庇护指环', '💍', 'ring', 'purple', 60, { stam: 12, agi: 8, crit: 0.03 }, 88000, 'cenarion', 'revered'),
     r_ce_cat:     RP('r_ce_cat', '塞纳里奥战豹', '🐆', 'mount', 'epic', 58, {}, 190000, 'cenarion', 'exalted'),
     /* 瑟银兄弟会(中立) */
     r_th_gloves:  RP('r_th_gloves', '瑟银护手', '🧤', 'gloves', 'blue', 48, { armor: 30, stam: 10, str: 8 }, 34000, 'thorium', 'honored'),
-    r_th_axe:     RP('r_th_axe', '瑟银战斧', '🪓', 'weapon', 'blue', 50, { dmg: [48, 72], str: 9, stam: 8 }, 38000, 'thorium', 'honored'),
+    r_th_axe:     RP('r_th_axe', '瑟银战斧', '🪓', 'weapon', 'blue', 50, { dmg: [68, 100], str: 12, stam: 8, crit: 0.01 }, 38000, 'thorium', 'honored'),
     r_th_chest:   RP('r_th_chest', '瑟银兄弟会胸甲', '🛡️', 'chest', 'purple', 55, { armor: 68, stam: 14, str: 12 }, 85000, 'thorium', 'revered'),
     r_th_ring:    RP('r_th_ring', '瑟银徽记', '💍', 'ring', 'purple', 52, { crit: 0.04, str: 8, agi: 6 }, 78000, 'thorium', 'revered'),
     r_th_wolf:    RP('r_th_wolf', '黑铁战狼', '🐺', 'mount', 'epic', 50, {}, 170000, 'thorium', 'exalted'),
@@ -1558,6 +1602,141 @@
     r_badge_ce:  IT('r_badge_ce', '塞纳里奥徽章', '🌿', 'material', 'green', 1, {}, { sell: 80 }, { badge: 'cenarion' }),
     r_badge_th:  IT('r_badge_th', '瑟银徽章', '🔥', 'material', 'green', 1, {}, { sell: 80 }, { badge: 'thorium' }),
   });
+
+  /* ============ 全等级段槽位覆盖补件 ============
+   * 覆盖审计发现若干槽位在某些 5 级段内没有任何可获取装备(如 35-39 级无物理武器、
+   * 43-58 级无头盔、53 级区间无护腿/靴子……),玩家在这些等级段「想换装也没得换」。
+   * 这里按槽位把空段补齐,并统一挂到对应区域商店与怪物掉落。 */
+  Object.assign(D.ITEMS, {
+    /* 6-10 段 */
+    a_boar_legs:        IT('a_boar_legs', '野猪皮护腿', '👖', 'legs', 'green', 8, { armor: 16, stam: 2 }, { buy: 900, sell: 225 }),
+    a_boar_boots:       IT('a_boar_boots', '野猪皮战靴', '🥾', 'boots', 'green', 8, { armor: 12, agi: 1, stam: 1 }, { buy: 800, sell: 200 }),
+    a_linen_pendant:    IT('a_linen_pendant', '亚麻坠饰', '📿', 'neck', 'green', 8, { int: 3, spi: 1 }, { buy: 950, sell: 240 }),
+    /* 11-15 段 */
+    a_tin_ring:         IT('a_tin_ring', '锡质戒指', '💍', 'ring', 'green', 13, { stam: 4 }, { buy: 2200, sell: 550 }),
+    a_greywood_pendant: IT('a_greywood_pendant', '灰木坠饰', '📿', 'neck', 'green', 13, { int: 3, spi: 2 }, { buy: 3600, sell: 900 }),
+    a_thorn_gloves:     IT('a_thorn_gloves', '荆棘手套', '🧤', 'gloves', 'green', 14, { armor: 14, str: 2, stam: 1 }, { buy: 2600, sell: 650 }),
+    /* 16-20 段 */
+    a_raptor_legs:      IT('a_raptor_legs', '迅猛龙皮护腿', '👖', 'legs', 'green', 18, { armor: 36, agi: 3, stam: 2 }, { buy: 5400, sell: 1350 }),
+    a_raptor_boots:     IT('a_raptor_boots', '迅猛龙皮战靴', '🥾', 'boots', 'green', 18, { armor: 20, agi: 3, stam: 2 }, { buy: 4600, sell: 1150 }),
+    /* 21-25 段 */
+    a_jungle_crown:     IT('a_jungle_crown', '丛林之冠', '🪖', 'head', 'green', 23, { armor: 32, agi: 4, stam: 3 }, { buy: 8200, sell: 2050 }),
+    a_jungle_legs:      IT('a_jungle_legs', '丛林护腿', '👖', 'legs', 'green', 23, { armor: 44, agi: 4, stam: 3 }, { buy: 8600, sell: 2150 }),
+    a_jungle_pendant:   IT('a_jungle_pendant', '丛林护符', '📿', 'neck', 'green', 23, { str: 4, stam: 3 }, { buy: 6200, sell: 1550 }),
+    tr_jungle_charm:    IT('tr_jungle_charm', '丛林巫毒护符', '🎖️', 'trinket', 'green', 23, { int: 5, spi: 3 }, { buy: 7400, sell: 1850 }),
+    /* 26-30 段 */
+    a_dust_gloves:      IT('a_dust_gloves', '尘泥手套', '🧤', 'gloves', 'green', 28, { armor: 22, str: 3, stam: 2 }, { buy: 9600, sell: 2400 }),
+    /* 31-35 段 */
+    a_searing_hood:     IT('a_searing_hood', '灼热兜帽', '🪖', 'head', 'green', 33, { armor: 42, str: 5, stam: 3 }, { buy: 15500, sell: 3875 }),
+    a_searing_gauntlets: IT('a_searing_gauntlets', '灼热护手', '🧤', 'gloves', 'green', 33, { armor: 28, str: 4, stam: 3 }, { buy: 11800, sell: 2950 }),
+    a_lava_legs:        IT('a_lava_legs', '熔岩护腿', '👖', 'legs', 'green', 33, { armor: 56, str: 5, stam: 4 }, { buy: 13400, sell: 3350 }),
+    a_lava_ring:        IT('a_lava_ring', '熔岩指环', '💍', 'ring', 'green', 33, { crit: 0.01, agi: 4, stam: 4 }, { buy: 12500, sell: 3125 }),
+    a_lava_pendant:     IT('a_lava_pendant', '熔岩坠饰', '📿', 'neck', 'green', 33, { int: 5, spi: 5, stam: 2 }, { buy: 10800, sell: 2700 }),
+    /* 36-40 段 */
+    a_ash_boots:        IT('a_ash_boots', '灰烬战靴', '🥾', 'boots', 'green', 38, { armor: 32, agi: 4, stam: 3 }, { buy: 15000, sell: 3750 }),
+    a_ash_cloak:        IT('a_ash_cloak', '灰烬披风', '🧣', 'cloak', 'green', 38, { armor: 20, int: 4, spi: 3 }, { buy: 14000, sell: 3500 }),
+    /* 41-45 段 */
+    a_brd_gauntlets:    IT('a_brd_gauntlets', '黑铁护手', '🧤', 'gloves', 'green', 43, { armor: 52, str: 6, stam: 4 }, { buy: 24000, sell: 6000 }),
+    a_brd_leggings:     IT('a_brd_leggings', '黑铁护腿', '👖', 'legs', 'green', 43, { armor: 74, str: 7, stam: 5 }, { buy: 26000, sell: 6500 }),
+    a_brd_torc:         IT('a_brd_torc', '黑铁颈环', '📿', 'neck', 'green', 43, { agi: 6, crit: 0.01, stam: 3 }, { buy: 21000, sell: 5250 }),
+    a_brd_ring:         IT('a_brd_ring', '黑铁指环', '💍', 'ring', 'green', 43, { crit: 0.02, agi: 4, stam: 4 }, { buy: 22000, sell: 5500 }),
+    tr_brd_totem:       IT('tr_brd_totem', '黑铁图腾', '🎖️', 'trinket', 'green', 43, { int: 7, spi: 5, crit: 0.01 }, { buy: 24000, sell: 6000 }),
+    /* 46-50 段 */
+    a_frozen_crown:     IT('a_frozen_crown', '寒冰之冠', '🪖', 'head', 'green', 48, { armor: 56, int: 7, spi: 4 }, { buy: 27000, sell: 6750 }),
+    a_frozen_boots:     IT('a_frozen_boots', '寒冰战靴', '🥾', 'boots', 'green', 48, { armor: 46, agi: 5, stam: 4 }, { buy: 24000, sell: 6000 }),
+    a_frozen_cloak:     IT('a_frozen_cloak', '寒冰披风', '🧣', 'cloak', 'green', 48, { armor: 24, agi: 5, stam: 4 }, { buy: 22000, sell: 5500 }),
+    /* 51-55 段 */
+    a_plague_crown:     IT('a_plague_crown', '瘟疫之冠', '🪖', 'head', 'green', 53, { armor: 64, str: 7, stam: 5 }, { buy: 38000, sell: 9500 }),
+    a_plague_gauntlets: IT('a_plague_gauntlets', '瘟疫护手', '🧤', 'gloves', 'green', 53, { armor: 60, str: 7, stam: 5 }, { buy: 34000, sell: 8500 }),
+    a_scourge_legs:     IT('a_scourge_legs', '天灾护腿', '👖', 'legs', 'green', 53, { armor: 88, str: 8, stam: 6 }, { buy: 44000, sell: 11000 }),
+    a_scourge_boots:    IT('a_scourge_boots', '天灾战靴', '🥾', 'boots', 'green', 53, { armor: 52, agi: 6, stam: 5 }, { buy: 36000, sell: 9000 }),
+    a_scourge_cloak:    IT('a_scourge_cloak', '天灾披风', '🧣', 'cloak', 'green', 53, { armor: 28, stam: 6, agi: 4 }, { buy: 32000, sell: 8000 }),
+    w_off_obsidian_shield: IT('w_off_obsidian_shield', '黑曜石盾', '🛡️', 'offhand', 'blue', 52, { armor: 28, stam: 9, str: 4 }, { buy: 45000, sell: 11250 }),
+    /* 56-60 段 */
+    a_obsidian_torc:    IT('a_obsidian_torc', '黑曜石颈环', '📿', 'neck', 'blue', 57, { int: 9, spi: 6, stam: 3 }, { buy: 46000, sell: 11500 }),
+    /* 35-39 段物理武器(补齐 34→40 之间的换装空档) */
+    w_tanaris_scimitar: IT('w_tanaris_scimitar', '塔纳利斯弯刀', '🗡️', 'weapon', 'green', 37, { dmg: [54, 76], str: 9, stam: 5 }, { buy: 27000, sell: 6750 }),
+  });
+
+  // 补件上架:挂到对应等级段的区域商店
+  const COVER_SHOPS = {
+    elwynn: ['a_boar_legs', 'a_boar_boots'],
+    durotar: ['a_boar_legs', 'a_boar_boots'],
+    stormwind: ['a_linen_pendant', 'a_tin_ring'],
+    orgrimmar: ['a_linen_pendant', 'a_tin_ring'],
+    westfall: ['a_thorn_gloves'],
+    barrens: ['a_thorn_gloves'],
+    duskwood: ['a_thorn_gloves', 'a_tin_ring', 'a_greywood_pendant'],
+    redridge: ['a_greywood_pendant'],
+    stv: ['a_raptor_legs', 'a_raptor_boots', 'a_jungle_crown', 'a_jungle_legs', 'a_jungle_pendant', 'tr_jungle_charm'],
+    thousand_needles: ['a_raptor_legs', 'a_raptor_boots'],
+    badlands: ['a_jungle_crown', 'a_jungle_legs', 'tr_jungle_charm', 'a_dust_gloves'],
+    dustwallow: ['a_jungle_pendant', 'a_dust_gloves'],
+    searing: ['a_searing_hood', 'a_searing_gauntlets', 'a_lava_legs', 'a_lava_ring', 'a_lava_pendant', 'w_tanaris_scimitar'],
+    tanaris: ['a_searing_hood', 'a_searing_gauntlets', 'a_lava_legs', 'a_lava_ring', 'a_lava_pendant', 'a_ash_boots', 'a_ash_cloak', 'w_tanaris_scimitar'],
+    burning: ['a_ash_boots', 'a_ash_cloak', 'a_brd_gauntlets', 'a_brd_leggings', 'a_brd_torc', 'a_brd_ring', 'tr_brd_totem', 'w_tanaris_scimitar'],
+    ungoro: ['a_brd_gauntlets', 'a_brd_leggings', 'a_brd_torc', 'a_brd_ring', 'tr_brd_totem'],
+    winterspring: ['a_frozen_crown', 'a_frozen_boots', 'a_frozen_cloak'],
+    plaguelands: ['a_frozen_crown', 'a_frozen_boots', 'a_frozen_cloak'],
+    blasted_lands: ['w_off_obsidian_shield'],
+    eplaguelands: ['a_plague_crown', 'a_plague_gauntlets', 'a_scourge_legs', 'a_scourge_boots', 'a_scourge_cloak', 'w_off_obsidian_shield', 'a_obsidian_torc'],
+    silithus: ['a_plague_crown', 'a_plague_gauntlets', 'a_scourge_legs', 'a_scourge_boots', 'a_scourge_cloak', 'w_off_obsidian_shield', 'a_obsidian_torc'],
+  };
+  for (const zid in COVER_SHOPS) {
+    const z = D.ZONES[zid];
+    if (!z) continue;
+    for (const iid of COVER_SHOPS[zid]) if (!z.shop.includes(iid)) z.shop.push(iid);
+  }
+
+  // 补件掉落:挂到对应区域怪物(每个阵亡敌人独立掷取)
+  const COVER_DROPS = {
+    elwynn_boar: [['a_boar_legs', 0.15]],
+    durotar_boar: [['a_boar_legs', 0.15]],
+    elwynn_wolf: [['a_boar_boots', 0.15]],
+    durotar_traitor: [['a_boar_boots', 0.15]],
+    elwynn_kobold: [['a_linen_pendant', 0.12]],
+    durotar_scorpion: [['a_linen_pendant', 0.12]],
+    westfall_gnoll: [['a_thorn_gloves', 0.15]],
+    barrens_centaur: [['a_thorn_gloves', 0.15]],
+    dusk_ghoul: [['a_tin_ring', 0.12]],
+    dusk_spider: [['a_greywood_pendant', 0.12]],
+    stv_panther: [['a_raptor_legs', 0.18]],
+    needle_centaur: [['a_raptor_legs', 0.15]],
+    stv_tiger: [['a_raptor_boots', 0.18]],
+    needle_vulture: [['a_raptor_boots', 0.15]],
+    stv_ape: [['a_jungle_crown', 0.15]],
+    badlands_raptor: [['a_jungle_legs', 0.15]],
+    marsh_ogre: [['a_jungle_pendant', 0.15]],
+    stv_elite: [['tr_jungle_charm', 0.2]],
+    marsh_slime: [['a_dust_gloves', 0.18]],
+    searing_dwarf: [['a_searing_hood', 0.18]],
+    tanaris_turtle: [['a_searing_gauntlets', 0.18]],
+    searing_lava: [['a_lava_legs', 0.18]],
+    tanaris_wasp: [['a_lava_ring', 0.16]],
+    searing_whelp: [['a_lava_pendant', 0.16]],
+    tanaris_wastewalker: [['a_ash_boots', 0.16]],
+    tanaris_elite: [['a_ash_cloak', 0.35]],
+    burning_orc: [['a_brd_gauntlets', 0.15]],
+    burning_whelp: [['a_brd_leggings', 0.18]],
+    ungoro_raptor: [['a_brd_torc', 0.15]],
+    ungoro_gorilla: [['a_brd_ring', 0.15]],
+    burning_elite: [['tr_brd_totem', 0.3]],
+    winter_owl: [['a_frozen_crown', 0.15]],
+    winter_yeti: [['a_frozen_boots', 0.15]],
+    plague_bat: [['a_frozen_cloak', 0.18]],
+    epl_ghoul: [['a_plague_crown', 0.18]],
+    sil_sandcrawler: [['a_plague_gauntlets', 0.16]],
+    epl_gargoyle: [['a_scourge_legs', 0.18]],
+    sil_beetle: [['a_scourge_boots', 0.16]],
+    epl_necromancer: [['a_scourge_cloak', 0.18]],
+    bl_elite: [['w_off_obsidian_shield', 0.35]],
+    sil_elite: [['a_obsidian_torc', 0.35]],
+    searing_wolf: [['w_tanaris_scimitar', 0.15]],
+  };
+  for (const mid in COVER_DROPS) {
+    if (!D.DROPS[mid]) continue;
+    D.DROPS[mid] = D.DROPS[mid].concat(COVER_DROPS[mid]);
+  }
 
   // 声望阵营注册表:经典魔兽声望阈值(中立0/友善3000/尊敬6000/崇敬12000/崇拜21000)
   D.REPS = {
@@ -1768,6 +1947,926 @@
     plaguelands: [[1, ['plague_zombie']], [0.9, ['plague_bat']], [0.7, ['plague_knight']], [0.6, ['plague_abomination']], [0.3, ['plague_zombie', 'plague_bat']], [0.1, ['plague_elite']]],
   };
 
+
+
+
+
+
+
+  /* ==================== 燃烧的远征(The Burning Crusade) ====================
+   * 外域:7 张野外区域 + 沙塔斯城 + 时光之穴/卡拉赞/奎尔丹纳斯岛,16 座 5 人本 + 8 座团本,
+   * 配套 61-70 装备/武器/传说/材料/消耗品/声望/任务/世界首领(等级上限 70)。
+   * 数值口径与 scripts/audit-data.js 的品质预算带、战力曲线、掉落闭环规则一致。 */
+  /* BEGIN TBC */
+  (function () {
+    /* ---------- 外域怪物技能(邪能 / 虚空系) ---------- */
+    Object.assign(D.MONSTER_SKILLS, {
+      m_fel_cleave: { id: 'm_fel_cleave', name: '邪能劈砍', icon: '🪓', sig: 1, mult: 1.6, aoe: 1, cd: 4, debuff: { key: 'fel_crush', name: '邪能压制', mod: { armorPct: -0.15 }, rounds: 2 }, desc: '邪能武器横扫全场，削碎目标的护甲。' },
+      m_fel_flames: { id: 'm_fel_flames', name: '邪能烈焰', icon: '🔥', sig: 1, mult: 1.7, magic: 1, cd: 4, dot: { per: 0.07, rounds: 3 }, dotType: 'fire', desc: '灼热的邪能烈焰持续焚烧目标。' },
+      m_supernova: { id: 'm_supernova', name: '星界新星', icon: '✨', sig: 1, mult: 1.5, magic: 1, aoe: 1, cd: 5, debuff: { key: 'nova_daze', name: '星界眩晕', mod: { atkPct: -0.12 }, rounds: 2 }, desc: '引爆星界能量冲击全场，干扰目标的攻击。' },
+      m_void_strike: { id: 'm_void_strike', name: '虚空重击', icon: '🌑', sig: 1, mult: 1.9, magic: 1, cd: 4, dot: { per: 0.06, rounds: 3 }, dotType: 'shadow', debuff: { key: 'void_sear', name: '虚空灼伤', mod: { healTaken: -0.2 }, rounds: 2 }, desc: '虚空的裂隙撕扯目标，持续侵蚀并抑制治疗。' },
+      m_nether_ward: { id: 'm_nether_ward', name: '虚空护盾', icon: '🛡️', sig: 1, healPct: 0.12, hot: { per: 0.05, rounds: 3 }, cd: 5, desc: '以虚空能量包裹自身，持续恢复生命。' },
+    });
+
+    /* ---------- 外域材料与消耗品 ---------- */
+    Object.assign(D.ITEMS, {
+      m_feliron: IT('m_feliron', '魔铁锭', '⛓️', 'material', 'green', 60, {}, { buy: 2200, sell: 550 }),
+      m_nether: IT('m_nether', '虚空水晶', '🟣', 'material', 'epic', 66, {}, { buy: 6800, sell: 1700 }),
+      c_out_heal: IT('c_out_heal', '外域治疗药水', '🧪', 'consumable', 'blue', 62, {}, { consumable: { healPct: 0.65 }, buy: 16000, sell: 4000 }),
+      c_out_mana: IT('c_out_mana', '外域法力药水', '🧪', 'consumable', 'blue', 62, {}, { consumable: { manaPct: 0.6 }, buy: 16000, sell: 4000 }),
+      c_nether_flask: IT('c_nether_flask', '虚空合剂', '⚗️', 'consumable', 'epic', 68, {}, { consumable: { healPct: 0.5, manaPct: 0.45 }, buy: 34000, sell: 8500 }),
+    });
+
+    /* ---------- 61-70 装备(每槽位 3 件覆盖两个等级段,属性线轮转) ---------- */
+    Object.assign(D.ITEMS, {
+      a_out_helm: IT('a_out_helm', '外域钢盔', '⛑️', 'head', 'blue', 62, {str: 13,stam: 4,crit: 0.03,armor: 91}, { buy: 82000, sell: 20500 }),
+      a_void_hood: IT('a_void_hood', '虚空兜帽', '🎩', 'head', 'epic', 66, {int: 14,spi: 12,stam: 4,crit: 0.03,armor: 113}, { buy: 148000, sell: 37000 }),
+      a_sun_crown: IT('a_sun_crown', '太阳井王冠', '👑', 'head', 'epic', 70, {agi: 18,stam: 6,crit: 0.04,armor: 121}, { buy: 162000, sell: 40500 }),
+      a_out_chest: IT('a_out_chest', '外域胸甲', '🦺', 'chest', 'blue', 62, {int: 12,spi: 11,stam: 3,crit: 0.03,armor: 225}, { buy: 82000, sell: 20500 }),
+      a_void_plate: IT('a_void_plate', '虚空板甲', '🛡️', 'chest', 'epic', 66, {str: 21,stam: 7,crit: 0.05,armor: 277}, { buy: 148000, sell: 37000 }),
+      a_sun_robe: IT('a_sun_robe', '太阳井法袍', '🥻', 'chest', 'epic', 70, {int: 18,spi: 16,stam: 5,crit: 0.04,armor: 297}, { buy: 162000, sell: 40500 }),
+      a_out_gloves: IT('a_out_gloves', '外域护手', '🧤', 'gloves', 'blue', 62, {agi: 13,stam: 4,crit: 0.03,armor: 129}, { buy: 82000, sell: 20500 }),
+      a_void_gauntlets: IT('a_void_gauntlets', '虚空护手', '🧤', 'gloves', 'epic', 66, {str: 18,stam: 6,crit: 0.04,armor: 156}, { buy: 148000, sell: 37000 }),
+      a_sun_gloves: IT('a_sun_gloves', '太阳井手套', '🧤', 'gloves', 'epic', 70, {agi: 20,stam: 6,crit: 0.05,armor: 164}, { buy: 162000, sell: 40500 }),
+      a_out_legs: IT('a_out_legs', '外域护腿', '👖', 'legs', 'blue', 62, {str: 14,stam: 5,crit: 0.03,armor: 165}, { buy: 82000, sell: 20500 }),
+      a_void_legs: IT('a_void_legs', '虚空护腿', '👖', 'legs', 'epic', 66, {agi: 20,stam: 7,crit: 0.05,armor: 201}, { buy: 148000, sell: 37000 }),
+      a_sun_legs: IT('a_sun_legs', '太阳井护腿', '👖', 'legs', 'epic', 70, {int: 17,spi: 15,stam: 5,crit: 0.04,armor: 213}, { buy: 162000, sell: 40500 }),
+      a_out_boots: IT('a_out_boots', '外域战靴', '🥾', 'boots', 'blue', 62, {int: 8,spi: 7,stam: 2,crit: 0.02,armor: 116}, { buy: 82000, sell: 20500 }),
+      a_void_boots: IT('a_void_boots', '虚空战靴', '🥾', 'boots', 'epic', 66, {str: 14,stam: 5,crit: 0.03,armor: 140}, { buy: 148000, sell: 37000 }),
+      a_sun_boots: IT('a_sun_boots', '太阳井长靴', '🥾', 'boots', 'epic', 70, {agi: 15,stam: 5,crit: 0.04,armor: 148}, { buy: 162000, sell: 40500 }),
+      a_out_cloak: IT('a_out_cloak', '外域披风', '🧣', 'cloak', 'blue', 62, {agi: 9,stam: 3,crit: 0.02,armor: 55}, { buy: 82000, sell: 20500 }),
+      a_void_cloak: IT('a_void_cloak', '虚空披风', '🧣', 'cloak', 'epic', 66, {int: 10,spi: 9,stam: 3,crit: 0.02,armor: 66}, { buy: 148000, sell: 37000 }),
+      a_sun_cloak: IT('a_sun_cloak', '太阳井披风', '🧣', 'cloak', 'epic', 70, {str: 13,stam: 4,crit: 0.03,armor: 70}, { buy: 162000, sell: 40500 }),
+      a_out_neck: IT('a_out_neck', '外域护符', '📿', 'neck', 'blue', 62, {str: 12,stam: 4,crit: 0.03}, { buy: 82000, sell: 20500 }),
+      a_void_neck: IT('a_void_neck', '虚空坠饰', '📿', 'neck', 'epic', 66, {int: 13,spi: 12,stam: 4,crit: 0.03}, { buy: 148000, sell: 37000 }),
+      a_sun_neck: IT('a_sun_neck', '太阳井项链', '📿', 'neck', 'epic', 70, {agi: 17,stam: 6,crit: 0.04}, { buy: 162000, sell: 40500 }),
+      a_out_ring: IT('a_out_ring', '外域指环', '💍', 'ring', 'blue', 62, {int: 11,spi: 10,stam: 3,crit: 0.02}, { buy: 82000, sell: 20500 }),
+      a_void_ring: IT('a_void_ring', '虚空指环', '💍', 'ring', 'epic', 66, {agi: 19,stam: 6,crit: 0.04}, { buy: 148000, sell: 37000 }),
+      a_sun_ring: IT('a_sun_ring', '太阳井戒指', '💍', 'ring', 'epic', 70, {str: 20,stam: 6,crit: 0.05}, { buy: 162000, sell: 40500 }),
+      tr_out_signet: IT('tr_out_signet', '外域徽记', '🔮', 'trinket', 'blue', 62, {agi: 15,stam: 5,crit: 0.03}, { buy: 82000, sell: 20500 }),
+      tr_void_eye: IT('tr_void_eye', '虚空之眼', '👁️', 'trinket', 'epic', 66, {int: 16,spi: 14,stam: 4,crit: 0.04}, { buy: 148000, sell: 37000 }),
+      tr_sun_seal: IT('tr_sun_seal', '太阳井印记', '🔆', 'trinket', 'epic', 70, {str: 21,stam: 7,crit: 0.05}, { buy: 162000, sell: 40500 }),
+      w_off_out_shield: IT('w_off_out_shield', '外域盾牌', '🛡️', 'offhand', 'blue', 62, {str: 14,stam: 4,crit: 0.03,armor: 33}, { buy: 82000, sell: 20500 }),
+      w_off_void_totem: IT('w_off_void_totem', '虚空图腾', '🪬', 'offhand', 'epic', 66, {int: 15,spi: 13,stam: 4,crit: 0.03,armor: 40}, { buy: 148000, sell: 37000 }),
+      w_off_sun_blade: IT('w_off_sun_blade', '太阳井副刃', '🗡️', 'offhand', 'epic', 70, {agi: 20,stam: 6,crit: 0.05,armor: 44}, { buy: 162000, sell: 40500 }),
+    });
+
+    /* ---------- 外域武器(物理/敏捷/法系三线,61-69 逐段可换) ---------- */
+    Object.assign(D.ITEMS, {
+      w_outland_blade: IT('w_outland_blade', '外域战刃', '⚔️', 'weapon', 'blue', 61, {dmg: [98,142],str: 18,stam: 12,crit: 0.02}, { buy: 81000, sell: 20250 }),
+      w_zangar_claw: IT('w_zangar_claw', '赞加裂爪', '🗡️', 'weapon', 'blue', 63, {dmg: [102,146],agi: 20,crit: 0.03}, { buy: 84000, sell: 21000 }),
+      w_shattered_blade: IT('w_shattered_blade', '破碎之刃', '⚔️', 'weapon', 'blue', 65, {dmg: [102,146],str: 22,stam: 12,crit: 0.03}, { buy: 86000, sell: 21500 }),
+      w_nether_edge: IT('w_nether_edge', '虚空之刃', '🗡️', 'weapon', 'blue', 67, {dmg: [106,158],agi: 26,crit: 0.04}, { buy: 88000, sell: 22000 }),
+      w_outland_staff: IT('w_outland_staff', '外域法杖', '🪄', 'weapon', 'blue', 61, {dmg: [86,122],int: 24,spi: 16,crit: 0.02}, { buy: 81000, sell: 20250 }),
+      w_nether_staff: IT('w_nether_staff', '虚空法杖', '🪄', 'weapon', 'blue', 65, {dmg: [90,126],int: 26,spi: 18,crit: 0.03}, { buy: 86000, sell: 21500 }),
+    });
+
+    /* ---------- 传说武器 / 传说饰品(预算按同槽位同线最强史诗 ≥1.3× 反推,橙色确实更强) ---------- */
+    Object.assign(D.ITEMS, {
+      w_black_temple_blade: IT('w_black_temple_blade', '黑暗神殿战刃', '⚔️', 'weapon', 'legendary', 69, {dmg: [196,284],str: 34,stam: 20,crit: 0.05}, { sell: 220000 }),
+      w_void_staff: IT('w_void_staff', '虚空风暴法杖', '🪄', 'weapon', 'legendary', 68, {dmg: [164,236],int: 42,spi: 26,crit: 0.05}, { sell: 220000 }),
+      w_warglaive: IT('w_warglaive', '埃辛诺斯战刃', '🗡️', 'weapon', 'legendary', 70, {dmg: [280,400],agi: 44,crit: 0.09}, { sell: 220000 }),
+      w_thori_dal: IT('w_thori_dal', '索利达尔·群星之怒', '🏹', 'weapon', 'legendary', 70, {dmg: [272,388],agi: 36,hit: 0.04,lifesteal: 0.03}, { sell: 220000 }),
+      w_naaru_staff: IT('w_naaru_staff', '纳鲁的恩典', '🪄', 'weapon', 'legendary', 70, {dmg: [248,352],int: 52,spi: 32,crit: 0.06}, { sell: 220000 }),
+      tr_skull_guldan: IT('tr_skull_guldan', '古尔丹之颅', '💀', 'trinket', 'legendary', 70, {int: 28,spi: 25,stam: 8,crit: 0.06}, { sell: 200000 }),
+    });
+
+    /* ---------- 外域商店与副本掉落池 ---------- */
+    const TBC_SHOP = {
+      hellfire: ['a_out_helm','a_out_chest','a_out_legs','a_out_boots','w_outland_blade','w_outland_staff','tr_out_signet','a_out_neck','c_out_heal','c_out_mana','m_feliron','m_nether'],
+      zangarmarsh: ['a_out_helm','a_out_chest','a_out_gloves','a_out_cloak','a_out_ring','w_outland_staff','w_zangar_claw','c_out_heal','c_out_mana','m_feliron','m_nether'],
+      terokkar: ['a_out_helm','a_out_legs','a_out_neck','a_out_ring','w_nether_staff','w_outland_blade','w_off_out_shield','c_out_heal','c_out_mana','m_feliron','m_nether'],
+      nagrand: ['a_void_hood','a_void_legs','a_void_boots','a_void_ring','tr_void_eye','w_nether_edge','w_nether_staff','c_out_heal','c_out_mana','m_feliron','m_nether'],
+      bladesedge: ['a_void_gauntlets','a_void_legs','a_void_cloak','a_void_neck','w_nether_edge','w_off_void_totem','c_out_heal','c_out_mana','c_nether_flask','m_feliron','m_nether'],
+      netherstorm: ['a_sun_crown','a_void_plate','a_void_gauntlets','a_void_boots','a_void_cloak','tr_void_eye','w_nether_staff','c_out_heal','c_out_mana','c_nether_flask','m_feliron','m_nether'],
+      shadowmoon: ['a_sun_crown','a_sun_robe','a_sun_gloves','a_sun_legs','a_sun_boots','a_sun_cloak','a_sun_neck','a_sun_ring','tr_sun_seal','w_off_sun_blade','w_nether_edge','c_out_heal','c_out_mana','c_nether_flask','m_feliron','m_nether'],
+      shattrath: ['a_out_helm','a_void_hood','a_sun_crown','a_out_chest','a_void_plate','a_sun_robe','a_out_gloves','a_void_gauntlets','a_sun_gloves','a_out_legs','a_void_legs','a_sun_legs','a_out_boots','a_void_boots','a_sun_boots','a_out_cloak','a_void_cloak','a_sun_cloak','a_out_neck','a_void_neck','a_sun_neck','a_out_ring','a_void_ring','a_sun_ring','tr_out_signet','tr_void_eye','tr_sun_seal','w_off_out_shield','w_off_void_totem','w_off_sun_blade','w_outland_blade','w_zangar_claw','w_shattered_blade','w_nether_edge','w_outland_staff','w_nether_staff','c_out_heal','c_out_mana','c_nether_flask','m_feliron','m_nether','m_crystal'],
+    };
+    const TBC_POOL = {
+      hellfire_ramparts: ['a_out_helm','w_outland_blade','a_out_boots','tr_out_signet'],
+      blood_furnace: ['a_out_chest','w_outland_staff','a_out_legs','tr_out_signet'],
+      shattered_halls: ['a_void_gauntlets','w_shattered_blade','a_void_boots','tr_void_eye'],
+      slave_pens: ['a_out_gloves','a_out_cloak','w_outland_staff','a_out_neck'],
+      underbog: ['a_out_ring','a_out_legs','w_zangar_claw','tr_out_signet'],
+      steamvault: ['a_void_ring','a_void_neck','w_nether_staff','w_off_void_totem'],
+      mana_tombs: ['tr_out_signet','a_out_neck','w_outland_blade','a_out_helm'],
+      auchenai_crypts: ['a_out_helm','w_off_out_shield','a_out_gloves','tr_out_signet'],
+      sethekk_halls: ['a_void_hood','w_nether_edge','a_void_legs','tr_void_eye'],
+      shadow_labyrinth: ['a_void_hood','a_void_cloak','w_nether_edge','tr_void_eye'],
+      old_hillsbrad: ['a_void_legs','a_out_cloak','w_nether_staff','a_void_ring'],
+      black_morass: ['a_void_cloak','w_nether_edge','a_void_neck','tr_void_eye'],
+      mechanar: ['a_void_gauntlets','w_nether_staff','a_void_ring','w_off_void_totem'],
+      botanica: ['a_void_plate','a_void_boots','w_nether_edge','tr_void_eye'],
+      arcatraz: ['a_sun_crown','w_void_staff','a_sun_boots','tr_sun_seal'],
+      magisters_terrace: ['a_sun_robe','w_off_sun_blade','a_sun_gloves','tr_sun_seal'],
+      karazhan: ['a_sun_crown','w_nether_edge','a_sun_cloak','tr_sun_seal'],
+      gruuls_lair: ['a_sun_gloves','a_sun_legs','tr_sun_seal','m_nether'],
+      magtheridons_lair: ['a_sun_robe','a_sun_crown','a_sun_boots','tr_sun_seal'],
+      serpentshrine_cavern: ['a_sun_legs','w_void_staff','a_sun_neck','tr_sun_seal'],
+      tempest_keep: ['a_sun_robe','w_naaru_staff','a_sun_cloak','tr_sun_seal'],
+      battle_for_hyjal: ['a_sun_crown','a_sun_robe','w_black_temple_blade','tr_sun_seal'],
+      black_temple: ['w_warglaive','tr_skull_guldan','a_sun_crown','a_sun_gloves'],
+      sunwell_plateau: ['a_sun_robe','w_thori_dal','a_sun_boots','tr_sun_seal'],
+    };
+
+    /* ---------- 外域区域(野外 + 枢纽 + 副本入口) ---------- */
+    D.ZONES.blasted_lands.travel.push('hellfire');
+    D.ZONES.duskwood.travel.push('karazhan');
+    D.ZONES.tanaris.travel.push('caverns_of_time');
+    Object.assign(D.ZONES, {
+      hellfire: Z('hellfire', '地狱火半岛', '🔥', 'neutral', '58-63',
+        '黑暗之门彼端的第一片焦土，邪兽人与燃烧军团的残部在破碎的红色荒原上厮杀。',
+        { travel: ['blasted_lands','zangarmarsh','shattrath','hellfire_ramparts','blood_furnace','shattered_halls','magtheridons_lair'], monsters: ['hell_boar','hell_ravager','hell_orc','hell_demon','hell_elite'], quests: ['q_tbc_hell_ravager'],
+          shop: TBC_SHOP.hellfire, inn: true, shopName: '远征军粮官' }),
+      zangarmarsh: Z('zangarmarsh', '赞加沼泽', '🍄', 'neutral', '60-64',
+        '巨大的蘑菇森林覆盖着湿热的沼泽，暗鳞纳迦与远征队在争夺这片水域。',
+        { travel: ['hellfire','terokkar','shattrath','slave_pens','underbog','steamvault','serpentshrine_cavern'], monsters: ['zang_bog','zang_naga','zang_spore','zang_hydra','zang_elite'], quests: ['q_tbc_zang_naga'],
+          shop: TBC_SHOP.zangarmarsh, inn: true, shopName: '远征军粮官' }),
+      terokkar: Z('terokkar', '泰罗卡森林', '🌲', 'neutral', '62-66',
+        '鸦人的古老林海，白骨荒野的亡灵与奥金尼的祭司在树影间徘徊。',
+        { travel: ['zangarmarsh','nagrand','shattrath','mana_tombs','auchenai_crypts','sethekk_halls','shadow_labyrinth'], monsters: ['ter_arakkoa','ter_spider','ter_wolf','ter_treant','ter_elite'], quests: ['q_tbc_ter_spider'],
+          shop: TBC_SHOP.terokkar, inn: true, shopName: '远征军粮官' }),
+      nagrand: Z('nagrand', '纳格兰', '🦬', 'neutral', '64-68',
+        '悬浮在虚空中的绿色草原，裂蹄牛群与石拳食人魔共享着这片最后的乐园。',
+        { travel: ['terokkar','bladesedge','shattrath'], monsters: ['nag_clefthoof','nag_ogre','nag_windroc','nag_ravager','nag_elite'], quests: ['q_tbc_nag_ogre'],
+          shop: TBC_SHOP.nagrand, inn: true, shopName: '远征军粮官' }),
+      bladesedge: Z('bladesedge', '刀锋山', '⛰️', 'neutral', '65-69',
+        '刀刃般的岩峰刺破天穹，格鲁尔的子嗣与虚空幼龙在峭壁间厮杀。',
+        { travel: ['nagrand','netherstorm','shattrath','gruuls_lair'], monsters: ['be_ogre','be_ravager','be_drake','be_gnome','be_elite'], quests: ['q_tbc_be_drake'],
+          shop: TBC_SHOP.bladesedge, inn: true, shopName: '远征军粮官' }),
+      netherstorm: Z('netherstorm', '虚空风暴', '⚡', 'neutral', '67-70',
+        '被虚空撕裂的浮空群岛，虚灵、恶魔与凯尔萨斯的奥术军团在此争夺法力熔炉。',
+        { travel: ['bladesedge','shadowmoon','shattrath','mechanar','botanica','arcatraz','tempest_keep'], monsters: ['net_ether','net_mana','net_void','net_robot','net_elite'], quests: ['q_tbc_net_void'],
+          shop: TBC_SHOP.netherstorm, inn: true, shopName: '远征军粮官' }),
+      shadowmoon: Z('shadowmoon', '影月谷', '🌑', 'neutral', '67-70',
+        '被邪能染黑的谷地，伊利丹的军团与黑暗神殿的阴影笼罩着整片大地。',
+        { travel: ['netherstorm','shattrath','quel_danas','black_temple'], monsters: ['sm_demon','sm_wolf','sm_drake','sm_elemental','sm_elite'], quests: ['q_tbc_sm_drake'],
+          shop: TBC_SHOP.shadowmoon, inn: true, shopName: '远征军粮官' }),
+      shattrath: Z('shattrath', '沙塔斯城', '🏛️', 'neutral', '—',
+        '外域的中立圣城，纳鲁的光辉照亮了流亡者的避难所，各阵营的军需官在此驻守。',
+        { travel: ['hellfire','zangarmarsh','terokkar','nagrand','bladesedge','netherstorm','shadowmoon'], monsters: [], quests: [], shop: TBC_SHOP.shattrath, inn: true, shopName: '沙塔斯商贩' }),
+      caverns_of_time: Z('caverns_of_time', '时光之穴', '⏳', 'neutral', '63-70',
+        '守卫时光的青铜龙巢穴，通往历史关键节点的传送门在此开启。',
+        { travel: ['tanaris','old_hillsbrad','black_morass','battle_for_hyjal'], monsters: [], quests: [], shop: [], inn: false }),
+      karazhan: Z('karazhan', '卡拉赞', '🏰', 'neutral', '70',
+        '麦迪文遗留的魔法高塔，扭曲的时空让亡者与幻象永不停歇地游荡。',
+        { travel: ['duskwood'], monsters: [], quests: [], shop: [], inn: false }),
+      quel_danas: Z('quel_danas', '奎尔丹纳斯岛', '🌅', 'neutral', '70',
+        '血精灵的圣岛，太阳之井的余烬仍在燃烧，基尔加丹的阴影逼近。',
+        { travel: ['shadowmoon','magisters_terrace','sunwell_plateau'], monsters: [], quests: [], shop: [], inn: false }),
+      hellfire_ramparts: Z('hellfire_ramparts', '地狱火城墙', '🏰', 'neutral', '58-61',
+        '地狱火堡垒的外围城墙，龙喉兽人把守着通往黑暗之门的要道。',
+        { travel: ['hellfire'], monsters: [], dungeon: 'hellfire_ramparts', inn: false, quests: ['q_tbc_hellfire_ramparts'] }),
+      blood_furnace: Z('blood_furnace', '血熔炉', '🔥', 'neutral', '60-63',
+        '地狱火堡垒地下的邪能熔炉，玛瑟里顿的血在此炼成狂暴的邪兽人。',
+        { travel: ['hellfire'], monsters: [], dungeon: 'blood_furnace', inn: false, quests: ['q_tbc_blood_furnace'] }),
+      shattered_halls: Z('shattered_halls', '破碎大厅', '⚔️', 'neutral', '68-70',
+        '卡加斯·刃拳统治的堡垒深处，被邪能强化的部落战士在此接受最后的试炼。',
+        { travel: ['hellfire'], monsters: [], dungeon: 'shattered_halls', inn: false, quests: ['q_tbc_shattered_halls'] }),
+      slave_pens: Z('slave_pens', '奴隶围栏', '🌿', 'neutral', '61-64',
+        '盘牙水库的奴隶围栏，纳迦在此驱使俘虏为瓦斯琪挖掘水源。',
+        { travel: ['zangarmarsh'], monsters: [], dungeon: 'slave_pens', inn: false, quests: ['q_tbc_slave_pens'] }),
+      underbog: Z('underbog', '幽暗沼泽', '🍄', 'neutral', '62-65',
+        '赞加沼泽水面之下的幽暗洞穴，巨型孢子与沼泽生物在黑暗中蠕动。',
+        { travel: ['zangarmarsh'], monsters: [], dungeon: 'underbog', inn: false, quests: ['q_tbc_underbog'] }),
+      steamvault: Z('steamvault', '蒸汽地窟', '⚙️', 'neutral', '68-70',
+        '盘牙水库的蒸汽核心，水泵的轰鸣中藏着瓦斯琪的战争机器。',
+        { travel: ['zangarmarsh'], monsters: [], dungeon: 'steamvault', inn: false, quests: ['q_tbc_steamvault'] }),
+      mana_tombs: Z('mana_tombs', '法力陵墓', '🔮', 'neutral', '63-66',
+        '鸦人王族的墓穴被虚灵洗劫，奥术构造体在密封的厅堂中守卫着陪葬品。',
+        { travel: ['terokkar'], monsters: [], dungeon: 'mana_tombs', inn: false, quests: ['q_tbc_mana_tombs'] }),
+      auchenai_crypts: Z('auchenai_crypts', '奥金尼地穴', '💀', 'neutral', '64-67',
+        '德莱尼祭司的安息之地被黑暗仪式亵渎，亡者的低语在墓道中回荡。',
+        { travel: ['terokkar'], monsters: [], dungeon: 'auchenai_crypts', inn: false, quests: ['q_tbc_auchenai_crypts'] }),
+      sethekk_halls: Z('sethekk_halls', '塞泰克大厅', '🕊️', 'neutral', '66-69',
+        '鸦人先知的圣殿，塞泰克教派在此唤醒沉睡的利爪之王。',
+        { travel: ['terokkar'], monsters: [], dungeon: 'sethekk_halls', inn: false, quests: ['q_tbc_sethekk_halls'] }),
+      shadow_labyrinth: Z('shadow_labyrinth', '暗影迷宫', '🌑', 'neutral', '69-70',
+        '奥金顿地下的暗影议会密室，被封印的元素之音正在唤醒毁灭。',
+        { travel: ['terokkar'], monsters: [], dungeon: 'shadow_labyrinth', inn: false, quests: ['q_tbc_shadow_labyrinth'] }),
+      old_hillsbrad: Z('old_hillsbrad', '旧希尔斯布莱德', '🕰️', 'neutral', '64-67',
+        '穿越时光回到旧希尔斯布莱德，护送萨尔逃离敦霍尔德的囚笼。',
+        { travel: ['caverns_of_time'], monsters: [], dungeon: 'old_hillsbrad', inn: false, quests: ['q_tbc_old_hillsbrad'] }),
+      black_morass: Z('black_morass', '黑色沼泽', '🐊', 'neutral', '66-69',
+        '守护黑暗之门的开启，抵挡无限龙族对时间线的侵蚀。',
+        { travel: ['caverns_of_time'], monsters: [], dungeon: 'black_morass', inn: false, quests: ['q_tbc_black_morass'] }),
+      mechanar: Z('mechanar', '能源舰', '🤖', 'neutral', '68-70',
+        '凯尔萨斯的风暴要塞卫星舰，太阳井法力在此被抽取炼成奥术兵器。',
+        { travel: ['netherstorm'], monsters: [], dungeon: 'mechanar', inn: false, quests: ['q_tbc_mechanar'] }),
+      botanica: Z('botanica', '生态船', '🌺', 'neutral', '68-70',
+        '风暴要塞的生态舱，被扭曲的植物在奥术催化下疯狂生长。',
+        { travel: ['netherstorm'], monsters: [], dungeon: 'botanica', inn: false, quests: ['q_tbc_botanica'] }),
+      arcatraz: Z('arcatraz', '禁魔监狱', '🔒', 'neutral', '70-70',
+        '纳鲁关押宇宙中最危险存在的牢狱，封印正在一道一道崩坏。',
+        { travel: ['netherstorm'], monsters: [], dungeon: 'arcatraz', inn: false, quests: ['q_tbc_arcatraz'] }),
+      magisters_terrace: Z('magisters_terrace', '魔导师平台', '🏛️', 'neutral', '70-70',
+        '凯尔萨斯在太阳之井废墟中重塑肉身，血骑士与秘法师誓死护卫。',
+        { travel: ['quel_danas'], monsters: [], dungeon: 'magisters_terrace', inn: false, quests: ['q_tbc_magisters_terrace'] }),
+      karazhan: Z('karazhan', '卡拉赞', '🏰', 'neutral', '70-70',
+        '麦迪文的魔法高塔已沦为鬼蜮，玛克扎尔王子在塔顶谋划着扭曲的阴谋。',
+        { travel: ['karazhan'], monsters: [], dungeon: 'karazhan', inn: false, quests: ['q_tbc_karazhan'] }),
+      gruuls_lair: Z('gruuls_lair', '格鲁尔的巢穴', '🐗', 'neutral', '70-70',
+        '刀锋山巅的食人魔王座，戈隆之王格鲁尔以巨龙的血肉为食。',
+        { travel: ['bladesedge'], monsters: [], dungeon: 'gruuls_lair', inn: false, quests: ['q_tbc_gruuls_lair'] }),
+      magtheridons_lair: Z('magtheridons_lair', '玛瑟里顿的巢穴', '🐉', 'neutral', '70-70',
+        '被锁链束缚的深渊领主，伊利丹以一整座堡垒囚禁着这位燃烧军团的指挥官。',
+        { travel: ['hellfire'], monsters: [], dungeon: 'magtheridons_lair', inn: false, quests: ['q_tbc_magtheridons_lair'] }),
+      serpentshrine_cavern: Z('serpentshrine_cavern', '毒蛇神殿', '🐍', 'neutral', '70-70',
+        '盘牙水库最深处的祭坛，瓦斯琪女士正为她的新主人抽取外域的水源。',
+        { travel: ['zangarmarsh'], monsters: [], dungeon: 'serpentshrine_cavern', inn: false, quests: ['q_tbc_serpentshrine_cavern'] }),
+      tempest_keep: Z('tempest_keep', '风暴要塞', '🛸', 'neutral', '70-70',
+        '纳鲁的旗舰要塞，凯尔萨斯占据了这座水晶飞船并向虚空宣誓效忠。',
+        { travel: ['netherstorm'], monsters: [], dungeon: 'tempest_keep', inn: false, quests: ['q_tbc_tempest_keep'] }),
+      battle_for_hyjal: Z('battle_for_hyjal', '海加尔山之战', '🌳', 'neutral', '70-70',
+        '回到海加尔山的圣战，与吉安娜、萨尔和泰兰德并肩抵挡燃烧军团。',
+        { travel: ['caverns_of_time'], monsters: [], dungeon: 'battle_for_hyjal', inn: false, quests: ['q_tbc_battle_for_hyjal'] }),
+      black_temple: Z('black_temple', '黑暗神殿', '👁️', 'neutral', '70-70',
+        '伊利丹的黑暗神殿，背叛者的怒火与邪能火焰在此燃烧。',
+        { travel: ['shadowmoon'], monsters: [], dungeon: 'black_temple', inn: false, quests: ['q_tbc_black_temple'] }),
+      sunwell_plateau: Z('sunwell_plateau', '太阳井高地', '☀️', 'neutral', '70-70',
+        '太阳之井的废墟之上，燃烧军团之主正从虚空裂隙中踏入艾泽拉斯。',
+        { travel: ['quel_danas'], monsters: [], dungeon: 'sunwell_plateau', inn: false, quests: ['q_tbc_sunwell_plateau'] }),
+    });
+
+    /* ---------- 外域野外怪物 ---------- */
+    Object.assign(D.MONSTERS, {
+      hell_boar: M('hell_boar', '地狱火野猪', '🐗', 58, 1250, [137,178], 109, 505, 409, 'beast', ['m_bite','m_rend']),
+      hell_ravager: M('hell_ravager', '地狱火掠食者', '🦗', 59, 1290, [140,182], 111, 515, 417, 'beast', ['m_claw','m_charge','m_bash']),
+      hell_orc: M('hell_orc', '龙喉兽人', '🪓', 60, 1330, [142,185], 112, 525, 425, 'humanoid', ['m_rend','m_war_cry','m_bash']),
+      hell_demon: M('hell_demon', '魔火恶魔', '👿', 61, 1370, [144,187], 113, 535, 433, 'demon', ['m_fel_flames','m_shadow','m_war_cry']),
+      hell_elite: M('hell_elite', '深渊领主', '👹', 63, 3190, [161,209], 122, 1665, 1167, 'demon', ['m_fel_cleave','m_fel_flames','m_enrage'], { elite: 1, title: '深渊领主 · 外域稀有精英' }),
+      zang_bog: M('zang_bog', '沼泽行者', '🦎', 60, 1330, [142,185], 112, 525, 425, 'beast', ['m_bite','m_poison']),
+      zang_naga: M('zang_naga', '暗鳞纳迦', '🐍', 61, 1370, [144,187], 113, 535, 433, 'humanoid', ['m_frost','m_claw','m_war_cry']),
+      zang_spore: M('zang_spore', '孢子蝙蝠', '🦇', 62, 1410, [147,191], 115, 545, 441, 'beast', ['m_bite','m_poison','m_rend']),
+      zang_hydra: M('zang_hydra', '沼泽九头蛇', '🐉', 63, 1450, [149,194], 116, 555, 449, 'beast', ['m_breath','m_bite','m_regen']),
+      zang_elite: M('zang_elite', '沼泽领主', '🍄', 64, 3278, [164,213], 123, 1695, 1188, 'elemental', ['m_breath','m_poison','m_enrage'], { elite: 1, title: '沼泽领主 · 外域稀有精英' }),
+      ter_arakkoa: M('ter_arakkoa', '鸦人猎手', '🐦', 62, 1410, [147,191], 115, 545, 441, 'humanoid', ['m_shadow','m_charge','m_war_cry']),
+      ter_spider: M('ter_spider', '泰罗卡毒蛛', '🕷️', 63, 1450, [149,194], 116, 555, 449, 'beast', ['m_poison','m_bite','m_rend']),
+      ter_wolf: M('ter_wolf', '森林座狼', '🐺', 64, 1490, [152,198], 117, 565, 457, 'beast', ['m_bite','m_rend','m_charge']),
+      ter_treant: M('ter_treant', '泰罗卡树人', '🌳', 65, 1530, [154,200], 119, 575, 465, 'elemental', ['m_bash','m_regen','m_war_cry']),
+      ter_elite: M('ter_elite', '鸦人先知', '🦅', 66, 3454, [168,218], 126, 1755, 1230, 'humanoid', ['m_void_strike','m_supernova','m_nether_ward'], { elite: 1, title: '鸦人先知 · 外域稀有精英' }),
+      nag_clefthoof: M('nag_clefthoof', '裂蹄牛', '🦬', 64, 1490, [152,198], 117, 565, 457, 'beast', ['m_charge','m_rend','m_bash']),
+      nag_ogre: M('nag_ogre', '石拳食人魔', '👺', 65, 1530, [154,200], 119, 575, 465, 'humanoid', ['m_charge','m_war_cry','m_rend']),
+      nag_windroc: M('nag_windroc', '风鹏', '🦅', 66, 1570, [156,203], 120, 585, 473, 'beast', ['m_claw','m_bite','m_charge']),
+      nag_ravager: M('nag_ravager', '塔布羊掠夺者', '🐏', 67, 1610, [159,207], 121, 595, 481, 'beast', ['m_bite','m_bash','m_enrage']),
+      nag_elite: M('nag_elite', '元素领主', '🌀', 68, 3630, [174,226], 128, 1815, 1271, 'elemental', ['m_supernova','m_charge','m_enrage'], { elite: 1, title: '元素领主 · 外域稀有精英' }),
+      be_ogre: M('be_ogre', '刀锋食人魔', '👹', 65, 1530, [154,200], 119, 575, 465, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      be_ravager: M('be_ravager', '刀锋掠食者', '🦗', 66, 1570, [156,203], 120, 585, 473, 'beast', ['m_claw','m_charge','m_rend']),
+      be_drake: M('be_drake', '虚空幼龙', '🐲', 67, 1610, [159,207], 121, 595, 481, 'dragon', ['m_breath','m_fel_flames','m_enrage']),
+      be_gnome: M('be_gnome', '侏儒技师', '🤖', 68, 1650, [161,209], 122, 605, 489, 'mechanical', ['m_charge','m_war_cry','m_bash']),
+      be_elite: M('be_elite', '格鲁尔之子', '🐗', 69, 3718, [177,230], 130, 1845, 1292, 'beast', ['m_bash','m_charge','m_enrage'], { elite: 1, title: '格鲁尔之子 · 外域稀有精英' }),
+      net_ether: M('net_ether', '虚灵掠夺者', '👽', 67, 1610, [159,207], 121, 595, 481, 'humanoid', ['m_void_strike','m_shadow','m_war_cry']),
+      net_mana: M('net_mana', '法力浮龙', '🦋', 68, 1650, [161,209], 122, 605, 489, 'elemental', ['m_supernova','m_frost','m_regen']),
+      net_void: M('net_void', '虚空行者', '🌑', 69, 1690, [164,213], 124, 615, 497, 'elemental', ['m_void_strike','m_shadow','m_enrage']),
+      net_robot: M('net_robot', '虚空机械', '🤖', 69, 1690, [164,213], 124, 615, 497, 'mechanical', ['m_charge','m_bash','m_enrage']),
+      net_elite: M('net_elite', '虚空领主', '👁️', 70, 3806, [179,233], 131, 1875, 1313, 'demon', ['m_supernova','m_void_strike','m_nether_ward'], { elite: 1, title: '虚空领主 · 外域稀有精英' }),
+      sm_demon: M('sm_demon', '恶魔卫士', '👿', 67, 1610, [159,207], 121, 595, 481, 'demon', ['m_fel_cleave','m_fel_flames','m_war_cry']),
+      sm_wolf: M('sm_wolf', '邪能座狼', '🐺', 68, 1650, [161,209], 122, 605, 489, 'beast', ['m_bite','m_rend','m_enrage']),
+      sm_drake: M('sm_drake', '影月幼龙', '🐉', 69, 1690, [164,213], 124, 615, 497, 'dragon', ['m_breath','m_fel_flames','m_enrage']),
+      sm_elemental: M('sm_elemental', '暗影元素', '🌀', 69, 1690, [164,213], 124, 615, 497, 'elemental', ['m_shadow','m_supernova','m_nether_ward']),
+      sm_elite: M('sm_elite', '恶魔领主', '😈', 70, 3806, [179,233], 131, 1875, 1313, 'demon', ['m_fel_cleave','m_void_strike','m_enrage'], { elite: 1, title: '恶魔领主 · 外域稀有精英' }),
+    });
+
+    /* ---------- 副本怪物(杂兵 + 最终首领;中途首领由下方表统一注册) ---------- */
+    Object.assign(D.MONSTERS, {
+      rampart_orc: M('rampart_orc', '龙喉步兵', '🪓', 58, 1325, [137,178], 109, 556, 409, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      rampart_whelp: M('rampart_whelp', '地狱火幼龙', '🐉', 58, 1325, [137,178], 109, 556, 409, 'dragon', ['m_breath','m_bite']),
+      vazruden: M('vazruden', '瓦兹鲁登·先锋', '👹', 59, 3660, [153,199], 116, 4460, 3600, 'humanoid', ['m_charge','m_war_cry','m_enrage'], { elite: 1, boss: 1, title: '地狱火城墙 · 最终首领' }),
+      bf_guard: M('bf_guard', '血熔炉守卫', '🪓', 60, 1410, [142,185], 112, 578, 425, 'humanoid', ['m_charge','m_rend','m_bash']),
+      bf_imp: M('bf_imp', '魔火小鬼', '👿', 60, 1410, [142,185], 112, 578, 425, 'demon', ['m_fireball','m_fel_flames']),
+      kelidan: M('kelidan', '击碎者基尔罗格', '🧙', 61, 3780, [160,208], 119, 4980, 4000, 'demon', ['m_fel_flames','m_shadow','m_enrage'], { elite: 1, boss: 1, title: '血熔炉 · 最终首领' }),
+      sh_legionnaire: M('sh_legionnaire', '邪兽人百夫长', '🪓', 68, 1749, [161,209], 122, 666, 489, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      sh_archer: M('sh_archer', '邪兽人射手', '🏹', 68, 1749, [161,209], 122, 666, 489, 'humanoid', ['m_bite','m_bash','m_charge']),
+      kargath: M('kargath', '卡加斯·刃拳', '🪓', 69, 4260, [185,241], 128, 7060, 5600, 'humanoid', ['m_fel_cleave','m_rend','m_enrage'], { elite: 1, boss: 1, title: '破碎大厅 · 最终首领' }),
+      sp_keeper: M('sp_keeper', '暗鳞奴隶主', '🐍', 61, 1452, [144,187], 113, 589, 433, 'humanoid', ['m_frost','m_claw','m_war_cry']),
+      sp_crab: M('sp_crab', '深渊巨蟹', '🦀', 61, 1452, [144,187], 113, 589, 433, 'beast', ['m_bash','m_claw','m_rend']),
+      quagmirran: M('quagmirran', '夸格米拉', '🦐', 62, 3840, [163,212], 120, 5240, 4200, 'beast', ['m_breath','m_bite','m_enrage'], { elite: 1, boss: 1, title: '奴隶围栏 · 最终首领' }),
+      ub_lord: M('ub_lord', '沼泽领主', '🐊', 62, 1495, [147,191], 115, 600, 441, 'beast', ['m_bite','m_breath','m_rend']),
+      ub_spore: M('ub_spore', '孢囊', '🍄', 62, 1495, [147,191], 115, 600, 441, 'elemental', ['m_poison','m_regen','m_breath']),
+      black_stalker: M('black_stalker', '黑色追踪者', '🕷️', 63, 3900, [166,216], 121, 5500, 4400, 'beast', ['m_poison','m_bite','m_enrage'], { elite: 1, boss: 1, title: '幽暗沼泽 · 最终首领' }),
+      sv_giant: M('sv_giant', '蒸汽巨人', '🗿', 68, 1749, [161,209], 122, 666, 489, 'elemental', ['m_bash','m_charge','m_war_cry']),
+      sv_naga: M('sv_naga', '纳迦侍从', '🐍', 68, 1749, [161,209], 122, 666, 489, 'humanoid', ['m_frost','m_claw','m_heal']),
+      kalithresh: M('kalithresh', '督军卡利瑟里斯', '🔱', 69, 4260, [185,241], 128, 7060, 5600, 'humanoid', ['m_frost','m_charge','m_enrage'], { elite: 1, boss: 1, title: '蒸汽地窟 · 最终首领' }),
+      mt_ethereal: M('mt_ethereal', '虚灵盗墓者', '👽', 63, 1537, [149,194], 116, 611, 449, 'humanoid', ['m_void_strike','m_shadow','m_war_cry']),
+      mt_arcane: M('mt_arcane', '奥术幽灵', '✨', 63, 1537, [149,194], 116, 611, 449, 'elemental', ['m_supernova','m_shadow']),
+      shaffar: M('shaffar', '节点亲王沙法尔', '💠', 64, 3960, [169,220], 122, 5760, 4600, 'humanoid', ['m_supernova','m_void_strike','m_enrage'], { elite: 1, boss: 1, title: '法力陵墓 · 最终首领' }),
+      ac_ghost: M('ac_ghost', '奥金尼幽灵', '👻', 64, 1579, [152,198], 117, 622, 457, 'undead', ['m_shadow','m_frost','m_rend']),
+      ac_skeleton: M('ac_skeleton', '骷髅卫士', '🦴', 64, 1579, [152,198], 117, 622, 457, 'undead', ['m_bash','m_charge','m_war_cry']),
+      maladaar: M('maladaar', '主教玛拉达尔', '🧙', 65, 4020, [172,224], 123, 6020, 4800, 'humanoid', ['m_shadow','m_soul_drain','m_enrage'], { elite: 1, boss: 1, title: '奥金尼地穴 · 最终首领' }),
+      seth_talon: M('seth_talon', '塞泰克利爪', '🐦', 66, 1664, [156,203], 120, 644, 473, 'humanoid', ['m_shadow','m_charge','m_bash']),
+      seth_priest: M('seth_priest', '塞泰克祭司', '🧙', 66, 1664, [156,203], 120, 644, 473, 'humanoid', ['m_shadow','m_heal','m_war_cry']),
+      ikiss: M('ikiss', '塔瓦洛克·艾基斯', '🦅', 67, 4140, [179,233], 126, 6540, 5200, 'humanoid', ['m_supernova','m_shadow','m_enrage'], { elite: 1, boss: 1, title: '塞泰克大厅 · 最终首领' }),
+      sl_cultist: M('sl_cultist', '暗影教团信徒', '🕯️', 69, 1791, [164,213], 124, 677, 497, 'humanoid', ['m_shadow','m_soul_drain','m_war_cry']),
+      sl_walker: M('sl_walker', '虚空行者', '🌑', 69, 1791, [164,213], 124, 677, 497, 'elemental', ['m_void_strike','m_shadow','m_enrage']),
+      murmur: M('murmur', '穆鲁之音', '🌀', 70, 4320, [188,244], 129, 7320, 5800, 'elemental', ['m_void_strike','m_supernova','m_enrage'], { elite: 1, boss: 1, title: '暗影迷宫 · 最终首领' }),
+      oh_guard: M('oh_guard', '敦霍尔德卫兵', '🛡️', 64, 1579, [152,198], 117, 622, 457, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      oh_dragon: M('oh_dragon', '时光幼龙', '🐲', 64, 1579, [152,198], 117, 622, 457, 'dragon', ['m_breath','m_bite']),
+      epoch_hunter: M('epoch_hunter', '时光猎手埃波克', '🐉', 65, 4020, [172,224], 123, 6020, 4800, 'dragon', ['m_breath','m_void_strike','m_enrage'], { elite: 1, boss: 1, title: '旧希尔斯布莱德 · 最终首领' }),
+      bm_lurker: M('bm_lurker', '沼泽潜伏者', '🐊', 66, 1664, [156,203], 120, 644, 473, 'beast', ['m_bite','m_breath','m_rend']),
+      bm_drake: M('bm_drake', '时光龙人', '🐲', 66, 1664, [156,203], 120, 644, 473, 'dragon', ['m_breath','m_shadow','m_war_cry']),
+      aeonus: M('aeonus', '埃欧努斯', '🐉', 67, 4140, [179,233], 126, 6540, 5200, 'dragon', ['m_breath','m_void_strike','m_enrage'], { elite: 1, boss: 1, title: '黑色沼泽 · 最终首领' }),
+      mech_guard: M('mech_guard', '能源舰守卫', '🤖', 68, 1749, [161,209], 122, 666, 489, 'mechanical', ['m_bash','m_charge','m_war_cry']),
+      mech_engineer: M('mech_engineer', '能源舰工程师', '🔧', 68, 1749, [161,209], 122, 666, 489, 'mechanical', ['m_charge','m_war_cry','m_heal']),
+      pathaleon: M('pathaleon', '计算者帕萨雷恩', '🧮', 69, 4260, [185,241], 128, 7060, 5600, 'humanoid', ['m_supernova','m_charge','m_enrage'], { elite: 1, boss: 1, title: '能源舰 · 最终首领' }),
+      bot_sprout: M('bot_sprout', '温室新芽', '🌱', 68, 1749, [161,209], 122, 666, 489, 'elemental', ['m_poison','m_regen']),
+      bot_keeper: M('bot_keeper', '植物园守卫', '🌿', 68, 1749, [161,209], 122, 666, 489, 'humanoid', ['m_bash','m_charge','m_war_cry']),
+      warpsplinter: M('warpsplinter', '迁跃扭木', '🌳', 69, 4260, [185,241], 128, 7060, 5600, 'elemental', ['m_bash','m_poison','m_enrage'], { elite: 1, boss: 1, title: '生态船 · 最终首领' }),
+      arc_warden: M('arc_warden', '禁魔守卫', '🤖', 70, 1834, [166,216], 125, 688, 505, 'mechanical', ['m_bash','m_charge','m_war_cry']),
+      arc_prisoner: M('arc_prisoner', '虚灵囚徒', '👽', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_void_strike','m_shadow','m_enrage']),
+      skyriss: M('skyriss', '预言者斯克瑞斯', '👁️', 70, 4320, [188,244], 129, 7320, 5800, 'demon', ['m_void_strike','m_supernova','m_enrage'], { elite: 1, boss: 1, title: '禁魔监狱 · 最终首领' }),
+      mt_blood_knight: M('mt_blood_knight', '血骑士', '🩸', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      mt_priestess: M('mt_priestess', '秘法女祭司', '✨', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_supernova','m_frost','m_heal']),
+      kael_reborn: M('kael_reborn', '重生的凯尔萨斯', '🔥', 70, 4320, [188,244], 129, 7320, 5800, 'humanoid', ['m_fel_flames','m_supernova','m_enrage'], { elite: 1, boss: 1, title: '魔导师平台 · 最终首领' }),
+      kara_ghost: M('kara_ghost', '亡魂仆从', '👻', 70, 1834, [166,216], 125, 688, 505, 'undead', ['m_shadow','m_frost','m_rend']),
+      kara_wolf: M('kara_wolf', '狼人守卫', '🐺', 70, 1834, [166,216], 125, 688, 505, 'beast', ['m_bite','m_rend','m_charge']),
+      prince_malchezaar: M('prince_malchezaar', '玛克扎尔王子', '👑', 70, 7200, [270,351], 140, 18500, 14800, 'demon', ['m_void_strike','m_supernova','m_enrage'], { elite: 1, boss: 1, title: '卡拉赞 · 最终首领' }),
+      gruul_ogre: M('gruul_ogre', '食人魔蛮兵', '👹', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      gruul_hound: M('gruul_hound', '深渊恶犬', '🐺', 70, 1834, [166,216], 125, 688, 505, 'beast', ['m_bite','m_rend','m_enrage']),
+      gruul: M('gruul', '屠龙者格鲁尔', '🐗', 70, 7200, [270,351], 140, 18500, 14800, 'humanoid', ['m_bash','m_charge','m_enrage'], { elite: 1, boss: 1, title: '格鲁尔的巢穴 · 最终首领' }),
+      mag_felguard: M('mag_felguard', '恶魔卫士', '👿', 70, 1834, [166,216], 125, 688, 505, 'demon', ['m_fel_cleave','m_fel_flames','m_war_cry']),
+      mag_summoner: M('mag_summoner', '暗影议会术士', '🧙', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_shadow','m_soul_drain','m_heal']),
+      magtheridon: M('magtheridon', '深渊领主玛瑟里顿', '😈', 70, 7200, [270,351], 140, 18500, 14800, 'demon', ['m_fel_cleave','m_fel_flames','m_enrage'], { elite: 1, boss: 1, title: '玛瑟里顿的巢穴 · 最终首领' }),
+      ssc_naga: M('ssc_naga', '盘牙纳迦', '🐍', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_frost','m_claw','m_war_cry']),
+      ssc_hydra: M('ssc_hydra', '深海九头蛇', '🐉', 70, 1834, [166,216], 125, 688, 505, 'beast', ['m_breath','m_poison','m_regen']),
+      lady_vashj: M('lady_vashj', '瓦斯琪女士', '🔱', 70, 7200, [270,351], 140, 18500, 14800, 'humanoid', ['m_frost','m_supernova','m_enrage'], { elite: 1, boss: 1, title: '毒蛇神殿 · 最终首领' }),
+      tk_solar: M('tk_solar', '太阳鹰', '🦅', 70, 1834, [166,216], 125, 688, 505, 'elemental', ['m_fel_flames','m_charge','m_enrage']),
+      tk_void: M('tk_void', '虚空守卫', '🌑', 70, 1834, [166,216], 125, 688, 505, 'demon', ['m_void_strike','m_shadow','m_war_cry']),
+      kaelthas: M('kaelthas', '凯尔萨斯·逐日者', '🔥', 70, 7200, [270,351], 140, 18500, 14800, 'humanoid', ['m_fel_flames','m_supernova','m_void_strike'], { elite: 1, boss: 1, title: '风暴要塞 · 最终首领' }),
+      hyjal_ghoul: M('hyjal_ghoul', '天灾食尸鬼', '🧟', 70, 1834, [166,216], 125, 688, 505, 'undead', ['m_bite','m_rend','m_charge']),
+      hyjal_abom: M('hyjal_abom', '天灾憎恶', '🧌', 70, 1834, [166,216], 125, 688, 505, 'undead', ['m_bash','m_rend','m_enrage']),
+      archimonde: M('archimonde', '污染者阿克蒙德', '👹', 70, 8280, [270,351], 140, 18500, 14800, 'demon', ['m_fel_cleave','m_fel_flames','m_enrage'], { elite: 1, boss: 1, title: '海加尔山之战 · 最终首领' }),
+      bt_bloodelf: M('bt_bloodelf', '血精灵卫兵', '🩸', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_charge','m_rend','m_war_cry']),
+      bt_demon: M('bt_demon', '恶魔守卫', '👿', 70, 1834, [166,216], 125, 688, 505, 'demon', ['m_fel_cleave','m_fel_flames','m_war_cry']),
+      illidan: M('illidan', '伊利丹·怒风', '😈', 70, 8280, [270,351], 140, 18500, 14800, 'demon', ['m_fel_cleave','m_void_strike','m_enrage'], { elite: 1, boss: 1, title: '黑暗神殿 · 最终首领' }),
+      swp_priestess: M('swp_priestess', '太阳之井女祭司', '✨', 70, 1834, [166,216], 125, 688, 505, 'humanoid', ['m_supernova','m_heal','m_war_cry']),
+      swp_dragon: M('swp_dragon', '太阳龙', '🐉', 70, 1834, [166,216], 125, 688, 505, 'dragon', ['m_breath','m_fel_flames','m_enrage']),
+      kiljaeden: M('kiljaeden', '燃烧军团之主基尔加丹', '😈', 70, 8280, [270,351], 140, 18500, 14800, 'demon', ['m_fel_cleave','m_fel_flames','m_void_strike'], { elite: 1, boss: 1, title: '太阳井高地 · 最终首领' }),
+      doomwalker: M('doomwalker', '末日行者', '🤖', 70, 9000, [250,325], 150, 20000, 16000, 'mechanical', ['m_supernova','m_bash','m_enrage'], { elite: 1, boss: 1, title: '外域世界首领' }),
+    });
+
+    /* ---------- 副本注册表(5 人本 16 座 + 团本 8 座) ---------- */
+    Object.assign(D.DUNGEONS, {
+      hellfire_ramparts: {
+        id: 'hellfire_ramparts', name: '地狱火城墙', icon: '🏰', zone: 'hellfire', minLevel: 58, boss: 'vazruden',
+        waves: [
+          { enemies: ['rampart_orc','rampart_whelp'], name: '前厅守卫' },
+          { enemies: ['rampart_orc','rampart_whelp'], name: '回廊巡逻' },
+          { enemies: ['vazruden'], name: '最终首领：瓦兹鲁登·先锋' },
+        ],
+        desc: '地狱火堡垒的外围城墙，龙喉兽人把守着通往黑暗之门的要道。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [5200,7200] },
+      },
+      blood_furnace: {
+        id: 'blood_furnace', name: '血熔炉', icon: '🔥', zone: 'hellfire', minLevel: 60, boss: 'kelidan',
+        waves: [
+          { enemies: ['bf_guard','bf_imp'], name: '前厅守卫' },
+          { enemies: ['bf_guard','bf_imp'], name: '回廊巡逻' },
+          { enemies: ['kelidan'], name: '最终首领：击碎者基尔罗格' },
+        ],
+        desc: '地狱火堡垒地下的邪能熔炉，玛瑟里顿的血在此炼成狂暴的邪兽人。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [6000,8200] },
+      },
+      shattered_halls: {
+        id: 'shattered_halls', name: '破碎大厅', icon: '⚔️', zone: 'hellfire', minLevel: 68, boss: 'kargath',
+        waves: [
+          { enemies: ['sh_legionnaire','sh_archer'], name: '前厅守卫' },
+          { enemies: ['sh_legionnaire','sh_archer'], name: '回廊巡逻' },
+          { enemies: ['kargath'], name: '最终首领：卡加斯·刃拳' },
+        ],
+        desc: '卡加斯·刃拳统治的堡垒深处，被邪能强化的部落战士在此接受最后的试炼。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [9000,12000] },
+      },
+      slave_pens: {
+        id: 'slave_pens', name: '奴隶围栏', icon: '🌿', zone: 'zangarmarsh', minLevel: 61, boss: 'quagmirran',
+        waves: [
+          { enemies: ['sp_keeper','sp_crab'], name: '前厅守卫' },
+          { enemies: ['sp_keeper','sp_crab'], name: '回廊巡逻' },
+          { enemies: ['quagmirran'], name: '最终首领：夸格米拉' },
+        ],
+        desc: '盘牙水库的奴隶围栏，纳迦在此驱使俘虏为瓦斯琪挖掘水源。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [6400,8800] },
+      },
+      underbog: {
+        id: 'underbog', name: '幽暗沼泽', icon: '🍄', zone: 'zangarmarsh', minLevel: 62, boss: 'black_stalker',
+        waves: [
+          { enemies: ['ub_lord','ub_spore'], name: '前厅守卫' },
+          { enemies: ['ub_lord','ub_spore'], name: '回廊巡逻' },
+          { enemies: ['black_stalker'], name: '最终首领：黑色追踪者' },
+        ],
+        desc: '赞加沼泽水面之下的幽暗洞穴，巨型孢子与沼泽生物在黑暗中蠕动。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [6800,9200] },
+      },
+      steamvault: {
+        id: 'steamvault', name: '蒸汽地窟', icon: '⚙️', zone: 'zangarmarsh', minLevel: 68, boss: 'kalithresh',
+        waves: [
+          { enemies: ['sv_giant','sv_naga'], name: '前厅守卫' },
+          { enemies: ['sv_giant','sv_naga'], name: '回廊巡逻' },
+          { enemies: ['kalithresh'], name: '最终首领：督军卡利瑟里斯' },
+        ],
+        desc: '盘牙水库的蒸汽核心，水泵的轰鸣中藏着瓦斯琪的战争机器。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [9200,12200] },
+      },
+      mana_tombs: {
+        id: 'mana_tombs', name: '法力陵墓', icon: '🔮', zone: 'terokkar', minLevel: 63, boss: 'shaffar',
+        waves: [
+          { enemies: ['mt_ethereal','mt_arcane'], name: '前厅守卫' },
+          { enemies: ['mt_ethereal','mt_arcane'], name: '回廊巡逻' },
+          { enemies: ['shaffar'], name: '最终首领：节点亲王沙法尔' },
+        ],
+        desc: '鸦人王族的墓穴被虚灵洗劫，奥术构造体在密封的厅堂中守卫着陪葬品。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [7000,9600] },
+      },
+      auchenai_crypts: {
+        id: 'auchenai_crypts', name: '奥金尼地穴', icon: '💀', zone: 'terokkar', minLevel: 64, boss: 'maladaar',
+        waves: [
+          { enemies: ['ac_ghost','ac_skeleton'], name: '前厅守卫' },
+          { enemies: ['ac_ghost','ac_skeleton'], name: '回廊巡逻' },
+          { enemies: ['maladaar'], name: '最终首领：主教玛拉达尔' },
+        ],
+        desc: '德莱尼祭司的安息之地被黑暗仪式亵渎，亡者的低语在墓道中回荡。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [7200,10000] },
+      },
+      sethekk_halls: {
+        id: 'sethekk_halls', name: '塞泰克大厅', icon: '🕊️', zone: 'terokkar', minLevel: 66, boss: 'ikiss',
+        waves: [
+          { enemies: ['seth_talon','seth_priest'], name: '前厅守卫' },
+          { enemies: ['seth_talon','seth_priest'], name: '回廊巡逻' },
+          { enemies: ['ikiss'], name: '最终首领：塔瓦洛克·艾基斯' },
+        ],
+        desc: '鸦人先知的圣殿，塞泰克教派在此唤醒沉睡的利爪之王。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [8000,11000] },
+      },
+      shadow_labyrinth: {
+        id: 'shadow_labyrinth', name: '暗影迷宫', icon: '🌑', zone: 'terokkar', minLevel: 69, boss: 'murmur',
+        waves: [
+          { enemies: ['sl_cultist','sl_walker'], name: '前厅守卫' },
+          { enemies: ['sl_cultist','sl_walker'], name: '回廊巡逻' },
+          { enemies: ['murmur'], name: '最终首领：穆鲁之音' },
+        ],
+        desc: '奥金顿地下的暗影议会密室，被封印的元素之音正在唤醒毁灭。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [10000,13000] },
+      },
+      old_hillsbrad: {
+        id: 'old_hillsbrad', name: '旧希尔斯布莱德', icon: '🕰️', zone: 'caverns_of_time', minLevel: 64, boss: 'epoch_hunter',
+        waves: [
+          { enemies: ['oh_guard','oh_dragon'], name: '前厅守卫' },
+          { enemies: ['oh_guard','oh_dragon'], name: '回廊巡逻' },
+          { enemies: ['epoch_hunter'], name: '最终首领：时光猎手埃波克' },
+        ],
+        desc: '穿越时光回到旧希尔斯布莱德，护送萨尔逃离敦霍尔德的囚笼。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [7400,10200] },
+      },
+      black_morass: {
+        id: 'black_morass', name: '黑色沼泽', icon: '🐊', zone: 'caverns_of_time', minLevel: 66, boss: 'aeonus',
+        waves: [
+          { enemies: ['bm_lurker','bm_drake'], name: '前厅守卫' },
+          { enemies: ['bm_lurker','bm_drake'], name: '回廊巡逻' },
+          { enemies: ['aeonus'], name: '最终首领：埃欧努斯' },
+        ],
+        desc: '守护黑暗之门的开启，抵挡无限龙族对时间线的侵蚀。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [8400,11400] },
+      },
+      mechanar: {
+        id: 'mechanar', name: '能源舰', icon: '🤖', zone: 'netherstorm', minLevel: 68, boss: 'pathaleon',
+        waves: [
+          { enemies: ['mech_guard','mech_engineer'], name: '前厅守卫' },
+          { enemies: ['mech_guard','mech_engineer'], name: '回廊巡逻' },
+          { enemies: ['pathaleon'], name: '最终首领：计算者帕萨雷恩' },
+        ],
+        desc: '凯尔萨斯的风暴要塞卫星舰，太阳井法力在此被抽取炼成奥术兵器。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [9200,12400] },
+      },
+      botanica: {
+        id: 'botanica', name: '生态船', icon: '🌺', zone: 'netherstorm', minLevel: 68, boss: 'warpsplinter',
+        waves: [
+          { enemies: ['bot_sprout','bot_keeper'], name: '前厅守卫' },
+          { enemies: ['bot_sprout','bot_keeper'], name: '回廊巡逻' },
+          { enemies: ['warpsplinter'], name: '最终首领：迁跃扭木' },
+        ],
+        desc: '风暴要塞的生态舱，被扭曲的植物在奥术催化下疯狂生长。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [9200,12400] },
+      },
+      arcatraz: {
+        id: 'arcatraz', name: '禁魔监狱', icon: '🔒', zone: 'netherstorm', minLevel: 70, boss: 'skyriss',
+        waves: [
+          { enemies: ['arc_warden','arc_prisoner'], name: '前厅守卫' },
+          { enemies: ['arc_warden','arc_prisoner'], name: '回廊巡逻' },
+          { enemies: ['skyriss'], name: '最终首领：预言者斯克瑞斯' },
+        ],
+        desc: '纳鲁关押宇宙中最危险存在的牢狱，封印正在一道一道崩坏。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [10400,13800] },
+      },
+      magisters_terrace: {
+        id: 'magisters_terrace', name: '魔导师平台', icon: '🏛️', zone: 'quel_danas', minLevel: 70, boss: 'kael_reborn',
+        waves: [
+          { enemies: ['mt_blood_knight','mt_priestess'], name: '前厅守卫' },
+          { enemies: ['mt_blood_knight','mt_priestess'], name: '回廊巡逻' },
+          { enemies: ['kael_reborn'], name: '最终首领：重生的凯尔萨斯' },
+        ],
+        desc: '凯尔萨斯在太阳之井废墟中重塑肉身，血骑士与秘法师誓死护卫。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [10600,14000] },
+      },
+      karazhan: {
+        id: 'karazhan', name: '卡拉赞', icon: '🏰', zone: 'karazhan', minLevel: 70, raid: 1, boss: 'prince_malchezaar',
+        waves: [
+          { enemies: ['kara_ghost','kara_wolf'], name: '前厅守卫' },
+          { enemies: ['kara_ghost','kara_wolf'], name: '回廊巡逻' },
+          { enemies: ['prince_malchezaar'], name: '最终首领：玛克扎尔王子' },
+        ],
+        desc: '麦迪文的魔法高塔已沦为鬼蜮，玛克扎尔王子在塔顶谋划着扭曲的阴谋。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [13000,17000] },
+      },
+      gruuls_lair: {
+        id: 'gruuls_lair', name: '格鲁尔的巢穴', icon: '🐗', zone: 'bladesedge', minLevel: 70, raid: 1, boss: 'gruul',
+        waves: [
+          { enemies: ['gruul_ogre','gruul_hound'], name: '前厅守卫' },
+          { enemies: ['gruul_ogre','gruul_hound'], name: '回廊巡逻' },
+          { enemies: ['gruul'], name: '最终首领：屠龙者格鲁尔' },
+        ],
+        desc: '刀锋山巅的食人魔王座，戈隆之王格鲁尔以巨龙的血肉为食。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [13500,17500] },
+      },
+      magtheridons_lair: {
+        id: 'magtheridons_lair', name: '玛瑟里顿的巢穴', icon: '🐉', zone: 'hellfire', minLevel: 70, raid: 1, boss: 'magtheridon',
+        waves: [
+          { enemies: ['mag_felguard','mag_summoner'], name: '前厅守卫' },
+          { enemies: ['mag_felguard','mag_summoner'], name: '回廊巡逻' },
+          { enemies: ['magtheridon'], name: '最终首领：深渊领主玛瑟里顿' },
+        ],
+        desc: '被锁链束缚的深渊领主，伊利丹以一整座堡垒囚禁着这位燃烧军团的指挥官。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [13500,17500] },
+      },
+      serpentshrine_cavern: {
+        id: 'serpentshrine_cavern', name: '毒蛇神殿', icon: '🐍', zone: 'zangarmarsh', minLevel: 70, raid: 1, boss: 'lady_vashj',
+        waves: [
+          { enemies: ['ssc_naga','ssc_hydra'], name: '前厅守卫' },
+          { enemies: ['ssc_naga','ssc_hydra'], name: '回廊巡逻' },
+          { enemies: ['lady_vashj'], name: '最终首领：瓦斯琪女士' },
+        ],
+        desc: '盘牙水库最深处的祭坛，瓦斯琪女士正为她的新主人抽取外域的水源。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [14000,18000] },
+      },
+      tempest_keep: {
+        id: 'tempest_keep', name: '风暴要塞', icon: '🛸', zone: 'netherstorm', minLevel: 70, raid: 1, boss: 'kaelthas',
+        waves: [
+          { enemies: ['tk_solar','tk_void'], name: '前厅守卫' },
+          { enemies: ['tk_solar','tk_void'], name: '回廊巡逻' },
+          { enemies: ['kaelthas'], name: '最终首领：凯尔萨斯·逐日者' },
+        ],
+        desc: '纳鲁的旗舰要塞，凯尔萨斯占据了这座水晶飞船并向虚空宣誓效忠。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [14500,18500] },
+      },
+      battle_for_hyjal: {
+        id: 'battle_for_hyjal', name: '海加尔山之战', icon: '🌳', zone: 'caverns_of_time', minLevel: 70, raid: 1, boss: 'archimonde',
+        waves: [
+          { enemies: ['hyjal_ghoul','hyjal_abom'], name: '前厅守卫' },
+          { enemies: ['hyjal_ghoul','hyjal_abom'], name: '回廊巡逻' },
+          { enemies: ['archimonde'], name: '最终首领：污染者阿克蒙德' },
+        ],
+        desc: '回到海加尔山的圣战，与吉安娜、萨尔和泰兰德并肩抵挡燃烧军团。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [14500,18500] },
+      },
+      black_temple: {
+        id: 'black_temple', name: '黑暗神殿', icon: '👁️', zone: 'shadowmoon', minLevel: 70, raid: 1, boss: 'illidan',
+        waves: [
+          { enemies: ['bt_bloodelf','bt_demon'], name: '前厅守卫' },
+          { enemies: ['bt_bloodelf','bt_demon'], name: '回廊巡逻' },
+          { enemies: ['illidan'], name: '最终首领：伊利丹·怒风' },
+        ],
+        desc: '伊利丹的黑暗神殿，背叛者的怒火与邪能火焰在此燃烧。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [15500,20000] },
+      },
+      sunwell_plateau: {
+        id: 'sunwell_plateau', name: '太阳井高地', icon: '☀️', zone: 'quel_danas', minLevel: 70, raid: 1, boss: 'kiljaeden',
+        waves: [
+          { enemies: ['swp_priestess','swp_dragon'], name: '前厅守卫' },
+          { enemies: ['swp_priestess','swp_dragon'], name: '回廊巡逻' },
+          { enemies: ['kiljaeden'], name: '最终首领：燃烧军团之主基尔加丹' },
+        ],
+        desc: '太阳之井的废墟之上，燃烧军团之主正从虚空裂隙中踏入艾泽拉斯。',
+        chest: { items: [['m_feliron', 3], ['m_nether', 2], ['m_crystal', 2]], gold: [17500,23000] },
+      },
+    });
+
+    /* ---------- 中途首领(按最终首领数值缩放后插入到最终波次之前) ---------- */
+    (function () {
+      const B = {
+        hellfire_ramparts: [['gargolmar','守望者加格玛尔','🛡️','humanoid',['m_charge','m_bash','m_war_cry']],['omor','刀枪不入的奥摩','👺','humanoid',['m_fel_cleave','m_rend','m_enrage']]],
+        blood_furnace: [['the_maker','制造者','🧪','humanoid',['m_bash','m_war_cry','m_rend']],['broggok','布洛戈克','👁️','demon',['m_fel_flames','m_bash','m_enrage']]],
+        shattered_halls: [['nethekurse','高阶术士奈瑟库斯','🔮','humanoid',['m_shadow','m_fel_flames','m_war_cry']],['omrogg','战争使者奥姆罗格','👹','humanoid',['m_bash','m_charge','m_enrage']]],
+        slave_pens: [['mennu','巨钳船长门努','🦀','humanoid',['m_bash','m_charge','m_war_cry']],['rokmora','沼地先知洛克玛拉','🧙','humanoid',['m_frost','m_heal','m_war_cry']]],
+        underbog: [['hungarfen','饥饿者芬古尔','🌱','elemental',['m_poison','m_breath','m_enrage']],['ghazan','加兹安','🦎','beast',['m_poison','m_bash','m_charge']]],
+        steamvault: [['sepethrea','水术师塞斯皮娅','🌊','humanoid',['m_frost','m_breath','m_war_cry']],['mekgineer','机械师斯蒂里格','🤖','mechanical',['m_charge','m_bash','m_enrage']]],
+        mana_tombs: [['pandemonius','潘德莫纽斯','🌑','demon',['m_void_strike','m_shadow','m_enrage']],['tavarok','塔瓦洛克','🗿','humanoid',['m_bash','m_charge','m_war_cry']]],
+        auchenai_crypts: [['shirrak','亡语者希尔拉克','☠️','undead',['m_shadow','m_soul_drain','m_war_cry']]],
+        sethekk_halls: [['syth','暗织者西斯','🕸️','humanoid',['m_void_strike','m_shadow','m_war_cry']]],
+        shadow_labyrinth: [['hellmaw','大使赫尔亚','👄','demon',['m_shadow','m_death_coil','m_war_cry']],['vorpil','大宗师沃尔皮尔','🧙','humanoid',['m_soul_drain','m_shadow','m_heal']]],
+        old_hillsbrad: [['drake','德拉克中尉','⚔️','humanoid',['m_charge','m_rend','m_enrage']],['skarloc','队长斯卡洛克','🛡️','humanoid',['m_bash','m_war_cry','m_charge']]],
+        black_morass: [['deja','时光领主德亚','⏳','dragon',['m_breath','m_frost','m_war_cry']],['temporus','永恒者泰姆普鲁斯','🐉','dragon',['m_breath','m_void_strike','m_enrage']]],
+        mechanar: [['capacitus','机械领主卡帕西图斯','⚙️','mechanical',['m_supernova','m_bash','m_enrage']],['sepethrea2','星术师塞皮瑟蕾','✨','humanoid',['m_supernova','m_frost','m_war_cry']]],
+        botanica: [['sarannis','指挥官萨拉妮丝','🎖️','humanoid',['m_supernova','m_charge','m_war_cry']],['freywinn','高阶植物学家弗雷温','🌿','humanoid',['m_poison','m_heal','m_enrage']]],
+        arcatraz: [['zereketh','湮灭者泽雷凯斯','🌑','demon',['m_void_strike','m_shadow','m_enrage']],['dalliah','女祭司达莉娅','🧙','humanoid',['m_shadow','m_soul_drain','m_heal']]],
+        magisters_terrace: [['selin','炽炎塞琳','🔥','humanoid',['m_fel_flames','m_supernova','m_war_cry']],['delrissa','女祭司德莉希亚','🗡️','humanoid',['m_shadow','m_heal','m_charge']]],
+        karazhan: [['attumen','猎手阿图门','🐎','undead',['m_charge','m_rend','m_war_cry']],['moroes','莫罗斯','🗡️','undead',['m_shadow','m_death_coil','m_war_cry']],['curator','馆长','🛡️','mechanical',['m_supernova','m_bash','m_enrage']]],
+        gruuls_lair: [['maulgar','大君王莫加尔','👑','humanoid',['m_charge','m_war_cry','m_rend']]],
+        magtheridons_lair: [['mag_hellfire','炎爆守卫','🔥','elemental',['m_fel_flames','m_bash','m_enrage']],['mag_knight','深渊骑士','⚔️','demon',['m_fel_cleave','m_charge','m_war_cry']]],
+        serpentshrine_cavern: [['lurker','深渊潜伏者','🦑','beast',['m_breath','m_bite','m_enrage']],['leotheras','盲眼莱欧瑟拉斯','🗡️','demon',['m_void_strike','m_rend','m_enrage']],['karathress','深水领主卡拉瑟雷斯','🔱','humanoid',['m_frost','m_heal','m_war_cry']]],
+        tempest_keep: [['alar','凤凰阿兰娜','🔥','elemental',['m_fel_flames','m_charge','m_enrage']],['void_reaver','虚空掠夺者','🤖','mechanical',['m_supernova','m_bash','m_enrage']],['solarian','高阶星术师索拉瑞恩','✨','humanoid',['m_supernova','m_frost','m_war_cry']]],
+        battle_for_hyjal: [['winterchill','寒冬之怒','❄️','elemental',['m_frost','m_breath','m_enrage']],['anetheron','阿奈瑟隆','😈','demon',['m_fel_cleave','m_shadow','m_war_cry']],['kazrogal','卡兹洛加尔','👿','demon',['m_fel_flames','m_bash','m_enrage']]],
+        black_temple: [['najentus','高阶督军纳因图斯','🛡️','humanoid',['m_charge','m_bash','m_war_cry']],['supremus','苏普雷姆斯','👹','demon',['m_bash','m_charge','m_enrage']],['teron','特隆·血魔','💀','undead',['m_void_strike','m_soul_drain','m_enrage']]],
+        sunwell_plateau: [['kalecgos','蓝龙卡雷苟斯','🐲','dragon',['m_breath','m_frost','m_enrage']],['brutallus','布鲁塔卢斯','👹','demon',['m_bash','m_charge','m_enrage']],['felmyst','菲米丝','🐍','dragon',['m_breath','m_poison','m_enrage']]],
+      };
+      for (const dgid in B) {
+        const dg = D.DUNGEONS[dgid];
+        if (!dg || !dg.boss) continue;
+        const fb = D.MONSTERS[dg.boss];
+        if (!fb) continue;
+        const pool = TBC_POOL[dgid] || ['m_feliron'];
+        dg.bosses = [];
+        const n = B[dgid].length;
+        B[dgid].forEach(function (b, bi) {
+          const mid = b[0], name = b[1], icon = b[2], kind = b[3], skills = b[4];
+          const step = n > 1 ? bi / (n - 1) : 0;
+          D.MONSTERS[mid] = {
+            id: mid, name: name, icon: icon, level: Math.max(1, Math.min(W.Config.LEVEL_CAP, fb.level - 1)),
+            hp: Math.round(fb.hp * (0.62 + 0.26 * step)),
+            atk: [Math.round(fb.atk[0] * (0.93 + 0.06 * step)), Math.round(fb.atk[1] * (0.93 + 0.06 * step))],
+            armor: Math.round(fb.armor * (0.92 + 0.04 * step)),
+            xp: Math.round(fb.xp * (0.52 + 0.22 * step)), gold: Math.round(fb.gold * (0.5 + 0.22 * step)),
+            kind: kind, skills: skills, ai: 'smart', elite: 1, boss: 1, sub: 1,
+            title: dg.name + ' · 首领',
+          };
+          const eq = pool[bi % pool.length];
+          const csm = pool[(bi + 1) % pool.length];
+          const mat = pool.length > 2 ? pool[(bi + 2) % pool.length] : 'm_feliron';
+          D.DROPS[mid] = [[eq, 0.4], [csm, 0.3], [mat, 0.5]];
+          dg.bosses.push(mid);
+          dg.waves.splice(dg.waves.length - 1, 0, { enemies: [mid], name: '首领：' + name });
+        });
+        dg.bosses.push(dg.boss);
+      }
+    })();
+
+    /* ---------- 外域掉落(材料 / 药水 / 61-70 装备) ---------- */
+    Object.assign(D.DROPS, {
+      hell_boar: [['a_out_helm',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      hell_ravager: [['a_out_cloak',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      hell_orc: [['a_out_ring',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      hell_demon: [['a_out_gloves',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      hell_elite: [['tr_out_signet',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_out_neck',0.35],['c_nether_flask',0.25]],
+      zang_bog: [['w_outland_blade',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      zang_naga: [['w_outland_staff',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      zang_spore: [['a_out_neck',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      zang_hydra: [['a_out_boots',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      zang_elite: [['a_out_helm',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_out_gloves',0.35],['c_nether_flask',0.25]],
+      ter_arakkoa: [['a_out_cloak',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      ter_spider: [['a_out_ring',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      ter_wolf: [['a_out_gloves',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      ter_treant: [['tr_void_eye',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      ter_elite: [['w_nether_edge',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_void_boots',0.35],['c_nether_flask',0.25]],
+      nag_clefthoof: [['w_outland_staff',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      nag_ogre: [['a_void_legs',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      nag_windroc: [['a_void_boots',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      nag_ravager: [['a_void_hood',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      nag_elite: [['a_sun_cloak',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['tr_sun_seal',0.35],['c_nether_flask',0.25]],
+      be_ogre: [['a_void_ring',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      be_ravager: [['a_void_neck',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      be_drake: [['tr_void_eye',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      be_gnome: [['a_sun_gloves',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      be_elite: [['a_sun_legs',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_sun_crown',0.35],['c_nether_flask',0.25]],
+      net_ether: [['a_void_legs',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      net_mana: [['w_nether_edge',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      net_void: [['a_sun_crown',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      net_robot: [['a_sun_cloak',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      net_elite: [['a_sun_ring',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_sun_gloves',0.35],['c_nether_flask',0.25]],
+      sm_demon: [['a_void_neck',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      sm_wolf: [['tr_sun_seal',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      sm_drake: [['a_sun_gloves',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      sm_elemental: [['a_sun_legs',0.14],['m_feliron',0.35],['c_out_heal',0.16],['m_nether',0.08]],
+      sm_elite: [['a_sun_boots',0.5],['m_feliron',0.7],['c_out_heal',0.6],['m_nether',0.4],['a_sun_cloak',0.35],['c_nether_flask',0.25]],
+      rampart_orc: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      rampart_whelp: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bf_guard: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bf_imp: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sh_legionnaire: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sh_archer: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sp_keeper: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sp_crab: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ub_lord: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ub_spore: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sv_giant: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sv_naga: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mt_ethereal: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mt_arcane: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ac_ghost: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ac_skeleton: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      seth_talon: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      seth_priest: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sl_cultist: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      sl_walker: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      oh_guard: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      oh_dragon: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bm_lurker: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bm_drake: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mech_guard: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mech_engineer: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bot_sprout: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bot_keeper: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      arc_warden: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      arc_prisoner: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mt_blood_knight: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mt_priestess: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      kara_ghost: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      kara_wolf: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      gruul_ogre: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      gruul_hound: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mag_felguard: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      mag_summoner: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ssc_naga: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      ssc_hydra: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      tk_solar: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      tk_void: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      hyjal_ghoul: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      hyjal_abom: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bt_bloodelf: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      bt_demon: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      swp_priestess: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+      swp_dragon: [['m_feliron',0.3],['c_out_mana',0.14],['m_nether',0.12]],
+    });
+
+    /* ---------- 副本最终首领掉落(招牌装备 + 材料;必掉奥术水晶) ---------- */
+    Object.assign(D.DROPS, {
+      vazruden: [['a_out_helm',0.6],['w_outland_blade',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kelidan: [['a_out_chest',0.6],['w_outland_staff',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kargath: [['a_void_gauntlets',0.6],['w_shattered_blade',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      quagmirran: [['a_out_gloves',0.6],['a_out_cloak',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      black_stalker: [['a_out_ring',0.6],['a_out_legs',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kalithresh: [['a_void_ring',0.6],['a_void_neck',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      shaffar: [['tr_out_signet',0.6],['a_out_neck',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      maladaar: [['a_out_helm',0.6],['w_off_out_shield',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      ikiss: [['a_void_hood',0.6],['w_nether_edge',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      murmur: [['a_void_hood',0.6],['a_void_cloak',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      epoch_hunter: [['a_void_legs',0.6],['a_out_cloak',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      aeonus: [['a_void_cloak',0.6],['w_nether_edge',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      pathaleon: [['a_void_gauntlets',0.6],['w_nether_staff',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      warpsplinter: [['a_void_plate',0.6],['a_void_boots',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      skyriss: [['a_sun_crown',0.6],['w_void_staff',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kael_reborn: [['a_sun_robe',0.6],['w_off_sun_blade',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      prince_malchezaar: [['a_sun_crown',0.6],['w_nether_edge',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      gruul: [['a_sun_gloves',0.6],['a_sun_legs',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      magtheridon: [['a_sun_robe',0.6],['a_sun_crown',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      lady_vashj: [['a_sun_legs',0.6],['w_void_staff',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kaelthas: [['a_sun_robe',0.6],['w_naaru_staff',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      archimonde: [['a_sun_crown',0.6],['a_sun_robe',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      illidan: [['w_warglaive',0.6],['tr_skull_guldan',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      kiljaeden: [['a_sun_robe',0.6],['w_thori_dal',0.5],['m_crystal',1],['m_nether',0.7],['m_feliron',0.8],['c_nether_flask',0.35]],
+      doomwalker: [['w_black_temple_blade',0.5],['tr_sun_seal',0.5],['m_nether',0.9],['m_crystal',1],['c_nether_flask',0.5]],
+    });
+
+    /* ---------- 外域任务(副本讨伐 + 区域悬赏;通用地图悬赏由文件末尾生成器补) ---------- */
+    Object.assign(D.QUESTS, {
+      q_tbc_hellfire_ramparts: Q('q_tbc_hellfire_ramparts', '远征：地狱火城墙', 'hellfire_ramparts', 58, '深入地狱火城墙，击败瓦兹鲁登·先锋！', 'vazruden', 1, 30160, 24360, ['a_out_helm','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_blood_furnace: Q('q_tbc_blood_furnace', '远征：血熔炉', 'blood_furnace', 60, '深入血熔炉，击败击碎者基尔罗格！', 'kelidan', 1, 31200, 25200, ['a_out_chest','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_shattered_halls: Q('q_tbc_shattered_halls', '远征：破碎大厅', 'shattered_halls', 68, '深入破碎大厅，击败卡加斯·刃拳！', 'kargath', 1, 35360, 28560, ['a_void_gauntlets','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_slave_pens: Q('q_tbc_slave_pens', '远征：奴隶围栏', 'slave_pens', 61, '深入奴隶围栏，击败夸格米拉！', 'quagmirran', 1, 31720, 25620, ['a_out_gloves','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_underbog: Q('q_tbc_underbog', '远征：幽暗沼泽', 'underbog', 62, '深入幽暗沼泽，击败黑色追踪者！', 'black_stalker', 1, 32240, 26040, ['a_out_ring','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_steamvault: Q('q_tbc_steamvault', '远征：蒸汽地窟', 'steamvault', 68, '深入蒸汽地窟，击败督军卡利瑟里斯！', 'kalithresh', 1, 35360, 28560, ['a_void_ring','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_mana_tombs: Q('q_tbc_mana_tombs', '远征：法力陵墓', 'mana_tombs', 63, '深入法力陵墓，击败节点亲王沙法尔！', 'shaffar', 1, 32760, 26460, ['tr_out_signet','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_auchenai_crypts: Q('q_tbc_auchenai_crypts', '远征：奥金尼地穴', 'auchenai_crypts', 64, '深入奥金尼地穴，击败主教玛拉达尔！', 'maladaar', 1, 33280, 26880, ['a_out_helm','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_sethekk_halls: Q('q_tbc_sethekk_halls', '远征：塞泰克大厅', 'sethekk_halls', 66, '深入塞泰克大厅，击败塔瓦洛克·艾基斯！', 'ikiss', 1, 34320, 27720, ['a_void_hood','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_shadow_labyrinth: Q('q_tbc_shadow_labyrinth', '远征：暗影迷宫', 'shadow_labyrinth', 69, '深入暗影迷宫，击败穆鲁之音！', 'murmur', 1, 35880, 28980, ['a_void_hood','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_old_hillsbrad: Q('q_tbc_old_hillsbrad', '远征：旧希尔斯布莱德', 'old_hillsbrad', 64, '深入旧希尔斯布莱德，击败时光猎手埃波克！', 'epoch_hunter', 1, 33280, 26880, ['a_void_legs','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_black_morass: Q('q_tbc_black_morass', '远征：黑色沼泽', 'black_morass', 66, '深入黑色沼泽，击败埃欧努斯！', 'aeonus', 1, 34320, 27720, ['a_void_cloak','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_mechanar: Q('q_tbc_mechanar', '远征：能源舰', 'mechanar', 68, '深入能源舰，击败计算者帕萨雷恩！', 'pathaleon', 1, 35360, 28560, ['a_void_gauntlets','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_botanica: Q('q_tbc_botanica', '远征：生态船', 'botanica', 68, '深入生态船，击败迁跃扭木！', 'warpsplinter', 1, 35360, 28560, ['a_void_plate','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_arcatraz: Q('q_tbc_arcatraz', '远征：禁魔监狱', 'arcatraz', 70, '深入禁魔监狱，击败预言者斯克瑞斯！', 'skyriss', 1, 36400, 29400, ['a_sun_crown','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_magisters_terrace: Q('q_tbc_magisters_terrace', '远征：魔导师平台', 'magisters_terrace', 70, '深入魔导师平台，击败重生的凯尔萨斯！', 'kael_reborn', 1, 36400, 29400, ['a_sun_robe','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_karazhan: Q('q_tbc_karazhan', '远征：卡拉赞', 'karazhan', 70, '深入卡拉赞，击败玛克扎尔王子！', 'prince_malchezaar', 1, 36400, 29400, ['a_sun_crown','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_gruuls_lair: Q('q_tbc_gruuls_lair', '远征：格鲁尔的巢穴', 'gruuls_lair', 70, '深入格鲁尔的巢穴，击败屠龙者格鲁尔！', 'gruul', 1, 36400, 29400, ['a_sun_gloves','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_magtheridons_lair: Q('q_tbc_magtheridons_lair', '远征：玛瑟里顿的巢穴', 'magtheridons_lair', 70, '深入玛瑟里顿的巢穴，击败深渊领主玛瑟里顿！', 'magtheridon', 1, 36400, 29400, ['a_sun_robe','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_serpentshrine_cavern: Q('q_tbc_serpentshrine_cavern', '远征：毒蛇神殿', 'serpentshrine_cavern', 70, '深入毒蛇神殿，击败瓦斯琪女士！', 'lady_vashj', 1, 36400, 29400, ['a_sun_legs','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_tempest_keep: Q('q_tbc_tempest_keep', '远征：风暴要塞', 'tempest_keep', 70, '深入风暴要塞，击败凯尔萨斯·逐日者！', 'kaelthas', 1, 36400, 29400, ['a_sun_robe','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_battle_for_hyjal: Q('q_tbc_battle_for_hyjal', '远征：海加尔山之战', 'battle_for_hyjal', 70, '深入海加尔山之战，击败污染者阿克蒙德！', 'archimonde', 1, 36400, 29400, ['a_sun_crown','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_black_temple: Q('q_tbc_black_temple', '远征：黑暗神殿', 'black_temple', 70, '深入黑暗神殿，击败伊利丹·怒风！', 'illidan', 1, 36400, 29400, ['w_warglaive','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_sunwell_plateau: Q('q_tbc_sunwell_plateau', '远征：太阳井高地', 'sunwell_plateau', 70, '深入太阳井高地，击败燃烧军团之主基尔加丹！', 'kiljaeden', 1, 36400, 29400, ['a_sun_robe','m_nether','m_crystal'], { giver: '远征军需官' }),
+      q_tbc_hell_ravager: Q('q_tbc_hell_ravager', '清剿地狱火掠食者', 'hellfire', 58, '地狱火半岛的地狱火掠食者威胁远征军的补给线，消灭 5 只。', 'hell_ravager', 5, 2668, 754, ['m_feliron', 'm_crystal']),
+      q_tbc_zang_naga: Q('q_tbc_zang_naga', '清剿暗鳞纳迦', 'zangarmarsh', 60, '赞加沼泽的暗鳞纳迦威胁远征军的补给线，消灭 6 只。', 'zang_naga', 6, 2760, 780, ['m_feliron', 'm_crystal']),
+      q_tbc_ter_spider: Q('q_tbc_ter_spider', '清剿泰罗卡毒蛛', 'terokkar', 62, '泰罗卡森林的泰罗卡毒蛛威胁远征军的补给线，消灭 6 只。', 'ter_spider', 6, 2852, 806, ['m_feliron', 'm_crystal']),
+      q_tbc_nag_ogre: Q('q_tbc_nag_ogre', '清剿石拳食人魔', 'nagrand', 64, '纳格兰的石拳食人魔威胁远征军的补给线，消灭 5 只。', 'nag_ogre', 5, 2944, 832, ['m_feliron', 'm_crystal']),
+      q_tbc_be_drake: Q('q_tbc_be_drake', '清剿虚空幼龙', 'bladesedge', 65, '刀锋山的虚空幼龙威胁远征军的补给线，消灭 5 只。', 'be_drake', 5, 2990, 845, ['m_feliron', 'm_crystal']),
+      q_tbc_net_void: Q('q_tbc_net_void', '清剿虚空行者', 'netherstorm', 67, '虚空风暴的虚空行者威胁远征军的补给线，消灭 6 只。', 'net_void', 6, 3082, 871, ['m_feliron', 'm_crystal']),
+      q_tbc_sm_drake: Q('q_tbc_sm_drake', '清剿影月幼龙', 'shadowmoon', 67, '影月谷的影月幼龙威胁远征军的补给线，消灭 5 只。', 'sm_drake', 5, 3082, 871, ['m_feliron', 'm_crystal']),
+    });
+
+    /* ---------- 外域遭遇表 ---------- */
+    Object.assign(D.ENCOUNTERS, {
+      hellfire: [[1,['hell_boar']],[0.9,['hell_ravager']],[0.8,['hell_orc']],[0.6,['hell_demon']],[0.35,['hell_boar','hell_ravager']],[0.1,['hell_elite']]],
+      zangarmarsh: [[1,['zang_bog']],[0.9,['zang_naga']],[0.8,['zang_spore']],[0.6,['zang_hydra']],[0.35,['zang_bog','zang_naga']],[0.1,['zang_elite']]],
+      terokkar: [[1,['ter_arakkoa']],[0.9,['ter_spider']],[0.8,['ter_wolf']],[0.6,['ter_treant']],[0.35,['ter_arakkoa','ter_spider']],[0.1,['ter_elite']]],
+      nagrand: [[1,['nag_clefthoof']],[0.9,['nag_ogre']],[0.8,['nag_windroc']],[0.6,['nag_ravager']],[0.35,['nag_clefthoof','nag_ogre']],[0.1,['nag_elite']]],
+      bladesedge: [[1,['be_ogre']],[0.9,['be_ravager']],[0.8,['be_drake']],[0.6,['be_gnome']],[0.35,['be_ogre','be_ravager']],[0.1,['be_elite']]],
+      netherstorm: [[1,['net_ether']],[0.9,['net_mana']],[0.8,['net_void']],[0.6,['net_robot']],[0.35,['net_ether','net_mana']],[0.1,['net_elite']]],
+      shadowmoon: [[1,['sm_demon']],[0.9,['sm_wolf']],[0.8,['sm_drake']],[0.6,['sm_elemental']],[0.35,['sm_demon','sm_wolf']],[0.1,['sm_elite']]],
+    });
+
+    /* ---------- 外域声望阵营(军需官 / 徽章 / 坐骑) ---------- */
+    Object.assign(D.REPS, {
+      cenarion_exp: { id: 'cenarion_exp', name: '塞纳里奥远征队', icon: '🌿', color: '#7fd4a0', faction: 'neutral',
+        desc: '深入外域研究生态的德鲁伊远征军，驻守赞加沼泽。',
+        zones: ['zangarmarsh', 'hellfire', 'nagrand'], dungeons: ['slave_pens', 'underbog', 'steamvault', 'serpentshrine_cavern'],
+        sources: '击败赞加沼泽/地狱火半岛怪物、通关奴隶围栏/幽暗沼泽/蒸汽地窟/毒蛇神殿、完成外域任务' },
+      shattar: { id: 'shattar', name: '沙塔尔', icon: '✨', color: '#e8d7a0', faction: 'neutral',
+        desc: '纳鲁在沙塔斯城建立的联合阵线，对抗燃烧军团与伊利丹。',
+        zones: ['terokkar', 'shattrath', 'caverns_of_time', 'karazhan'], dungeons: ['mana_tombs', 'auchenai_crypts', 'sethekk_halls', 'shadow_labyrinth', 'old_hillsbrad', 'black_morass', 'arcatraz', 'battle_for_hyjal', 'hellfire_ramparts', 'blood_furnace', 'shattered_halls', 'karazhan'],
+        sources: '击败泰罗卡森林怪物、通关法力陵墓/奥金尼地穴/暗影迷宫/时光之穴副本、完成外域任务' },
+      scryers: { id: 'scryers', name: '占星者', icon: '🔮', color: '#c3b0ff', faction: 'neutral',
+        desc: '对抗燃烧军团的血精灵占星者，驻守虚空风暴与影月谷。',
+        zones: ['netherstorm', 'bladesedge', 'shadowmoon', 'quel_danas'], dungeons: ['mechanar', 'botanica', 'tempest_keep', 'black_temple', 'sunwell_plateau', 'magisters_terrace', 'gruuls_lair', 'magtheridons_lair'],
+        sources: '击败虚空风暴/刀锋山/影月谷怪物、通关能源舰/生态船/风暴要塞/黑暗神殿/太阳井高地、完成外域任务' },
+    });
+
+    /* ---------- 外域军需官装备(尊敬蓝装 / 崇敬紫装 / 崇拜坐骑) ---------- */
+    const TBC_REP_GEAR = [
+      ['r_tb_cexp_gloves', '远征队护手', '🧤', 'gloves', 'blue', 63, {int: 11,spi: 9,stam: 3,crit: 0.02,armor: 131}, 62000, 'cenarion_exp', 'honored'],
+      ['r_tb_cexp_ring', '远征队指环', '💍', 'ring', 'purple', 68, {agi: 20,stam: 6,crit: 0.05}, 118000, 'cenarion_exp', 'revered'],
+      ['r_tb_cexp_mount', '远征队角鹰兽', '🦅', 'mount', 'epic', 62, {}, 240000, 'cenarion_exp', 'exalted'],
+      ['r_tb_shattar_neck', '沙塔尔坠饰', '📿', 'neck', 'blue', 64, {int: 10,spi: 9,stam: 3,crit: 0.02}, 66000, 'shattar', 'honored'],
+      ['r_tb_shattar_cloak', '沙塔尔圣光披风', '🧣', 'cloak', 'purple', 69, {str: 13,stam: 4,crit: 0.03,armor: 69}, 124000, 'shattar', 'revered'],
+      ['r_tb_shattar_mount', '沙塔尔虚空鳐', '🐟', 'mount', 'epic', 65, {}, 250000, 'shattar', 'exalted'],
+      ['r_tb_scryers_legs', '占星者护腿', '👖', 'legs', 'blue', 63, {str: 14,stam: 5,crit: 0.03,armor: 168}, 64000, 'scryers', 'honored'],
+      ['r_tb_scryers_trinket', '占星者星图', '🔮', 'trinket', 'purple', 69, {int: 16,spi: 15,stam: 5,crit: 0.04}, 120000, 'scryers', 'revered'],
+      ['r_tb_scryers_mount', '占星者虚空龙', '🐉', 'mount', 'epic', 68, {}, 260000, 'scryers', 'exalted'],
+    ];
+    for (const [rid, rname, ricon, rslot, rqual, rlv, rstats, rbuy, rrep, rtier] of TBC_REP_GEAR) {
+      D.ITEMS[rid] = RP(rid, rname, ricon, rslot, rqual, rlv, rstats, rbuy, rrep, rtier);
+    }
+
+    /* ---------- 外域声望徽章(精英与首领掉落,可上交加速冲声望) ---------- */
+    Object.assign(D.ITEMS, {
+      r_badge_cexp: IT('r_badge_cexp', '塞纳里奥远征队徽章', '🌿', 'material', 'green', 1, {}, { sell: 120 }, { badge: 'cenarion_exp' }),
+      r_badge_shattar: IT('r_badge_shattar', '沙塔尔徽章', '✨', 'material', 'green', 1, {}, { sell: 120 }, { badge: 'shattar' }),
+      r_badge_scryers: IT('r_badge_scryers', '占星者徽章', '🔮', 'material', 'green', 1, {}, { sell: 120 }, { badge: 'scryers' }),
+    });
+
+    /* ---------- 外域打造配方(魔铁锭 / 虚空水晶的消耗口) ---------- */
+    Object.assign(D.CRAFTS, {
+      craft_nether_edge: { id: 'craft_nether_edge', name: '虚空之刃', icon: '🗡️', item: 'w_nether_edge', mats: { m_feliron: 8, m_nether: 4 }, gold: 32000 },
+      craft_nether_staff: { id: 'craft_nether_staff', name: '虚空法杖', icon: '🪄', item: 'w_nether_staff', mats: { m_nether: 6, m_crystal: 2 }, gold: 34000 },
+      craft_void_plate: { id: 'craft_void_plate', name: '虚空板甲', icon: '🛡️', item: 'a_void_plate', mats: { m_feliron: 10, m_nether: 3 }, gold: 30000 },
+      craft_sun_robe: { id: 'craft_sun_robe', name: '太阳井法袍', icon: '🥻', item: 'a_sun_robe', mats: { m_feliron: 12, m_nether: 6, m_crystal: 3 }, gold: 48000 },
+    });
+
+    /* ---------- 外域世界首领与虚空航线 ---------- */
+    D.WORLD_BOSSES.doomwalker = { mid: 'doomwalker', zone: 'shadowmoon', minLevel: 70 };
+    D.AIRSHIPS.shattrath = { icon: '🚁', name: '虚空飞艇', to: ['stormwind', 'orgrimmar'] };
+    D.AIRSHIPS.stormwind.to.push('shattrath');
+    D.AIRSHIPS.orgrimmar.to.push('shattrath');
+
+    /* ---------- 外域副本成就 + 满级成就 ---------- */
+    const TBC_ACH = {
+      hellfire_ramparts: ['城墙之上', '🏰'],
+      blood_furnace: ['邪能熔炉', '🔥'],
+      shattered_halls: ['刃拳的末日', '⚔️'],
+      slave_pens: ['挣脱枷锁', '🌿'],
+      underbog: ['沼泽之后', '🍄'],
+      steamvault: ['蒸汽核心', '⚙️'],
+      mana_tombs: ['墓穴盗影', '🔮'],
+      auchenai_crypts: ['亡者安息', '💀'],
+      sethekk_halls: ['利爪之王', '🕊️'],
+      shadow_labyrinth: ['穆鲁之音', '🌑'],
+      old_hillsbrad: ['时光囚笼', '🕰️'],
+      black_morass: ['时间线守卫', '🐊'],
+      mechanar: ['能源舰陷落', '🤖'],
+      botanica: ['温室浩劫', '🌺'],
+      arcatraz: ['牢狱崩坏', '🔒'],
+      magisters_terrace: ['王子的陨落', '🏛️'],
+      karazhan: ['塔中幻梦', '🏰'],
+      gruuls_lair: ['屠龙者', '🐗'],
+      magtheridons_lair: ['深渊囚徒', '🐉'],
+      serpentshrine_cavern: ['盘牙之渊', '🐍'],
+      tempest_keep: ['风暴降伏', '🛸'],
+      battle_for_hyjal: ['海加尔圣战', '🌳'],
+      black_temple: ['背叛者的终末', '👁️'],
+      sunwell_plateau: ['太阳井的余烬', '☀️'],
+    };
+    const TBC_ACH_SPECIAL = { sunwell_plateau: ['tr_skull_guldan', 'm_nether'], black_temple: ['tr_sun_seal', 'm_nether'], tempest_keep: ['tr_sun_seal', 'm_nether'] };
+    for (const tbcId in TBC_ACH) {
+      const dg = D.DUNGEONS[tbcId];
+      if (!dg) continue;
+      const lv = dg.minLevel || 1;
+      D.ACHIEVEMENTS['ach_dg_' + tbcId] = {
+        id: 'ach_dg_' + tbcId, name: TBC_ACH[tbcId][0], icon: TBC_ACH[tbcId][1],
+        cat: 'dungeon', type: 'dungeon', target: tbcId,
+        desc: '通关' + dg.name + (dg.raid ? '（团本）' : '（5人本）'),
+        count: 1, reward: { gold: 2500 + lv * 150, exp: 2500 + lv * 150, items: TBC_ACH_SPECIAL[tbcId] || ['m_crystal'] },
+      };
+    }
+    D.ACHIEVEMENTS.ach_level_70 = { id: 'ach_level_70', name: '外域远征军', icon: '🌌', cat: 'level', desc: '角色达到 70 级', count: 70, reward: { gold: 80000, exp: 0, items: ['tr_skull_guldan', 'm_nether'] } };
+
+  })();
+  /* END TBC */
+
+
   /* ============ 声望徽章(精英掉落 · 上交加速冲声望) ============ */
   // 每阵营一枚徽章;区域精英→区域阵营 / 副本精英与Boss→副本阵营 / 世界首领→所在区域阵营
   D.BADGES = {
@@ -1776,6 +2875,10 @@
     argent:  { id: 'argent',  item: 'r_badge_ag', name: '银色黎明徽章', icon: '🌕', rep: 'argent' },
     cenarion: { id: 'cenarion', item: 'r_badge_ce', name: '塞纳里奥徽章', icon: '🌿', rep: 'cenarion' },
     thorium: { id: 'thorium', item: 'r_badge_th', name: '瑟银徽章', icon: '🔥', rep: 'thorium' },
+    /* 外域阵营徽章(TBC) */
+    cenarion_exp: { id: 'cenarion_exp', item: 'r_badge_cexp', name: '塞纳里奥远征队徽章', icon: '🌿', rep: 'cenarion_exp' },
+    shattar: { id: 'shattar', item: 'r_badge_shattar', name: '沙塔尔徽章', icon: '✨', rep: 'shattar' },
+    scryers: { id: 'scryers', item: 'r_badge_scryers', name: '占星者徽章', icon: '🔮', rep: 'scryers' },
   };
   (function () {
     const repOfZone = (zid) => {
@@ -1993,11 +3096,13 @@
       'dire_maul': ['w_immolthar_staff', 'tr_immolthar_eye', 'w_verdant_rod', 'c_master_heal', 'm_crystal'],
       'stratholme': ['w_rivendare_blade', 'a_rivendare_helm', 'tr_abyssal_signet', 'c_ultimate_heal', 'm_crystal'],
       'naxxramas': ['a_necropolis_plate', 'w_necropolis_staff', 'tr_kelthuzad_heart', 'c_ultimate_heal', 'm_crystal'],
-      'molten_core': ['a_mc_crown', 'a_mc_plate', 'a_mc_gauntlets', 'tr_abyss_eye', 'm_crystal'],
-      'blackwing_lair': ['a_bwl_crown', 'a_bwl_plate', 'w_nefarian_blade', 'tr_abyssal_signet', 'm_crystal'],
-      'zulgurub': ['a_zg_hood', 'a_zg_robes', 'tr_hakkar_heart', 'm_crystal'],
-      'ruins_ahnqiraj': ['a_aq_helm', 'a_aq_plate', 'a_aq_gauntlets', 'm_crystal'],
-      'temple_ahnqiraj': ['a_aq_helm', 'a_cthun_armor', 'tr_cthun_eye', 'm_crystal'],
+      // 团本套装各槽位散件放在中途首领身上(每场各一件,按 bi/bi+1/bi+2 轮转掷取 0.4/0.3/0.5),
+      // 最终首领只保留招牌装备与材料 —— 全套不再只靠最终首领产出。
+      'molten_core': ['a_mc_crown', 'a_mc_plate', 'a_mc_gauntlets', 'a_mc_leggings', 'a_mc_boots', 'tr_abyss_eye', 'm_crystal'],
+      'blackwing_lair': ['a_bwl_crown', 'a_bwl_plate', 'a_bwl_gauntlets', 'a_bwl_leggings', 'a_bwl_boots', 'w_nefarian_blade', 'm_crystal'],
+      'zulgurub': ['a_zg_hood', 'a_zg_robes', 'a_zg_gloves', 'a_zg_boots', 'tr_hakkar_heart', 'm_crystal'],
+      'ruins_ahnqiraj': ['a_aq_helm', 'a_aq_plate', 'a_aq_gauntlets', 'a_aq_leggings', 'a_aq_boots', 'm_crystal'],
+      'temple_ahnqiraj': ['a_aq_helm', 'a_cthun_armor', 'a_aq_leggings', 'a_aq_boots', 'tr_cthun_eye', 'm_crystal'],
     };
     for (const dgid in B) {
       const d = D.DUNGEONS[dgid];
@@ -2010,7 +3115,7 @@
         const mid = b[0], name = b[1], icon = b[2], title = b[3];
         const hpH = b[4], atkH = b[5], armH = b[6], xpH = b[7], goldH = b[8], kind = b[9], skills = b[10];
         D.MONSTERS[mid] = {
-          id: mid, name: name, icon: icon, level: Math.max(1, Math.min(60, fb.level - 1)),
+          id: mid, name: name, icon: icon, level: Math.max(1, Math.min(window.WOW.Config.LEVEL_CAP, fb.level - 1)),
           hp: Math.round(fb.hp * hpH), atk: [Math.round(fb.atk[0] * atkH), Math.round(fb.atk[1] * atkH)],
           armor: Math.round(fb.armor * armH), xp: Math.round(fb.xp * xpH), gold: Math.round(fb.gold * goldH),
           kind: kind, skills: skills, ai: 'smart', elite: 1, boss: 1, sub: 1, title: title,

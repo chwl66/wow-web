@@ -199,7 +199,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     sc.level = 10;
     sc.inventory.push({ id: 's_force', count: 2 }, { id: 's_spirit', count: 1 });
     const scc = W.Char.computed(sc);
-    sc.hp = Math.floor(scc.hpMax * 0.45); sc.hpMax = scc.hpMax; sc.mana = scc.manaMax; sc.manaMax = scc.manaMax;
+    sc.hp = Math.floor(scc.hpMax * 0.45); sc.hpMax = scc.hpMax; sc.mana = Math.floor(scc.manaMax * 0.4); sc.manaMax = scc.manaMax;
+    const manaBefore = sc.mana;
     W.State.newCharacter(sc);
     W.World.showWorld();
     W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试遭遇' }, {});
@@ -223,6 +224,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await sleep(500);
     if (sb.victory) {
       check('战后回血提示(恢复生命)', text('.modal-body').includes('战后休整') && text('.modal-body').includes('恢复'), text('.modal-body').slice(0, 120));
+      check('战后同步回复法力', sc.mana > manaBefore && text('.modal-body').includes('法力'), `mana ${manaBefore} → ${sc.mana}`);
       const cont = doc.querySelector('[data-continue]');
       if (cont) cont.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       await sleep(60);
@@ -245,10 +247,20 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const hp0 = pb.player.hp;
     click('[data-potion="c_heal"]');
     await sleep(80);
-    check('点击药水:恢复生命+不占回合', pb.player.hp > hp0 && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_heal') === 2);
+    check('点击药水:按百分比恢复生命+不占回合', pb.player.hp === Math.min(pb.player.hpMax, hp0 + Math.round(pb.player.hpMax * D.ITEMS.c_heal.consumable.healPct)) && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_heal') === 2, `hp=${pb.player.hp}/${pb.player.hpMax}`);
+    // 背包/商店文案同步为百分比口径(不再写死固定数值)
+    click('[data-act="bag"]');
+    const bagPotionRow = [...doc.querySelectorAll('.bag-row')].find((r) => r.textContent.includes('治疗药水'));
+    check('背包装水效果文案显示百分比', !!bagPotionRow && bagPotionRow.textContent.includes('恢复 25% 生命'), bagPotionRow ? bagPotionRow.querySelector('.item-stats').textContent : '无行');
+    click('.close-x');
     const potionBtn = doc.querySelector('[data-potion="c_heal"]');
     check('药水按钮冷却期禁用', !!potionBtn && potionBtn.disabled === true);
     check('药水与卷轴共存于战斗道具栏', !!doc.querySelector('[data-potion="c_heal"]') && !!doc.querySelector('[data-scroll="s_force"]'));
+    // 药水效果已改为百分比口径:道具栏提示同步展示百分比 + 当前等级实际回复量
+    const healTip = doc.querySelector('[data-potion="c_heal"]').title;
+    check('道具栏按百分比提示药水效果', healTip.includes('恢复 25% 生命') && /约 \d+/.test(healTip), healTip.slice(0, 60));
+    const manaTip = doc.querySelector('[data-potion="c_mana"]').title;
+    check('法力药水按百分比提示(带实际值)', manaTip.includes('恢复 15% 法力') && /约 \d+/.test(manaTip), manaTip.slice(0, 60));
   }
 
   console.log('== 战斗道具栏折叠 ==');
@@ -992,6 +1004,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     check('战士战斗开始无起始护盾', W.Combat.battle.player.shield == null);
   }
 
+  console.log('== 被动专属角标(减伤/免控/吸血/控场) ==');
+  {
+    const bg = W.Char.create('角标师', 'undead', 'mage');
+    bg.level = 30;
+    for (const sid of ['ice_block', 'polymorph', 'evocation', 'presence_of_mind']) {
+      if (!bg.learnedSkills.includes(sid)) bg.learnedSkills.push(sid);
+    }
+    W.State.newCharacter(bg);
+    W.World.showWorld();
+    W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试' }, {});
+    const bar = doc.querySelector('.passive-bar');
+    check('减伤被动带专属角标(寒冰屏障)', !!bar && !!bar.querySelector('.pp-badge-dmg'));
+    check('吸血被动带专属角标(吞噬尸体)', !!bar && !!bar.querySelector('.pp-badge-leech'));
+    check('控场被动带专属角标(变羊术)', !!bar && !!bar.querySelector('.pp-badge-control'));
+    check('控场角标提示文字', !!bar && [...bar.querySelectorAll('.pp-badge')].some((b) => b.textContent.includes('控场')));
+    check('被动角标仍保留常驻「常」标', !!(bar && bar.querySelector('.pp-mark')));
+  }
+
   console.log('== 天赋被动标签(心灵之火/寒冰护体) ==');
   {
     const tc = W.Char.create('灵火', 'human', 'priest');
@@ -1030,11 +1060,37 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     W.State.newCharacter(bc);
     W.World.showWorld();
     W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试' }, {});
-    const chips = doc.querySelectorAll('.ally-card .passive-chip');
+    const chips = doc.querySelectorAll('.ally-card .passive-bar .passive-chip');
     check('玩家卡牌显示被动常驻标识(战斗怒吼+盾牌格挡)', chips.length === 2, `chips=${chips.length}`);
     check('被动标识带水印常驻角标', [...chips].every((c) => !!c.querySelector('.pp-mark') && c.querySelector('.pp-mark').textContent === '常'));
     check('被动标识悬停显示效果说明', chips.length > 0 && [...chips].some((c) => c.title.includes('被动 · 常驻') && c.title.includes('护甲')), [...chips].map((c) => c.title).join(' | '));
     check('宠物/敌人卡牌无被动标识', !doc.querySelector('.pet .passive-bar') && !doc.querySelector('.enemy-card .passive-bar'));
+    check('宠物/敌人卡牌无自动释放标识', !doc.querySelector('.pet .auto-bar') && !doc.querySelector('.enemy-card .auto-bar'));
+    // 自动释放技能:青色「自动」角标,与金色「常」区分,且不占技能栏
+    const autoChips = doc.querySelectorAll('.ally-card .auto-bar .auto-chip');
+    check('玩家卡牌显示自动释放技能标识(撕裂)', autoChips.length === 1, 'n=' + autoChips.length);
+    check('自动标识带青队「自动」角标', autoChips.length === 1 && autoChips[0].querySelector('.pp-mark').textContent === '自动');
+    check('自动标识悬停显示自动释放说明', autoChips.length === 1 && autoChips[0].title.includes('自动释放'));
+    check('自动释放技能不再占用技能栏', ![...doc.querySelectorAll('.skill-btn[data-skill]')].some((b) => b.dataset.skill === 'rend'));
+    check('撕裂已标记为自动释放且免费', D.SKILLS.rend.autoCast === true && !D.SKILLS.rend.res && !D.SKILLS.rend.cost);
+    // 专属效果角标:按 DOT 元素类型 / 减益种类 / 范围分类配色(与被动角标同一套视觉)
+    check('自动标识带效果专属角标(🩸流血)', !!autoChips[0].querySelector('.pp-badge.pp-badge-bleed') && autoChips[0].textContent.includes('流血'));
+    check('自动标识显示当前状态角标(生效)', !!autoChips[0].querySelector('.pp-badge.on-badge'));
+    check('角标带悬停说明', autoChips[0].querySelector('.pp-badge.pp-badge-bleed').title.includes('流血'));
+    // 奉献(AOE DOT):角标升级为「群体 + 元素」
+    const pc2 = W.Char.create('角标骑', 'human', 'paladin');
+    pc2.level = 20;
+    for (const sid of D.CLASSES.paladin.skills) {
+      const s = D.SKILLS[sid];
+      if (s && s.learn <= pc2.level && !pc2.learnedSkills.includes(sid)) pc2.learnedSkills.push(sid);
+    }
+    W.State.newCharacter(pc2);
+    W.World.showWorld();
+    W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试' }, {});
+    const pChip = doc.querySelector('.ally-card .auto-bar .auto-chip');
+    check('群体自动技能角标标明范围(奉献)', !!pChip && pChip.textContent.includes('群体'), pChip && pChip.textContent);
+    check('奉献角标为圣灼类', !!pChip && !!pChip.querySelector('.pp-badge.pp-badge-holy'));
+    check('奉献冷却中显示冷却角标', !!pChip && !!pChip.querySelector('.pp-badge.cd-badge'));
     // 猎人:敌方身上的印记徽章显示专用弓箭图标
     const hc2 = W.Char.create('标识猎', 'night_elf', 'hunter');
     hc2.level = 5;
@@ -1045,7 +1101,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     W.State.newCharacter(hc2);
     W.World.showWorld();
     W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试' }, {});
-    check('猎人玩家卡牌被动标识(鹰之守护+印记)', doc.querySelectorAll('.ally-card .passive-chip').length === 2);
+    // 暗夜精灵猎人:鹰之守护 + 猎人印记 + 影遁(种族被动) = 3 个标识
+    const hTitles = [...doc.querySelectorAll('.ally-card .passive-chip')].map((c) => c.title || '');
+    check('猎人玩家卡牌被动标识(鹰之守护+印记+影遁)', hTitles.some((t) => t.includes('鹰之守护')) && hTitles.some((t) => t.includes('猎人印记')) && hTitles.some((t) => t.includes('影遁')), hTitles.join(' | '));
+    check('猎人技能栏不含假死按钮(已转被动)', !doc.querySelector('[data-skill="feign_death"]'));
     check('敌方印记徽章显示弓箭图标且提示常驻', [...doc.querySelectorAll('.enemy-card .buff-chip')].some((c) => c.textContent === '🎯' && c.title.includes('猎人印记') && c.title.includes('常驻')));
     check('常驻效果不显示剩余回合数', ![...doc.querySelectorAll('.enemy-card .buff-chip')].some((c) => c.title.includes('剩 999')));
   }
@@ -1239,6 +1298,47 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     click('.close-x');
   }
 
+  console.log('== 低等级覆盖高等级存档(二次确认) ==');
+  {
+    const S = W.State;
+    const keepSlots = S.saveSlots.slice();
+    const keepSlot = S._saveSlot;
+    S.saveSlots = [];
+    S.saveSlots[0] = { name: '高等级甲', classCN: '战士', raceCN: '人类', level: 60, gold: 999, zoneCN: '熔火之心', savedAt: Date.now(), src: 'manual', data: { classId: 'warrior', race: 'human', level: 60, gold: 999, zone: 'molten_core' } };
+    S._saveSlot = 1;
+    S.persist(); // 存档管理面板走 loadSlots() 从 localStorage 读,测试槽位必须先落盘
+    const lc = W.Char.create('低级乙', 'human', 'warrior');
+    lc.level = 12;
+    S.newCharacter(lc);
+    W.World.showWorld();
+    W.World.openSave();
+    const clickEl = (el) => el.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    check('降级覆盖槽带行内警示', doc.querySelector('[data-save="0"]').closest('.save-row').classList.contains('downgrade') && text('.save-warn').includes('高于当前角色'), text('.save-warn'));
+    check('降级覆盖按钮转危险态并标注槽内等级', doc.querySelector('[data-save="0"]').classList.contains('danger') && text('[data-save="0"]').includes('⚠ 覆盖 Lv.60') && doc.querySelector('[data-save="0"]').dataset.downLv === '60', text('[data-save="0"]'));
+    check('空槽保存按钮不需要二次确认', !doc.querySelector('[data-save="1"]').dataset.downLv && !doc.querySelector('[data-save="1"]').classList.contains('danger'));
+    // 首次点击 → 仅进入确认态,不改动存档
+    clickEl(doc.querySelector('[data-save="0"]'));
+    check('首次点击进入确认态', doc.querySelector('[data-save="0"]').dataset.confirm === '1' && text('[data-save="0"]').includes('确认覆盖 Lv.60'), text('[data-save="0"]'));
+    check('首次点击不写入存档', S.saveSlots[0].name === '高等级甲' && S.saveSlots[0].level === 60, S.saveSlots[0].name + ' Lv.' + S.saveSlots[0].level);
+    check('首次点击给出警告提示', text('#toast').includes('再点一次'), text('#toast'));
+    check('确认态挂上超时复位计时器', !!doc.querySelector('[data-save="0"]')._t);
+    // 超时/取消后恢复原文案
+    W.World._saveConfirmReset(doc.querySelector('[data-save="0"]'));
+    check('确认态可复位回原按钮文案', text('[data-save="0"]').includes('⚠ 覆盖 Lv.60') && !doc.querySelector('[data-save="0"]').dataset.confirm, text('[data-save="0"]'));
+    // 再次点击 → 真正覆盖
+    clickEl(doc.querySelector('[data-save="0"]'));
+    clickEl(doc.querySelector('[data-save="0"]'));
+    check('再次点击才真正覆盖存档', S.saveSlots[0].name === '低级乙' && S.saveSlots[0].level === 12, S.saveSlots[0].name + ' Lv.' + S.saveSlots[0].level);
+    check('覆盖后警示与危险态消失', !doc.querySelector('.save-warn') && !doc.querySelector('[data-save="0"]').classList.contains('danger') && !doc.querySelector('[data-save="0"]').dataset.downLv, text('[data-save="0"]'));
+    // 普通槽(不高于当前角色)仍是一次点击
+    clickEl(doc.querySelector('[data-save="1"]'));
+    check('普通存档槽一次点击即保存', S.saveSlots[1] && S.saveSlots[1].name === '低级乙' && !doc.querySelector('[data-save="1"]').classList.contains('danger'), text('[data-save="1"]'));
+    click('.close-x');
+    S.saveSlots = keepSlots;
+    S._saveSlot = keepSlot;
+    S.persist();
+  }
+
   console.log('== 背包卖价与装备对比 ==');
   {
     const bc = W.Char.create('对比王', 'human', 'warrior');
@@ -1336,6 +1436,103 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     click('[data-act="bag"]');
     const bagT = text('.modal-body');
     check('背包渲染新护腿属性', bagT.includes('荒芜护腿') && /护甲 52/.test(bagT), bagT.slice(0, 120));
+    click('.close-x');
+  }
+
+  console.log('== 商店/背包等级段分区(补件可一眼找到) ==');
+  {
+    // 按 modal 内子节点顺序回推某一行所属的等级段标题
+    const bandOf = (box, match) => {
+      if (!box) return null;
+      let band = null;
+      for (const el of box.children) {
+        if (el.classList.contains('lv-band-title')) band = el.textContent;
+        else if (match(el)) return band;
+      }
+      return null;
+    };
+    const bc = W.Char.create('分区王', 'human', 'warrior');
+    bc.level = 37;
+    bc.gold = 999999;
+    bc.zone = 'searing';
+    W.State.newCharacter(bc);
+    W.World.showWorld();
+    click('[data-act="shop"]');
+    const titles = [...doc.querySelectorAll('.shop-buy .lv-band-title')];
+    check('商店按等级段分区', titles.length >= 2, titles.map((e) => e.textContent.trim()).join(' | '));
+    check('当前等级段标题高亮', titles.some((e) => e.classList.contains('cur') && e.textContent.includes('31-40')), titles.map((e) => e.textContent.trim()).join(' | '));
+    check('购买区显示当前段可换件数', text('.shop-buy .sub-note').includes('当前等级段 31-40'), text('.shop-buy .sub-note'));
+    const buyBox = doc.querySelector('.shop-buy');
+    check('补件(塔纳利斯弯刀)归入 31-40 段', (bandOf(buyBox, (el) => el.dataset.item === 'w_tanaris_scimitar') || '').includes('31-40'), bandOf(buyBox, (el) => el.dataset.item === 'w_tanaris_scimitar'));
+    check('装备行显示等级标签', text('[data-item="w_tanaris_scimitar"]').includes('Lv37'), text('[data-item="w_tanaris_scimitar"]').slice(0, 60));
+    check('同段补件与老装备同区展示', ['a_searing_hood', 'a_searing_gauntlets', 'a_lava_legs', 'a_lava_ring', 'a_lava_pendant', 'w_searing_axe'].every((id) => (bandOf(buyBox, (el) => el.dataset.item === id) || '').includes('31-40')));
+    click('.close-x');
+    // 背包:装备按等级段分区,消耗品/材料收尾
+    W.Char.Inventory.add(bc, 'a_boar_legs', 1);
+    W.Char.Inventory.add(bc, 'a_scourge_legs', 1);
+    W.Char.Inventory.add(bc, 'c_bread', 1);
+    W.World.showWorld();
+    click('[data-act="bag"]');
+    const bagBox = doc.querySelector('.modal-body');
+    const bTitles = [...bagBox.querySelectorAll('.lv-band-title')].map((e) => e.textContent.trim());
+    check('背包按等级段分区', bTitles.filter((t) => t.includes('级')).length >= 2, bTitles.join(' | '));
+    check('背包消耗品/材料收尾分区', bTitles.some((t) => t.includes('消耗品')), bTitles.join(' | '));
+    check('8 级补件归入 1-10 段', (bandOf(bagBox, (el) => el.querySelector && el.querySelector('[data-use="a_boar_legs"]')) || '').includes('1-10'));
+    check('53 级补件归入 51-60 段', (bandOf(bagBox, (el) => el.querySelector && el.querySelector('[data-use="a_scourge_legs"]')) || '').includes('51-60'));
+    check('背包装备行显示等级标签', text('.modal-body').includes('Lv8') && text('.modal-body').includes('Lv53'), text('.modal-body').slice(0, 120));
+    check('53 级补件在 37 级角色下提示需要等级', text('.modal-body').includes('需要53级'), text('.modal-body').slice(0, 160));
+    click('.close-x');
+  }
+
+  console.log('== 背包筛选芯片(只看当前等级段 / 只看可装备) ==');
+  {
+    const bc = W.Char.create('筛选王', 'human', 'warrior');
+    bc.level = 37;
+    W.State.newCharacter(bc);
+    for (const [id, n] of [['a_boar_legs', 1], ['a_jungle_crown', 1], ['a_searing_hood', 1], ['a_scourge_legs', 1], ['c_bread', 2], ['m_dust', 3]]) W.Char.Inventory.add(bc, id, n);
+    W.World.showWorld();
+    click('[data-act="bag"]');
+    const chips = () => [...doc.querySelectorAll('[data-bag-filter]')].map((b) => b.textContent.trim());
+    const rowsTxt = () => [...doc.querySelectorAll('.bag-row')].map((r) => r.textContent);
+    check('背包有筛选芯片(全部/当前等级段/可装备)', chips().length === 3, chips().join(' | '));
+    check('筛选芯片标注各自件数', chips()[0].includes('全部（6）') && chips()[1].includes('当前等级段（1）') && chips()[2].includes('可装备（3）'), chips().join(' | '));
+    check('默认「全部」为激活态且不隐藏任何物品', doc.querySelector('[data-bag-filter="all"]').classList.contains('active') && rowsTxt().length === 6, String(rowsTxt().length));
+    // 只看当前等级段:31-40 段装备,材料/消耗品隐藏
+    click('[data-bag-filter="band"]');
+    check('只看当前等级段只留本段装备', rowsTxt().length === 1 && rowsTxt()[0].includes('灼热兜帽'), rowsTxt().join(' | ').slice(0, 120));
+    check('筛选隐藏材料与消耗品', !doc.querySelector('[data-use="c_bread"]') && !doc.querySelector('[data-sell-bag="m_dust"]') && !doc.querySelector('[data-sell-bag="a_scourge_legs"]'), '隐藏项行数=' + rowsTxt().length);
+    check('筛选后只剩本段分区标题', [...doc.querySelectorAll('.lv-band-title')].every((t) => t.textContent.includes('31-40')), [...doc.querySelectorAll('.lv-band-title')].map((t) => t.textContent.trim()).join(' | '));
+    check('筛选说明行标注显示/总数', text('.bf-note').includes('显示 1 / 6'), text('.bf-note'));
+    check('当前等级段芯片激活', doc.querySelector('[data-bag-filter="band"]').classList.contains('active') && doc.querySelector('[data-bag-filter="all"]').classList.contains('active') === false);
+    // 叠加「可装备」
+    click('[data-bag-filter="equip"]');
+    check('两个筛选可叠加(本段 + 可装备)', rowsTxt().length === 1 && rowsTxt()[0].includes('灼热兜帽'), rowsTxt().join(' | ').slice(0, 120));
+    // 只留「可装备」:低等级达标装备回归,51-60 段与消耗品仍隐藏
+    click('[data-bag-filter="band"]');
+    check('只看可装备保留全部达标装备', rowsTxt().length === 3 && rowsTxt().some((t) => t.includes('野猪皮护腿')) && rowsTxt().some((t) => t.includes('丛林之冠')) && !rowsTxt().some((t) => t.includes('天灾护腿')), rowsTxt().length + ' 行');
+    check('只看可装备隐藏未达标装备与消耗品', !doc.querySelector('[data-use="a_scourge_legs"]') && !doc.querySelector('[data-use="c_bread"]'), text('.modal-body').slice(0, 120));
+    // 筛选态跨操作保留(出售后就地刷新不重置筛选)
+    click('[data-sell-bag="a_boar_legs"]');
+    check('出售后就地刷新不破坏筛选', rowsTxt().length === 2 && doc.querySelector('[data-bag-filter="equip"]').classList.contains('active'), rowsTxt().length + ' 行 · ' + chips().join(' | '));
+    check('出售后筛选芯片计数同步', chips()[0].includes('全部（5）') && chips()[2].includes('可装备（2）'), chips().join(' | '));
+    const theTitles = [...doc.querySelectorAll('.lv-band-title')].map((t) => t.textContent.replace(/\s+/g, ''));
+    check('出售后等级段分区件数同步', theTitles.length === 2 && theTitles.every((t) => t.includes('1件')) && !theTitles.some((t) => t.includes('0件')), theTitles.join(' | '));
+    // 一键清除
+    click('[data-bag-filter="all"]');
+    check('清除筛选恢复全部物品', rowsTxt().length === 5 && doc.querySelector('[data-bag-filter="all"]').classList.contains('active') && !doc.querySelector('[data-bag-filter="equip"]').classList.contains('active'), String(rowsTxt().length));
+    click('.close-x');
+    // 空态:当前等级段无装备时给明确提示(而不是误报背包空)
+    bc.level = 47;
+    W.World.showWorld();
+    click('[data-act="bag"]');
+    click('[data-bag-filter="band"]');
+    const modalEmpty = text('#modal-root .empty');
+    check('当前等级段无装备时提示无符合筛选条件', modalEmpty.includes('没有符合筛选条件的物品'), modalEmpty);
+    check('空态提示隐藏件数', modalEmpty.includes('5 件已隐藏'), modalEmpty);
+    check('空态不误报背包空', !modalEmpty.includes('背包空空如也') && doc.querySelectorAll('.bag-row').length === 0, modalEmpty);
+    check('空态下筛选芯片计数仍正确', chips()[1].includes('当前等级段（0）'), chips().join(' | '));
+    click('[data-bag-filter="all"]');
+    check('清除筛选后物品全部回归', rowsTxt().length === 5, String(rowsTxt().length));
     click('.close-x');
   }
 
@@ -1804,6 +2001,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       trinket1: 'tr_kelthuzad_heart', trinket2: 'tr_abyssal_signet',
     };
     for (const bd of D.TALENT_BUILDS.warrior) W.Char.applyBuild(wbChar, bd);
+    // 世界首领经强度重调后大幅变强,本用例聚焦「击杀后刷新计时」,显式开启 GM 一击必杀稳定取胜
+    wbChar.gm = { enabled: true, oneShot: true };
     const wbc = W.Char.computed(wbChar);
     wbChar.hp = wbc.hpMax; wbChar.hpMax = wbc.hpMax; wbChar.mana = wbc.manaMax; wbChar.manaMax = wbc.manaMax;
     wbChar.zone = 'burning';
@@ -2050,15 +2249,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('== 满级经验隐藏 + 副本首领序列 ==');
   {
     const mx = W.Char.create('巅峰', 'human', 'warrior');
-    mx.level = 60;
+    mx.level = W.Config.LEVEL_CAP;
     W.State.newCharacter(mx);
     W.World.showWorld();
-    check('满级世界视图显示巅峰标识', text('.wh-maxlv').includes('满级 Lv.60'));
+    check('满级世界视图显示巅峰标识', text('.wh-maxlv').includes('满级 Lv.' + W.Config.LEVEL_CAP));
     check('满级世界视图隐藏经验条', !doc.querySelector('.wh-expbar'));
     mx.exp = 500; // 试图塞入经验
     W.Char.addExp(mx, 1000);
     check('满级 addExp 后经验恒为 0', mx.exp === 0, 'exp=' + mx.exp);
-    check('满级不再升级', mx.level === 60);
+    check('满级不再升级', mx.level === W.Config.LEVEL_CAP);
     // 副本首领序列渲染(熔火之心 9 首领:战斗流程预览/首领图鉴)
     check('熔火之心注册 9 首领序列', W.Data.DUNGEONS.molten_core.bosses.length === 9);
     check('死亡矿井注册 5 首领序列', W.Data.DUNGEONS.deadmines.bosses.length === 5);
@@ -2067,6 +2266,71 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     // 新地图悬赏/副本讨伐任务数据
     check('地图悬赏任务已接入任务板', Object.keys(W.Data.ZONES).some((z) => (W.Data.ZONES[z].quests || []).some((q) => String(q).startsWith('q_map_'))));
     check('副本讨伐任务已接入任务板', Object.keys(W.Data.ZONES).some((z) => (W.Data.ZONES[z].quests || []).some((q) => String(q).startsWith('q_dg_'))));
+  }
+
+  console.log('== 燃烧的远征 UI 流程(外域旅行 / 副本入口 / 任务板) ==');
+  {
+    const tc = W.Char.create('外域远征', 'human', 'warrior');
+    tc.level = 70;
+    tc.equipment = {
+      weapon: 'w_outland_blade', head: 'a_out_helm', chest: 'a_out_chest', gloves: 'a_out_gloves',
+      legs: 'a_out_legs', boots: 'a_out_boots', cloak: 'a_out_cloak', neck: 'a_out_neck',
+      ring1: 'a_out_ring', ring2: 'a_out_ring', trinket1: 'tr_out_signet',
+    };
+    const tcc2 = W.Char.computed(tc);
+    tc.hp = tcc2.hpMax; tc.hpMax = tcc2.hpMax; tc.mana = tcc2.manaMax; tc.manaMax = tcc2.manaMax;
+    for (const sid of D.CLASSES.warrior.skills) { const s = D.SKILLS[sid]; if (s && s.learn <= tc.level && !tc.learnedSkills.includes(sid)) tc.learnedSkills.push(sid); }
+    tc.zone = 'burning'; // 燃烧平原
+    W.State.newCharacter(tc);
+    W.World.showWorld();
+    check('70 级角色头部显示「满级 Lv.70」', text('.wh-maxlv').includes('Lv.70'), text('.wh-maxlv'));
+    check('70 级角色隐藏经验条', !doc.querySelector('.wh-expbar'));
+    // 黑暗之门:燃烧平原 →(首站诅咒之地)→ 地狱火半岛
+    W.World.openTravel();
+    const hfRow = doc.querySelector('.travel-row[data-zone="hellfire"]');
+    check('旅行面板可达外域(地狱火半岛)', !!hfRow);
+    if (hfRow) {
+      hfRow.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      check('多跳区域沿最近路径先抵首站(诅咒之地)', W.State.character.zone === 'blasted_lands', W.State.character.zone);
+      W.World.openTravel();
+      const hfRow2 = doc.querySelector('.travel-row[data-zone="hellfire"]');
+      if (hfRow2) hfRow2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      check('过黑暗之门抵达地狱火半岛', W.State.character.zone === 'hellfire', W.State.character.zone);
+    }
+    // 外域任务板:区域悬赏可接
+    click('[data-act="quests"]');
+    check('外域任务板打开(地狱火半岛)', text('.modal-title').includes('地狱火半岛'), text('.modal-title'));
+    check('外域任务板含区域悬赏(清剿地狱火掠食者)', /清剿/.test(text('.modal-body')));
+    click('.close-x');
+    // 外域副本入口:等级达标可进,等级不足锁定
+    W.World.openTravel();
+    const hfrRow = doc.querySelector('.travel-row[data-zone="hellfire_ramparts"]');
+    check('旅行面板可达外域副本(地狱火城墙)', !!hfrRow);
+    check('外域副本行标注 5人本 标签', !!hfrRow && text('.travel-row[data-zone="hellfire_ramparts"]').includes('5人本'));
+    const btRow = doc.querySelector('.travel-row[data-zone="black_temple"]');
+    check('外域团本行标注 团本 标签(黑暗神殿)', !!btRow && text('.travel-row[data-zone="black_temple"]').includes('团本'));
+    if (hfrRow) {
+      hfrRow.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      check('进入地狱火城墙副本', !!W.State.character.dungeon && W.State.character.dungeon.id === 'hellfire_ramparts',
+        JSON.stringify(W.State.character.dungeon));
+      check('外域副本内保留深入/离开与任务板按钮', !!doc.querySelector('.zone-actions .explore-btn')
+        && !!doc.querySelector('.zone-actions .act-quests') && text('.zone-actions').includes('离开副本'), text('.zone-actions'));
+      click('[data-act="quests"]');
+      check('外域副本任务板显示副本任务(远征：地狱火城墙)', text('.modal-body').includes('远征：地狱火城墙'));
+      click('.close-x');
+    }
+    // 等级门槛:58 级角色看外域团本应是锁定态
+    const low = W.Char.create('新手远征', 'human', 'warrior');
+    low.level = 58;
+    low.zone = 'hellfire';
+    W.State.newCharacter(low);
+    W.World.showWorld();
+    W.World.openTravel();
+    const lockRow = doc.querySelector('.travel-row[data-zone="black_temple"]');
+    check('等级不足的外域团本显示锁定(等级不足)', !!lockRow && lockRow.classList.contains('locked') && text('.travel-row[data-zone="black_temple"]').includes('等级不足'),
+      lockRow ? lockRow.className : '无');
+    const okRow = doc.querySelector('.travel-row[data-zone="hellfire_ramparts"]');
+    check('58 级可进 58 级外域 5 人本(未锁定)', !!okRow && !okRow.classList.contains('locked'));
   }
 
   console.log('== 成就直达等级门槛 ==');
@@ -2100,7 +2364,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     check('成就面板搜索栏存在', !!doc.querySelector('.ach-search'));
     check('成就面板筛选工具栏存在', !!toolbar && !!doc.querySelector('.ach-chips'));
     check('筛选芯片含未完成/团本/可直达', /未完成/.test(text('[data-ach-done="todo"]')) && /团本/.test(text('[data-ach-raid="1"]')) && /可直达/.test(text('[data-ach-reach="1"]')));
-    check('未完成芯片计数正确(37)', text('[data-ach-done="todo"]').indexOf('37') >= 0, text('[data-ach-done="todo"]'));
+    check('未完成芯片计数正确(65)', text('[data-ach-done="todo"]').indexOf('65') >= 0, text('[data-ach-done="todo"]'));
     check('可直达芯片计数正确(7)', text('[data-ach-reach="1"]').indexOf('7') >= 0, text('[data-ach-reach="1"]'));
     // 搜索过滤:输入「熔火」只剩烈焰之子一行
     const search = doc.querySelector('.ach-search');
@@ -2125,8 +2389,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     doc.querySelector('[data-ach-done="all"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     doc.querySelector('[data-ach-raid="1"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     const raidRows = doc.querySelectorAll('.ach-body .ach-row');
-    check('团本筛选恰 5 行', raidRows.length === 5, 'n=' + raidRows.length);
-    check('团本筛选行均带团本标记', raidRows.length === 5 && !!doc.querySelector('.ach-body .raid-tag') && !doc.querySelector('.ach-body .d5-tag'));
+    check('团本筛选恰 13 行', raidRows.length === 13, 'n=' + raidRows.length);
+    check('团本筛选行均带团本标记', raidRows.length === 13 && !!doc.querySelector('.ach-body .raid-tag') && !doc.querySelector('.ach-body .d5-tag'));
     // 关团本 → 可直达筛选(20级 = 7 行,全部可点)  
     doc.querySelector('[data-ach-raid="1"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     doc.querySelector('[data-ach-reach="1"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
@@ -2144,6 +2408,219 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const combo = doc.querySelectorAll('.ach-body .ach-row');
     check('团本+可直达组合(60级)恰 5 行', combo.length === 5, 'n=' + combo.length);
     click('.close-x');
+  }
+
+  console.log('== 戒指/饰品双槽不可重复(状态面板) ==');
+  {
+    const dc = W.Char.create('双槽师', 'human', 'warrior');
+    dc.level = 40;
+    dc.equipment.ring1 = 'a_ring';
+    dc.equipment.trinket1 = 'tr_might_signet';
+    W.Char.Inventory.add(dc, 'a_ring', 1);            // 背包里还有一枚同名戒指
+    W.Char.Inventory.add(dc, 'tr_might_signet', 1);   // 以及一件同名饰品
+    W.State.newCharacter(dc);
+    W.World.showWorld();
+    W.World.openStatus();
+    const slotRows = (name) => [...doc.querySelectorAll('.eq-row')]
+      .filter((r) => r.querySelector('.eq-slot') && r.querySelector('.eq-slot').textContent === name);
+    const ringRows = slotRows('戒指');
+    check('状态面板展示两个戒指槽位', ringRows.length === 2, 'n=' + ringRows.length);
+    const emptyRing = ringRows.find((r) => !r.querySelector('[data-unequip]'));
+    check('空戒指槽不把同名戒指列为候选', !!emptyRing && !emptyRing.querySelector('[data-eq-from-bag]'));
+    check('空戒指槽给出双槽互斥提示', !!emptyRing && emptyRing.textContent.includes('双槽不可重复'), emptyRing && emptyRing.textContent);
+    const trRows = slotRows('饰品');
+    const emptyTr = trRows.find((r) => !r.querySelector('[data-unequip]'));
+    check('空饰品槽同样不列同名候选', !!emptyTr && !emptyTr.querySelector('[data-eq-from-bag]') && emptyTr.textContent.includes('双槽不可重复'));
+    check('背包装备同名戒指被拒绝', W.Char.Equipment.equipIssue(dc, 'a_ring', false).includes('不能同时装备'));
+    check('背包装备同名饰品被拒绝', W.Char.Equipment.equipIssue(dc, 'tr_might_signet', false).includes('不能同时装备'));
+    // 不同名的其他戒指/饰品仍可填入空槽
+    W.Char.Inventory.add(dc, 'a_band', 1);
+    W.Char.Inventory.add(dc, 'tr_brass_charm', 1);
+    W.World.openStatus();
+    const emptyRing2 = slotRows('戒指').find((r) => !r.querySelector('[data-unequip]'));
+    const emptyTr2 = slotRows('饰品').find((r) => !r.querySelector('[data-unequip]'));
+    check('不同戒指仍可填入空槽', !!emptyRing2 && !!emptyRing2.querySelector('[data-eq-from-bag]'));
+    check('不同饰品仍可填入空槽', !!emptyTr2 && !!emptyTr2.querySelector('[data-eq-from-bag]'));
+    // 直接点击候选装备(不同名)→ 正常填满双槽
+    emptyRing2.querySelector('[data-eq-from-bag]').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    check('点击候选可正常装备第二枚戒指', dc.equipment.ring2 === 'a_band', JSON.stringify(dc.equipment));
+    click('.close-x');
+  }
+
+  console.log('== 二级菜单与 GM 模式 ==');
+  {
+    const gc = W.Char.create('菜单师', 'human', 'warrior');
+    gc.level = 10;
+    gc.gold = 1000;
+    W.State.newCharacter(gc);
+    W.World.showWorld();
+    const sub = doc.getElementById('world-subnav');
+    check('二级菜单默认收起', !!sub && sub.hidden === true);
+    check('二级菜单收纳锻造/成就/图鉴/声望等', ['forge', 'ach', 'codex', 'rep', 'save', 'settings', 'title'].every((a) => !!sub.querySelector(`[data-act="${a}"]`)));
+    check('一级菜单保留状态/背包/技能/天赋', ['status', 'bag', 'skills', 'talents'].every((a) => !!doc.querySelector(`.wf-main [data-act="${a}"]`)));
+    check('锻造不在一级菜单', !doc.querySelector(`.wf-main [data-act="forge"]`));
+    click('[data-act="more"]');
+    check('点「更多」展开二级菜单', sub.hidden === false, 'hidden=' + sub.hidden);
+    check('展开后按钮转为收起态', doc.querySelector('[data-act="more"]').classList.contains('active') && doc.querySelector('[data-act="more"]').getAttribute('aria-expanded') === 'true');
+    click('[data-act="more"]');
+    check('再点「更多」收起', sub.hidden === true);
+    check('二级菜单功能不受收起影响(锻造可打开)', (W.World.openForge(), !!doc.querySelector('.forge-row')));
+    click('.close-x');
+
+    check('GM 入口默认隐藏', sub.querySelector('[data-act="gm"]').hidden === true);
+    check('GM 默认关闭', W.Char.GM.on(gc) === false);
+    W.World.openSettings();
+    check('设置面板含 GM 开关', !!doc.querySelector('[data-set="gm"]'));
+    click('[data-set="gm"]');
+    check('设置里启用 GM 模式', W.Char.GM.on(gc) === true);
+    check('启用后 GM 入口露出', doc.querySelector('[data-act="gm"]').hidden === false);
+    check('启用后头部显示 GM 角标', !!doc.querySelector('.wh-gm'));
+    click('.close-x');
+
+    W.World.openGM();
+    check('GM 面板渲染 3 个战斗开关', doc.querySelectorAll('[data-gm-sw]').length === 3);
+    check('GM 面板显示当前状态', text('.gm-stats').includes('等级') && text('.gm-stats').includes('金币'));
+    check('GM 面板提供传送区域选择', doc.querySelectorAll('[data-gm-zone] option').length === Object.keys(D.ZONES).length);
+    const gold0 = gc.gold;
+    doc.querySelector('[data-gm-act="gold"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 快捷:金币 +10000', gc.gold === gold0 + 10000, 'gold=' + gc.gold);
+    doc.querySelector('[data-gm-act="maxlevel"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 快捷:直接满级', gc.level === W.Config.LEVEL_CAP && gc.exp === 0, 'lv=' + gc.level);
+    check('满级后补全新技能', gc.learnedSkills.length > 5);
+    doc.querySelector('[data-gm-act="talents"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 快捷:天赋三系点满', Object.values(gc.talents).every((tree) => Object.values(tree).every((r) => r > 0)));
+    const hpBefore = gc.hp;
+    gc.hp = 1;
+    doc.querySelector('[data-gm-act="restore"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 快捷:回满生命法力', gc.hp === W.Char.computed(gc).hpMax && gc.mana === W.Char.computed(gc).manaMax, 'hp=' + gc.hp);
+    gc.hp = hpBefore;
+    // 传送
+    const targetZone = Object.keys(D.ZONES).find((z) => z !== gc.zone);
+    const zoneSel = doc.querySelector('[data-gm-zone]');
+    zoneSel.value = targetZone;
+    doc.querySelector('[data-gm-act="travel"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 快捷:传送到指定区域', gc.zone === targetZone, 'zone=' + gc.zone);
+    check('传送后 GM 面板仍开启', !!doc.querySelector('[data-gm-sw]'));
+
+    // 调试日志:每次操作都被记录
+    check('GM 面板内嵌最近调试日志', doc.querySelectorAll('.gm-log-row').length > 0, 'n=' + doc.querySelectorAll('.gm-log-row').length);
+    check('日志记录金币操作', text('.gm-log').includes('金币 +10000'));
+    check('日志记录传送操作', text('.gm-log').includes('传送：'));
+    check('日志行含时间与类型标签', !!doc.querySelector('.gm-log-time') && !!doc.querySelector('.gm-log-kind'));
+    const logCount = W.Char.GM.logs(gc).length;
+    doc.querySelector('[data-gm-act="log-all"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('查看全部日志:打开独立日志面板', !!doc.querySelector('.gm-log-full'));
+    check('日志面板标题正确', (doc.querySelector('.modal-title') || {}).textContent === 'GM 调试日志');
+    check('日志面板列出全部记录', doc.querySelectorAll('.gm-log-full .gm-log-row').length === logCount, 'rows=' + doc.querySelectorAll('.gm-log-full .gm-log-row').length + ' log=' + logCount);
+    doc.querySelector('[data-gm-log-back]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('日志面板可返回 GM 面板', !!doc.querySelector('[data-gm-sw]'));
+    doc.querySelector('[data-gm-act="log-clear"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('清空日志前先二次确认', !!doc.querySelector('[data-yes]'));
+    doc.querySelector('[data-yes]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('确认后调试日志清空', logCount > 0 && W.Char.GM.logs(gc).length === 0);
+    check('清空后 GM 面板显示日志空态', !!doc.querySelector('.gm-log-empty'));
+
+    // 战斗开关切换
+    doc.querySelector('[data-gm-sw="god"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 开关:无敌开启', gc.gm.god === true);
+    doc.querySelector('[data-gm-sw="god"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    check('GM 开关:无敌关闭', gc.gm.god === false);
+    check('开关操作同样记入日志', W.Char.GM.logs(gc).some((e) => e.kind === 'toggle' && e.text.includes('无敌')));
+    click('.close-x');
+
+    // GM 水印与存档调试提示已移除:界面不该再出现任何 GM 标记
+    check('GM 开启时世界界面无水印', !doc.querySelector('#view-world .gm-watermark'));
+    check('存档成功', W.State.save(0) === true);
+    check('GM 状态照常随存档保存(只是不再做界面标记)', !!(W.State.saveSlots[0].data.gm && W.State.saveSlots[0].data.gm.enabled === true));
+    W.World.openSave();
+    check('存档行不带 GM 水印', !doc.querySelector('.save-row .save-gm-watermark'));
+    check('存档行不带 GM 调试标签', !doc.querySelector('.save-row .tag.gm-tag'));
+    check('存档行不带仅供调试警告', !doc.querySelector('.save-gm-warn'));
+    check('存档行不再标记 gm-save 样式', !doc.querySelector('.save-row.gm-save'));
+    check('存档列表照常渲染槽位', doc.querySelectorAll('.save-row:not(.empty)').length >= 1, 'n=' + doc.querySelectorAll('.save-row:not(.empty)').length);
+    click('.close-x');
+
+    // 关闭 GM 总开关:入口收起、作弊项一并清零
+    W.World.openSettings();
+    gc.gm.god = true;
+    click('[data-set="gm"]');
+    check('关闭 GM 模式:入口重新隐藏', doc.querySelector('[data-act="gm"]').hidden === true);
+    check('关闭 GM 模式:作弊项一并清零', gc.gm.god === false && gc.gm.enabled === false);
+    check('关闭 GM 模式:头部角标消失', !doc.querySelector('.wh-gm'));
+    check('关闭 GM 后世界界面依旧无水印', !doc.querySelector('#view-world .gm-watermark'));
+    click('.close-x');
+    // 清空调试历史同样不产生任何界面标记
+    W.Char.GM.clearLog(gc);
+    W.World.render();
+    check('清空调试历史后世界界面仍无水印', !doc.querySelector('#view-world .gm-watermark'));
+    W.World.openGM();
+    check('未启用时无法打开 GM 面板', !doc.querySelector('[data-gm-sw]'));
+  }
+
+  console.log('== 触屏适配:长按详情 + 手机侧栏折叠 ==');
+  {
+    // 触屏没有悬停,title 提示完全不可见 → 长按必须能弹出同样的内容
+    const tc = W.Char.create('长按测', 'human', 'warrior');
+    tc.level = 10;
+    for (const sid of D.CLASSES.warrior.skills) {
+      const s = D.SKILLS[sid];
+      if (s && s.learn <= tc.level && !tc.learnedSkills.includes(sid)) tc.learnedSkills.push(sid);
+    }
+    W.State.newCharacter(tc);
+    W.World.showWorld();
+    W.BattleView.start({ enemies: [D.MONSTERS.elwynn_boar], name: '测试' }, {});
+    const press = (el, type, x, y) => el.dispatchEvent(new window.MouseEvent(type, { bubbles: true, clientX: x == null ? 5 : x, clientY: y == null ? 5 : y }));
+
+    // 1) 长按技能按钮 → 技能说明弹窗(内容与 title 一致)
+    const sbtn = doc.querySelector('.skill-btn[data-skill]:not([disabled])');
+    check('战斗技能栏有可用技能按钮', !!sbtn);
+    const sTitle = sbtn.title;
+    press(sbtn, 'pointerdown');
+    await sleep(560);
+    const infoBody = text('.info-box');
+    check('长按技能按钮弹出技能详情', !!doc.querySelector('.info-box') && infoBody.includes(sTitle.split('：')[0]), infoBody.slice(0, 40));
+    check('技能详情替代触屏看不到的 title 提示', infoBody.length > 6 && !!doc.querySelector('.modal-actions [data-close]'));
+
+    // 2) 长按后的那一次 click 被吞掉(不能同时把技能放出去)
+    const logsBefore = doc.querySelectorAll('.log-line').length;
+    press(sbtn, 'click');
+    await sleep(120);
+    check('长按后吞掉这一次点击(未误施放技能)', doc.querySelectorAll('.log-line').length === logsBefore && !!doc.querySelector('.info-box'));
+    click('.close-x');
+
+    // 3) 长按敌人卡牌 → 状态面板(增益/减益/首领技能)
+    const eCard = doc.querySelector('.enemy-card');
+    press(eCard, 'pointerdown');
+    await sleep(560);
+    const uBody = text('.info-box');
+    check('长按单位卡牌弹出状态面板', !!doc.querySelector('.info-box') && uBody.includes('当前状态'), uBody.slice(0, 40));
+    check('状态面板含生命与等级', uBody.includes('生命') && uBody.includes('Lv.'));
+    click('.close-x');
+
+    // 4) 长按中滑动(滚动列表)不应误弹详情
+    press(eCard, 'pointerdown');
+    await sleep(120);
+    press(eCard, 'pointermove', 80, 5);
+    await sleep(500);
+    check('长按中滑动取消详情(不干扰滚动)', !doc.querySelector('.info-box'));
+
+    // 5) 手机竖屏:侧栏折叠成一行摘要(实测竖屏侧栏整体落在首屏之外)
+    const rawNarrow = W.Utils.isNarrow;
+    W.Utils.isNarrow = () => true;
+    W.World.showWorld();
+    const wasOpen = !!doc.querySelector('.side-compact .side-body:not([hidden])');
+    check('窄屏侧栏折叠为一行摘要', !!doc.querySelector('.side-panel .side-compact .side-toggle'));
+    check('窄屏侧栏默认收起', wasOpen === false, 'open=' + wasOpen);
+    check('摘要显示任务数并标明展开', /任务 \d+/.test(text('.side-toggle')) && text('.side-toggle').includes('展开'), text('.side-toggle'));
+    click('.side-toggle');
+    check('点击摘要展开侧栏', !doc.querySelector('.side-body[hidden]') && text('.side-toggle').includes('收起'));
+    const compactBody = text('.side-compact .side-body');
+    check('展开后仍含任务日志与角色状态', compactBody.includes('任务日志') && compactBody.includes('角色状态'));
+    check('展开后状态摘要未被删减', doc.querySelectorAll('.side-compact .stat-grid > div').length >= 5);
+    W.Utils.isNarrow = rawNarrow;
+    W.World.render();
+    check('宽屏恢复双面板侧栏', !!doc.querySelector('.quest-panel') && !!doc.querySelector('.stat-panel') && !doc.querySelector('.side-compact'));
+    check('宽屏状态摘要同样完整', doc.querySelectorAll('.stat-panel .stat-grid > div').length >= 5);
   }
 
   console.log(failed === 0 ? '\n🎉 DOM 流程全部通过' : `\n❌ ${failed} 项失败`);

@@ -12,6 +12,8 @@
   const TYPE_CN = { physical: '物理', fire: '火焰', frost: '冰霜', nature: '自然', shadow: '暗影', holy: '神圣', arcane: '奥术' };
   // 战斗中喝药水的冷却回合(不占回合的免费动作,冷却期内无法再喝,防止无限磨)
   const POTION_CD_ROUNDS = 3;
+  // 高阶(紫/橙)品质:用于「30 级以上副本最终首领保底一件史诗」判定
+  const EQ_QUALITIES = ['epic', 'purple', 'legendary', 'orange'];
 
   /* ============ 构建战斗单位 ============ */
   function buildPlayerUnit(char) {
@@ -38,12 +40,15 @@
         startShield: pm.startShield || 0, startShieldSp: pm.startShieldSp || 0,
         shieldHeal: pm.shieldHeal || 0, markTaken: pm.markTaken || 0,
         petAtkPct: pm.petAtkPct || 0,
+        startCcs: pm.startCc || [],
       },
       // 职业专精:毒药 / 灵魂碎片 / 宠物栏
       poison: char.poison || null,
       soulShards: char.soulShards || 0,
       petDefs: (char.pets || []).slice(),
       activePet: char.activePet || null,
+      // GM 调试修正(与存档中的角色配置同源,战斗中改开关即时生效)
+      gm: W.Char.GM.of(char),
     };
   }
 
@@ -63,11 +68,15 @@
   }
 
   function buildEnemyUnit(monster, idx) {
+    // 全局难度系数:被动体系调整后统一校准怪物血量/攻击(见 scripts/sim-balance.js)
+    const hpMult = C.MONSTER_HP_MULT || 1;
+    const atkMult = C.MONSTER_ATK_MULT || 1;
+    const mHp = Math.max(1, Math.round(monster.hp * hpMult));
     return {
       key: 'e' + idx, mid: monster.id, name: monster.name, icon: monster.icon, isEnemy: true,
       level: monster.level, kind: monster.kind, elite: !!monster.elite, boss: !!monster.boss, sub: !!monster.sub, world: !!monster.world,
       title: monster.title, ai: monster.ai || 'smart',
-      hp: monster.hp, hpMax: monster.hp, atkMin: monster.atk[0], atkMax: monster.atk[1],
+      hp: mHp, hpMax: mHp, atkMin: Math.max(1, Math.round(monster.atk[0] * atkMult)), atkMax: Math.max(1, Math.round(monster.atk[1] * atkMult)),
       armor: monster.armor, hit: 0.9, dodge: 0.02 + monster.level * 0.001, crit: 0.05,
       resists: { fire: 0, frost: 0, nature: 0, shadow: 0, arcane: 0, holy: 0 },
       mSkills: monster.skills || [], mSkillCds: {}, bossPhase2: !monster.boss, _usedOnce: false,
@@ -90,7 +99,70 @@
         victory: false, fleed: false, rewards: null, onEnd: ui.onEnd || null,
       };
       this._applyPassiveStart();
+      this._logGmEffects();
+      this._autoCastAll(); // 减益/DOT 类技能第 1 回合就自动释放
       return this.battle;
+    },
+
+    /* ---------- 减益/DOT 技能自动施放 ----------
+       口径:纯减益类技能(撕裂/奉献/毒蛇钉刺/暗言术：痛/腐蚀术/痛苦诅咒)不再需要手点——
+       每回合开始时(含第 1 回合)作为「免费动作」自动释放,不占回合、不消耗资源;
+       仅受技能自身冷却与「目标身上效果仍在」限制,效果结束后会自动补下一发。 */
+    // 目标身上是否已有该技能的效果(有则不重复施放,等价于「等效果结束再补」)
+    _hasAutoEffect(target, skill) {
+      if (skill.dot) return (target.dots || []).some((d) => d.key === skill.id);
+      if (skill.debuff) return (target.buffs || []).some((x) => x.key === skill.debuff.key);
+      return false;
+    },
+    // 施放单个自动技能(免费、不占回合)
+    _autoApply(player, skill) {
+      const b = this.battle;
+      const ui = b.ui;
+      const alive = b.enemies.filter((e) => e.hp > 0);
+      const targets = (skill.aoe ? alive : alive.slice(0, 1)).filter((t) => !this._hasAutoEffect(t, skill));
+      if (!targets.length) return false;
+      for (const t of targets) {
+        if (skill.dot) this._refreshDot(t, skill.dot, skill);
+        if (skill.debuff) {
+          const dbf = Object.assign({}, skill.debuff);
+          const dp = (player.talents && player.talents.debuffPct && player.talents.debuffPct[skill.id]) || 0;
+          if (dp > 0 && dbf.pct != null) dbf.pct += dp;
+          t.buffs = t.buffs.filter((x) => x.key !== dbf.key);
+          t.buffs.push({ key: dbf.key, name: dbf.name, rounds: dbf.rounds, mod: this._modFromDebuff(dbf), isNegative: true });
+        }
+      }
+      if (skill.cd) player.cd[skill.id] = skill.cd;
+      const names = targets.map((t) => t.name).join('、');
+      const kind = skill.dot ? `${TYPE_CN[skill.dot.type] || ''}伤害` : '减益';
+      ui.log('dot', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 本能地施放 <b>${skill.name}</b>，使 <b>${names}</b> 持续受到${kind}（自动施放 · 不占回合）`);
+      if (skill.dot) W.Audio.dot();
+      return true;
+    },
+    // 遍历全部已习得的自动技能:冷却已好且目标身上未生效的补一发
+    _autoCastAll() {
+      const b = this.battle;
+      if (!b || b.ended) return 0;
+      const player = b.player;
+      if (this._isCCed(player)) return 0; // 被控制时同样无法自动施放
+      let n = 0;
+      for (const sid of (player.learned || [])) {
+        const skill = D.SKILLS[sid];
+        if (!skill || skill.passive || !skill.autoCast) continue;
+        if (!skill.dot && !skill.debuff) continue;
+        if ((player.cd[skill.id] || 0) > 0) continue;
+        if (this._autoApply(player, skill)) n++;
+      }
+      return n;
+    },
+
+    // GM 调试增益在本场战斗中生效时记一条调试日志(每场战斗一次)
+    _logGmEffects() {
+      const b = this.battle;
+      const g = b.player && b.player.gm;
+      if (!g || !g.enabled) return;
+      const on = [['god', '无敌'], ['oneShot', '一击必杀'], ['infinite', '无限资源']]
+        .filter(([k]) => g[k]).map(([, name]) => name);
+      if (on.length) W.Char.GM.log(b.char, 'battle', `战斗增益生效：${on.join(' / ')}`);
     },
 
     // 被动技能的战斗开始效果:起始护盾(萨满大地之盾 / 法师寒冰护体)与猎人印记自动标记
@@ -113,6 +185,17 @@
         e.buffs = e.buffs.filter((x) => x.key !== 'hunters_mark');
         e.buffs.push({ key: 'hunters_mark', name: '猎人印记', rounds: 999, mod: { takenPct: pct }, isNegative: true });
         b.ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${e.name}</b> 被<b>猎人印记</b>标记，受到的伤害提高 ${Math.round(pct * 100)}%`);
+      }
+      // 控制链被动:战斗开始时自动控制首个敌人(被动控场不因受到伤害解除)
+      if ((pm.startCcs || []).length && b.enemies.length) {
+        const e = b.enemies[0];
+        for (const sc of pm.startCcs) {
+          if (this._applyCC(e, sc.type, sc.rounds, true)) {
+            b.ui.log('cc', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 的控场本能生效：<b>${e.name}</b> 被<b>${CC_CN[sc.type] || sc.type}</b> ${sc.rounds} 回合`);
+          } else {
+            b.ui.log('info', `<b>${e.name}</b> 免疫了控制效果！`);
+          }
+        }
       }
     },
 
@@ -197,8 +280,8 @@
         if (damage <= 0) return { shielded: true, crit: isCrit, dmgType };
       }
 
-      // 变羊术:受到伤害即解除
-      if (defender.ccs && defender.ccs.some((c) => c.type === 'sheep')) {
+      // 变羊术:受到伤害即解除(被动控场 noBreak 标记的不受此影响)
+      if (defender.ccs && defender.ccs.some((c) => c.type === 'sheep' && !c.noBreak)) {
         defender.ccs = defender.ccs.filter((c) => c.type !== 'sheep');
         b.ui.log('buff', `<span class="dn">${defender.icon}</span> <b>${defender.name}</b> 的<b>变形</b>效果被打破了！`);
       }
@@ -246,9 +329,21 @@
       return v;
     },
 
+    // GM 调试项是否生效(需 GM 总开关开启)
+    _gm(key) {
+      const b = this.battle;
+      const g = b && b.player && b.player.gm;
+      return !!(g && g.enabled && g[key]);
+    },
+
     _applyDamage(unit, amount) {
+      if (!unit) return;
+      // GM 无敌:玩家受到的伤害全部归零
+      if (unit.isPlayer && this._gm('god')) return;
+      // GM 一击必杀:敌人受到任意伤害即清空生命
+      if (unit.isEnemy && this._gm('oneShot')) amount = unit.hp;
       // 套装减伤(仅玩家):dmgTaken = 受到的伤害降低
-      if (unit && unit.isPlayer && unit.dmgTaken) amount = Math.max(0, Math.round(amount * (1 - unit.dmgTaken)));
+      if (unit.isPlayer && unit.dmgTaken) amount = Math.max(0, Math.round(amount * (1 - unit.dmgTaken)));
       unit.hp = Math.max(0, unit.hp - amount);
     },
     _applyHeal(unit, amount) {
@@ -298,7 +393,9 @@
     canUse(skill, player) {
       const b = this.battle;
       if (skill.passive) return false; // 被动技能效果常驻,不可主动施放
+      if (skill.autoCast) return false; // 自动施放类技能由引擎按回合自动释放,不需要手动点
       if (!player.learned.includes(skill.id) && !skill.race) return false;
+      if (this._gm('infinite')) return true; // GM 无限资源:无视冷却与消耗
       if (player.cd[skill.id] > 0) return false;
       if (skill.res) {
         const res = { rage: player.rage, energy: player.energy, mana: player.mana }[skill.res];
@@ -363,16 +460,19 @@
       const char = W.State.character;
       const it = D.ITEMS[itemId];
       if (!it || !it.consumable) return;
-      if (!(it.consumable.heal || it.consumable.mana)) return;
+      if (!W.Utils.consHasEffect(it.consumable)) return;
       if (W.Char.Inventory.count(char, itemId) <= 0) return;
       const player = b.player;
       if (player.potionCd > 0) {
         b.ui.log('warn', `<span class="dn">🧪</span> <b>${it.name}</b> 冷却中，还需 <b>${player.potionCd}</b> 回合`);
         return;
       }
+      // 回复量:按使用者当前上限实时换算(百分比口径),见 Utils.consAmount
+      const healAmt = W.Utils.consAmount(it.consumable, 'heal', player.hpMax);
+      const manaAmt = W.Utils.consAmount(it.consumable, 'mana', player.manaMax);
       // 满状态时不允许浪费药水
-      const needHeal = !!(it.consumable.heal && player.hp < player.hpMax);
-      const needMana = !!(it.consumable.mana && player.mana < player.manaMax);
+      const needHeal = !!(healAmt && player.hp < player.hpMax);
+      const needMana = !!(manaAmt && player.mana < player.manaMax);
       if (!needHeal && !needMana) {
         b.ui.log('warn', `<span class="dn">🧪</span> 生命与法力已满，无需使用 <b>${it.name}</b>`);
         return;
@@ -381,16 +481,16 @@
       try {
         W.Char.Inventory.remove(char, itemId, 1);
         const parts = [];
-        if (it.consumable.heal && player.hp < player.hpMax) {
-          const h = this._applyHeal(player, it.consumable.heal);
+        if (needHeal) {
+          const h = this._applyHeal(player, healAmt);
           if (h > 0) {
             parts.push(`恢复 <b class="heal">${h}</b> 生命`);
             this._float(player, '+' + h, 'heal');
           }
         }
-        if (it.consumable.mana && player.mana < player.manaMax) {
+        if (needMana) {
           const before = player.mana;
-          player.mana = Math.min(player.manaMax, player.mana + it.consumable.mana);
+          player.mana = Math.min(player.manaMax, player.mana + manaAmt);
           if (player.mana > before) parts.push(`恢复 <b>${player.mana - before}</b> 法力`);
         }
         player.potionCd = POTION_CD_ROUNDS;
@@ -514,14 +614,14 @@
       // 气定神闲:下一技能零消耗且不进入冷却
       const pom = player.buffs.some((x) => x.mod && x.mod.nextFree);
 
-      // 消耗资源(天赋降低消耗;气定神闲免除)
-      const cost = pom ? 0 : this._effCost(player, skill);
+      // 消耗资源(天赋降低消耗;气定神闲/ GM 无限资源免除)
+      const cost = (pom || this._gm('infinite')) ? 0 : this._effCost(player, skill);
       if (skill.res === 'rage') player.rage = Math.max(0, player.rage - cost);
       if (skill.res === 'energy') player.energy = Math.max(0, player.energy - cost);
       if (skill.res === 'mana') player.mana = Math.max(0, player.mana - cost);
       if (skill.rage) player.rage = Math.min(C.RAGE_MAX, player.rage + skill.rage);
-      // 灵魂碎片消耗(术士)
-      if (skill.shardCost) {
+      // 灵魂碎片消耗(术士;GM 无限资源免费)
+      if (skill.shardCost && !this._gm('infinite')) {
         player.soulShards = Math.max(0, (player.soulShards || 0) - skill.shardCost);
         ui.log('debuff', `<span class="dn">${player.icon}</span> 消耗了 <b>${skill.shardCost}</b> 枚灵魂碎片（剩余 ${player.soulShards}）`);
       }
@@ -574,7 +674,7 @@
           // 毒药触发(近战技能有 60% 几率)
           if (r.dmgType === 'physical') this._procPoison(t, true);
           // 暗言术:灭 击杀反噬
-          if (skill.backfirePct && t.hp <= 0) {
+          if (skill.backfirePct && t.hp <= 0 && !this._gm('god')) {
             const bf = Math.max(1, Math.round(player.hpMax * skill.backfirePct));
             player.hp = Math.max(1, player.hp - bf);
             ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${skill.name}</b> 的反噬灼伤了 <b>${player.name}</b>（${bf} 点伤害）`);
@@ -725,7 +825,7 @@
         W.Audio.heal();
       }
       // 自伤(地狱烈焰)
-      if (skill.selfDmgPct) {
+      if (skill.selfDmgPct && !this._gm('god')) {
         const sd = Math.max(1, Math.round(player.hpMax * skill.selfDmgPct));
         player.hp = Math.max(1, player.hp - sd);
         ui.log('debuff', `<b>${player.name}</b> 被 <b>${skill.name}</b> 灼伤，受到 ${sd} 点伤害`);
@@ -760,8 +860,8 @@
       if (skill.combo) player.combo = Math.min(5, player.combo + skill.combo);
       if (skill.comboSpend) player.combo = Math.max(0, player.combo - skill.comboSpend);
 
-      // 冷却(天赋缩短;气定神闲免除)
-      const effCd = pom ? 0 : this._effCd(player, skill);
+      // 冷却(天赋缩短;气定神闲/ GM 无限资源免除)
+      const effCd = (pom || this._gm('infinite')) ? 0 : this._effCd(player, skill);
       if (effCd > 0) player.cd[skill.id] = effCd;
       // 消耗气定神闲
       if (pom) {
@@ -795,10 +895,11 @@
       return mod;
     },
 
-    _applyCC(unit, type, rounds) {
+    // noBreak:被动控场标记——变形(sheep)类不因受到伤害提前解除
+    _applyCC(unit, type, rounds, noBreak) {
       if (unit.buffs.some((x) => x.mod && x.mod.ccImmune)) return false;
       unit.ccs = unit.ccs.filter((c) => c.type !== type);
-      unit.ccs.push({ type, rounds });
+      unit.ccs.push({ type, rounds, noBreak: !!noBreak });
       return true;
     },
     _isCCed(unit) {
@@ -840,10 +941,13 @@
         }
         dmg = Math.max(1, dmg);
         if (unit.hp <= 0) break;
-        unit.hp = Math.max(0, unit.hp - dmg);
-        ui.log('dot', `<span class="dn">${unit.icon}</span> <b>${unit.name}</b> 受到 <b>${d.name}</b> 的 ${dmg} 点${TYPE_CN[d.type] || ''}伤害`);
-        this._float(unit, dmg, 'dot');
-        W.Audio.dot();
+        // GM 无敌:持续伤害不生效(仍照常计时)
+        if (!(unit.isPlayer && this._gm('god'))) {
+          unit.hp = Math.max(0, unit.hp - dmg);
+          ui.log('dot', `<span class="dn">${unit.icon}</span> <b>${unit.name}</b> 受到 <b>${d.name}</b> 的 ${dmg} 点${TYPE_CN[d.type] || ''}伤害`);
+          this._float(unit, dmg, 'dot');
+          W.Audio.dot();
+        }
         d.rounds--;
         if (d.rounds <= 0) unit.dots = unit.dots.filter((x) => x !== d);
       }
@@ -892,6 +996,8 @@
           }
         }
       }
+      // 新回合开始:减益/DOT 类技能冷却好了就自动补发(免费动作)
+      this._autoCastAll();
     },
 
     async _enemyTurn() {
@@ -1153,26 +1259,41 @@
         }
         // 物品/装备掉落:每个阵亡敌人独立掷取;装备掉率大幅上调(×DROP_EQUIP_BOOST)
         let bagFullLogged = false;
-        for (const [dropId, chance] of (e.drops || [])) {
+        let epicDropped = false;
+        // force=true 为保底掉落:跳过几率判定与背包上限(chance>=1 的「必定掉落」同规则)
+        const grantDrop = (dropId, chance, force) => {
           const it = D.ITEMS[dropId];
-          if (!it) continue;
+          if (!it) return;
           const isGear = !!it.slot && it.slot !== 'consumable' && it.slot !== 'material';
           const effChance = isGear ? Math.min(0.95, chance * C.DROP_EQUIP_BOOST) : chance;
-          if (!RNG.chance(effChance)) continue;
+          if (!force && !RNG.chance(effChance)) return;
           // 必定掉落(chance>=1,如 Boss 奥术水晶)不受背包上限影响;其余掉落背包满则跳过本件
-          const guaranteed = chance >= 1;
+          const guaranteed = force || chance >= 1;
           if (!guaranteed && it.slot !== 'consumable' && W.Char.Inventory.list(char).length >= W.Char.bagSize(char)) {
             if (!bagFullLogged) { ui.log('info', '🎒 背包已满，部分掉落未能拾取'); bagFullLogged = true; }
-            continue;
+            return;
           }
           // 小概率掉落极品装备(属性 +50%);橙色传说装备极品率更高
           const perfChance = it.quality === 'legendary' ? C.LEGENDARY_PERFECT_CHANCE : C.PERFECT_CHANCE;
           const perf = isGear && RNG.chance(perfChance);
           W.Char.Inventory.add(char, dropId, 1, { perf });
           drops.push(dropId);
+          if (EQ_QUALITIES.includes(it.quality)) epicDropped = true;
           ui.log('gold', perf
             ? `✨ 掉落了 <b>极品</b> ${it.icon} ${U.esc(it.name)}！属性 +${Math.round((C.PERFECT_STAT_MULT - 1) * 100)}%`
             : `拾取了 <b>${it.icon} ${U.esc(it.name)}</b>`);
+        };
+        for (const [dropId, chance] of (e.drops || [])) grantDrop(dropId, chance, false);
+        // 30 级以上副本最终首领:保底一件紫色史诗战利品(兼现说明里的「必定掉落紫色史诗装备」)
+        const dgCtx = (b.context === 'dungeon' && char.dungeon) ? D.DUNGEONS[char.dungeon.id] : null;
+        if (dgCtx && dgCtx.boss === e.mid && (dgCtx.minLevel || 0) >= 30 && !epicDropped) {
+          const epicPool = (e.drops || []).map((d) => D.ITEMS[d[0]])
+            .filter((it) => it && EQ_QUALITIES.includes(it.quality));
+          if (epicPool.length) {
+            const pick = RNG.pick(epicPool);
+            ui.log('boss', `👑 ${U.esc(e.name)} 掉落了一件保底史诗战利品`);
+            grantDrop(pick.id, 1, true);
+          }
         }
       }
       // 稀有精英击杀:记录刷新计时(仅限本区域出没的精英,Boss/副本精英不在此列)

@@ -4,6 +4,42 @@
   const W = window.WOW;
   const D = W.Data;
   const U = W.Utils;
+  const CC_CN = { stun: '眩晕', sheep: '变形', fear: '恐惧', root: '定身' };
+
+  /* ---------- GM 模式(调试,配置挂在角色上随存档持久化) ----------
+     enabled 总开关;god 无敌(玩家免伤);oneShot 一击必杀;infinite 无限资源(技能无消耗无冷却) */
+  const GM_DEFAULT = { enabled: false, god: false, oneShot: false, infinite: false };
+  const GM_LOG_MAX = 200;
+  const GM = {
+    // 取角色 GM 配置(缺失时补默认值,老存档兼容)
+    of(char) {
+      if (!char) return null;
+      if (!char.gm || typeof char.gm !== 'object') char.gm = Object.assign({}, GM_DEFAULT);
+      for (const k in GM_DEFAULT) if (typeof char.gm[k] !== 'boolean') char.gm[k] = GM_DEFAULT[k];
+      return char.gm;
+    },
+    // 总开关是否开启
+    on(char) { return !!(char && char.gm && char.gm.enabled); },
+    // 某个调试项是否生效(需总开关开启)
+    has(char, key) { return !!(char && char.gm && char.gm.enabled && char.gm[key]); },
+    // 调试日志:记录每一次 GM 操作(随存档保存,便于事后核对调试过程)
+    log(char, kind, text) {
+      if (!char) return null;
+      if (!Array.isArray(char.gmLog)) char.gmLog = [];
+      const entry = { t: Date.now(), kind: kind || 'op', text: String(text) };
+      char.gmLog.push(entry);
+      // 只保留最近 GM_LOG_MAX 条,避免存档被日志涨爆
+      if (char.gmLog.length > GM_LOG_MAX) char.gmLog.splice(0, char.gmLog.length - GM_LOG_MAX);
+      return entry;
+    },
+    // 读取日志(默认倒序:最新在前)
+    logs(char, newestFirst) {
+      const list = (char && Array.isArray(char.gmLog)) ? char.gmLog.slice() : [];
+      return newestFirst === false ? list : list.reverse();
+    },
+    clearLog(char) { if (char) char.gmLog = []; },
+    LOG_MAX: GM_LOG_MAX,
+  };
 
   /* ---------- 被动技能(常驻) ---------- */
   // 已习得被动技能的效果汇总:属性类在 computed() 生效,战斗类(onHit/thorns)由战斗单位携带
@@ -12,7 +48,11 @@
     for (const sid of (char.learnedSkills || [])) {
       const s = D.SKILLS[sid];
       if (s && s.passive && s.mod) {
-        for (const k in s.mod) mod[k] = (mod[k] || 0) + s.mod[k];
+        for (const k in s.mod) {
+          // startCc 为对象(战斗开始自动控场),按数组收集,不做数值累加
+          if (k === 'startCc') { (mod.startCc = mod.startCc || []).push(s.mod[k]); continue; }
+          mod[k] = (mod[k] || 0) + s.mod[k];
+        }
       }
     }
     // 天赋强化被动:强化类天赋 buffPct(强化切割/强化战斗怒吼/强化嗜血/强化形态)对已转被动的 buff 技能同样生效
@@ -104,8 +144,16 @@
       battle.push(`自动标记首个敌人，其受伤 +${Math.round(pct * 100)}%`);
     }
     if (mod.petAtkPct) battle.push(`宠物攻击力 +${Math.round(mod.petAtkPct * 100)}%`);
+    if (mod.startCc) {
+      const ccs = Array.isArray(mod.startCc) ? mod.startCc : [mod.startCc];
+      battle.push(`战斗开始时自动控制首个敌人（${ccs.map((c) => CC_CN[c.type] || c.type).join('、')}，共 ${ccs.reduce((s, c) => s + c.rounds, 0)} 回合）`);
+    }
     if (mod.onHit) battle.push(`每次攻击附加 ${mod.onHit} 点神圣伤害`);
     if (mod.thorns) battle.push(`受到近战攻击反弹 ${mod.thorns} 点自然伤害`);
+    if (mod.dmgTaken) battle.push(`受到的伤害降低 ${Math.round(mod.dmgTaken * 100)}%`);
+    if (mod.healPct) battle.push(`治疗效果提高 ${Math.round(mod.healPct * 100)}%`);
+    if (mod.ccReduce) battle.push(`受到控制效果的回合数减少 ${Math.round(mod.ccReduce * 100)}%`);
+    if (mod.lifesteal) battle.push(`每次攻击回复 ${Math.round(mod.lifesteal * 100)}% 造成伤害的生命`);
     return { delta, battle };
   }
 
@@ -249,6 +297,8 @@
         if (t.mod.beastDmg) beastDmg += t.mod.beastDmg;
       }
     }
+    // 被动技能:种族修正类(免控)
+    ccReduce += pm.ccReduce || 0;
     // 坐骑收藏:每匹坐骑 +2% 金币获取
     goldMult += 0.02 * ((char.mounts || []).length);
     hpMax = Math.floor(hpMax * hpMult * (1 + tm.hpPct)) + ubonus.hp;
@@ -258,10 +308,10 @@
       hpMax, manaMax, armor, ap, spellPower, atkMin, atkMax,
       hit: U.clamp01(hit), dodge: U.clamp01(dodge), crit: U.clamp01(crit),
       resists, goldMult, ccReduce, regenPct, petDmgMult, beastDmg,
-      weaponLifesteal: ubonus.lifesteal,
+      weaponLifesteal: ubonus.lifesteal + (pm.lifesteal || 0),
       critMult: tm.critMult,
-      healPct: sm.healPct || 0,
-      dmgTaken: sm.dmgTaken || 0,
+      healPct: (sm.healPct || 0) + (pm.healPct || 0),
+      dmgTaken: (sm.dmgTaken || 0) + (pm.dmgTaken || 0),
       manaRegen: manaMax ? Math.floor((manaMax * W.Config.MANA_REGEN_PCT + spi * 0.4) * (1 + tm.manaRegenPct + (pm.manaRegenPct || 0))) : 0,
       hpRegen: Math.floor(stam * 0.15 + spi * 0.08),
       race, cls, weapon, talents: tm,
@@ -287,7 +337,7 @@
       hp: 0, hpMax: 0, mana: 0, manaMax: 0, rage: 0, energy: W.Config.ENERGY_MAX, combo: 0,
       gold: 300, // 3 银
       inventory: [{ id: 'c_bread', count: 5 }],
-      equipment: { weapon: 'w_wooden_staff', offhand: null, head: null, chest: 'a_cloth', gloves: null, legs: null, boots: null, cloak: null, neck: null, ring1: null, ring2: null },
+      equipment: { weapon: 'w_wooden_staff', offhand: null, head: null, chest: 'a_cloth', gloves: null, legs: null, boots: null, cloak: null, neck: null, ring1: null, ring2: null, trinket1: null, trinket2: null },
       learnedSkills: skills,
       quests: {},          // { questId: {progress, done} }
       completedQuests: [],
@@ -432,41 +482,67 @@
         else Inventory.add(char, r, 1);
       }
     },
-    // 戒指可装备槽:空槽优先(ring1 → ring2);两个都占时替换属性较弱的一枚(粗略评分:基础属性+极品加成+升级/附魔值)
-    ringTarget(char) {
-      if (!char.equipment.ring1) return 'ring1';
-      if (!char.equipment.ring2) return 'ring2';
-      const score = (slot) => {
-        const id = char.equipment[slot];
-        const it = id ? D.ITEMS[id] : null;
-        let s = 0;
-        if (it && it.stats) {
-          const m = char.eqPerf && char.eqPerf[slot] ? W.Config.PERFECT_STAT_MULT : 1;
-          for (const k in it.stats) s += Math.round(it.stats[k] * m);
-        }
-        const ub = W.Char.upgradeBonus(it, W.Char.Forge.get(char, id));
-        for (const k in ub) s += ub[k] || 0;
-        return s;
-      };
-      return score('ring2') < score('ring1') ? 'ring2' : 'ring1';
+    // 单槽装备评分(粗略:基础属性 + 极品加成 + 强化/附魔值),双满时用于挑出较弱的一枚
+    _slotScore(char, slot) {
+      const id = char.equipment[slot];
+      const it = id ? D.ITEMS[id] : null;
+      let s = 0;
+      if (it && it.stats) {
+        const m = char.eqPerf && char.eqPerf[slot] ? W.Config.PERFECT_STAT_MULT : 1;
+        for (const k in it.stats) s += Math.round(it.stats[k] * m);
+      }
+      const ub = W.Char.upgradeBonus(it, W.Char.Forge.get(char, id));
+      for (const k in ub) s += ub[k] || 0;
+      return s;
     },
-    // 饰品可装备槽:空槽优先(trinket1 → trinket2);双满时替换评分较低的一枚(与戒指同规则)
-    trinketTarget(char) {
-      if (!char.equipment.trinket1) return 'trinket1';
-      if (!char.equipment.trinket2) return 'trinket2';
-      const score = (slot) => {
-        const id = char.equipment[slot];
-        const it = id ? D.ITEMS[id] : null;
-        let s = 0;
-        if (it && it.stats) {
-          const m = char.eqPerf && char.eqPerf[slot] ? W.Config.PERFECT_STAT_MULT : 1;
-          for (const k in it.stats) s += Math.round(it.stats[k] * m);
+    // 双槽(戒指/饰品)目标槽选择 —— 同名装备不能同时占据两个槽位:
+    //   · 同名装备已在某一槽位 → 只能「就地升级/换装」该槽位(如普通↔极品),绝不去占另一格
+    //   · 两槽无同名 → 空槽优先(槽A → 槽B);双满时替换评分较低的一枚
+    _dualTarget(char, slotA, slotB, itemId) {
+      const eq = char.equipment;
+      if (itemId) {
+        if (eq[slotA] === itemId) return slotA;
+        if (eq[slotB] === itemId) return slotB;
+      }
+      if (!eq[slotA]) return slotA;
+      if (!eq[slotB]) return slotB;
+      return this._slotScore(char, slotB) < this._slotScore(char, slotA) ? slotB : slotA;
+    },
+    // 戒指可装备槽(传入 itemId 时保证不与另一格同名)
+    ringTarget(char, itemId) { return this._dualTarget(char, 'ring1', 'ring2', itemId); },
+    // 饰品可装备槽(与戒指同规则)
+    trinketTarget(char, itemId) { return this._dualTarget(char, 'trinket1', 'trinket2', itemId); },
+    // 双槽互斥校验:返回被拒绝的原因(同名装备已戴在另一格),无冲突时返回空串
+    dualConflict(char, itemId, slot) {
+      const sibling = { ring1: 'ring2', ring2: 'ring1', trinket1: 'trinket2', trinket2: 'trinket1' }[slot];
+      if (!sibling || !itemId) return '';
+      if (char.equipment[sibling] !== itemId) return '';
+      const name = (D.ITEMS[itemId] || {}).name || itemId;
+      return `同一件${slot.startsWith('ring') ? '戒指' : '饰品'}「${name}」不能同时装备到两个槽位`;
+    },
+    // 装备前校验:返回不能装备的原因(空串表示可以装备),供 UI 给出明确反馈
+    equipIssue(char, itemId, perf) {
+      const item = D.ITEMS[itemId];
+      if (!item || !item.slot || item.slot === 'consumable' || item.slot === 'material' || item.slot === 'bag') return '该物品不可装备';
+      // 双槽互斥先判:同名装备已戴在某一格时,同状态→明确拒绝;极品/普通不同状态→允许就地换装该格
+      if (item.slot === 'ring' || item.slot === 'trinket') {
+        const pair = item.slot === 'ring' ? ['ring1', 'ring2'] : ['trinket1', 'trinket2'];
+        const held = pair.find((s) => char.equipment[s] === itemId);
+        if (held) {
+          const heldPerf = !!(char.eqPerf && char.eqPerf[held]);
+          if (heldPerf === !!perf) {
+            return `同一件${item.slot === 'ring' ? '戒指' : '饰品'}「${item.name}」不能同时装备到两个槽位（可换一枚不同的同名部位装备）`;
+          }
+          return '';
         }
-        const ub = W.Char.upgradeBonus(it, W.Char.Forge.get(char, id));
-        for (const k in ub) s += ub[k] || 0;
-        return s;
-      };
-      return score('trinket2') < score('trinket1') ? 'trinket2' : 'trinket1';
+      }
+      const slot = item.slot === 'ring' ? this.ringTarget(char, itemId) : (item.slot === 'trinket' ? this.trinketTarget(char, itemId) : item.slot);
+      const conflict = this.dualConflict(char, itemId, slot);
+      if (conflict) return conflict;
+      if (char.equipment[slot] === itemId && !!(char.eqPerf && char.eqPerf[slot]) === !!perf) {
+        return `已经装备着同款${item.slot === 'ring' ? '戒指' : item.slot === 'trinket' ? '饰品' : '装备'}了`;
+      }
+      return '';
     },
     // 装备:itemId 从背包移除(已装备不占背包格),perf 标记极品;换装时旧装备(含其极品状态)回到背包
     equip(char, itemId, perf) {
@@ -484,7 +560,9 @@
       } else if (char.equipment[item.slot] === itemId && !!char.eqPerf[item.slot] === !!perf) {
         return false;
       }
-      const slot = item.slot === 'ring' ? this.ringTarget(char) : (item.slot === 'trinket' ? this.trinketTarget(char) : item.slot);
+      const slot = item.slot === 'ring' ? this.ringTarget(char, itemId) : (item.slot === 'trinket' ? this.trinketTarget(char, itemId) : item.slot);
+      // 双槽互斥兜底:同名装备已戴在另一格时不再写入(正常由 _dualTarget 导向同槽升级)
+      if (this.dualConflict(char, itemId, slot)) return false;
       const old = char.equipment[slot];
       const oldPerf = !!(char.eqPerf && char.eqPerf[slot]);
       char.equipment[slot] = itemId;
@@ -518,11 +596,14 @@
       if (item.slot === 'consumable' && item.consumable) {
         const c = computed(char);
         let used = false;
-        if (item.consumable.heal && char.hp < c.hpMax) {
-          char.hp = Math.min(c.hpMax, char.hp + item.consumable.heal); used = true;
+        // 回复量按当前上限实时换算:百分比为主(healPct / manaPct),兼容旧版固定值
+        const healAmt = U.consAmount(item.consumable, 'heal', c.hpMax);
+        const manaAmt = U.consAmount(item.consumable, 'mana', c.manaMax);
+        if (healAmt && char.hp < c.hpMax) {
+          char.hp = Math.min(c.hpMax, char.hp + healAmt); used = true;
         }
-        if (item.consumable.mana && char.mana < c.manaMax && c.manaMax > 0) {
-          char.mana = Math.min(c.manaMax, char.mana + item.consumable.mana); used = true;
+        if (manaAmt && char.mana < c.manaMax && c.manaMax > 0) {
+          char.mana = Math.min(c.manaMax, char.mana + manaAmt); used = true;
         }
         if (used) { Inventory.remove(char, itemId, 1); return true; }
         return false; // 无需使用
@@ -816,6 +897,20 @@
     if (!a.targets) a.targets = {};
     return a;
   }
+  // 是否持有/装备任意一件橙色传说装备(成就判定用)
+  function ownsLegendary(char) {
+    const slots = ['weapon', 'offhand', 'head', 'chest', 'gloves', 'legs', 'boots', 'cloak', 'neck', 'ring1', 'ring2', 'trinket1', 'trinket2'];
+    for (const s of slots) {
+      const it = char.equipment && char.equipment[s] ? D.ITEMS[char.equipment[s]] : null;
+      if (it && it.quality === 'legendary') return true;
+    }
+    for (const st of Inventory.list(char)) {
+      const it = D.ITEMS[st.id];
+      if (it && it.quality === 'legendary') return true;
+    }
+    return false;
+  }
+
   const Achievements = {
     state(char) { return _achState(char); },
     unlocked(char) { return Object.keys(_achState(char).unlocked).length; },
@@ -824,8 +919,13 @@
       const st = _achState(char);
       const t = st.targets[ach.id] || {};
       if (ach.target) return Object.keys(t).length;
-      if (ach.id === 'ach_level_60') return Math.min(char.level, ach.count);
-      if (ach.id === 'ach_set_4') {
+      // 等级型成就(ach_level_*):进度=当前等级,上限为该成就要求的等级
+      if (ach.id.indexOf('ach_level_') === 0) return Math.min(char.level, ach.count);
+      if (ach.cond === 'legendset') {
+        const sc = setCounts(char);
+        return Math.min(Math.max(sc.s_titan || 0, sc.s_oldgod || 0), ach.count);
+      }
+      if (ach.type === 'set' || ach.id === 'ach_set_4') {
         const sc = setCounts(char);
         let mx = 0; for (const k in sc) if (sc[k] > mx) mx = sc[k];
         return Math.min(mx, ach.count);
@@ -890,12 +990,21 @@
       for (const aid in D.ACHIEVEMENTS) {
         const ach = D.ACHIEVEMENTS[aid];
         if (!ach || st.unlocked[ach.id]) continue;
-        const ok = (ach.id === 'ach_level_60' && char.level >= ach.count)
-          || (ach.id === 'ach_set_4' && (function () {
-            const sc = setCounts(char); let mx = 0;
-            for (const k in sc) if (sc[k] > mx) mx = sc[k];
-            return mx >= ach.count;
-          })());
+        let ok = false;
+        if (ach.id.indexOf('ach_level_') === 0) ok = char.level >= ach.count;
+        else if (ach.type === 'set' || ach.id === 'ach_set_4') {
+          const sc = setCounts(char); let mx = 0;
+          for (const k in sc) if (sc[k] > mx) mx = sc[k];
+          ok = mx >= ach.count;
+        } else if (ach.cond === 'legendset') {
+          const sc = setCounts(char);
+          ok = (sc.s_titan || 0) >= ach.count || (sc.s_oldgod || 0) >= ach.count;
+        } else if (ach.cond === 'legend') {
+          ok = ownsLegendary(char);
+        } else if (ach.cond === 'codex') {
+          const reg = Codex.registry();
+          ok = reg.length > 0 && reg.every((r) => (char.codex || {})[r.mid]);
+        }
         if (ok) {
           const g = this._grant(char, ach);
           if (g) out.push(g);
@@ -1239,6 +1348,8 @@
     char.zone = char.zone; // 原地
   }    W.Char = {
     computed, passiveMods, create, addExp, expNeeded, regen, rest,
+    // GM 调试模式:配置读写与生效判定
+    GM,
     Inventory, Equipment, QuestLog, bagSize, expandBag,
     // 装备套装:件数统计 / 已激活加成 / 战斗修正合计
     setCounts, activeSetBonuses, setMods,

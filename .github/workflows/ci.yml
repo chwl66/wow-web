@@ -43,7 +43,8 @@ jobs:
             exit 1
           fi
 
-      - name: Check html assets & script order
+      # 含数据交叉引用审计:拦下「数据定义了但玩家拿不到」的死内容(无掉落源的套装散件等)
+      - name: Check html assets, script order & data integrity
         run: npm run check
 
       - name: Test

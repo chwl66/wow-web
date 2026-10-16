@@ -444,6 +444,10 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .cx-row .cx-name { font-weight: bold; }
 .cx-row .cx-desc { font-size: 12px; color: #9a8fae; }
 .cx-row .cx-note { font-size: 11px; color: #9a8fae; flex-shrink: 0; }
+.cx-row .cx-drops { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 4px; }
+.cx-row .cx-drops-label { font-size: 11px; color: #9a8fae; flex-shrink: 0; }
+.cx-row .cx-drop { font-size: 11px; padding: 1px 6px; border: 1px solid rgba(160,140,200,0.35); border-radius: 999px; background: rgba(120,130,150,0.10); white-space: nowrap; }
+.cx-row .cx-drop.owned { border-color: rgba(80,200,120,0.55); background: rgba(80,200,120,0.12); }
 .cx-stats { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; flex-shrink: 0; }
 .cx-stat { font-size: 11px; color: #b9c2d8; }
 .cx-stat b { color: var(--gold); }
@@ -581,9 +585,69 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .stat-foot { color: var(--text-dim); font-size: 11px; margin-top: 8px; }
 
 .world-footer {
-  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  display: flex; flex-direction: column; gap: 8px;
   margin-top: 14px; padding: 10px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+  /* 底部功能菜单常驻可视:不再只按宽度(≤640px)触发
+   * ——手机横屏(844×390)、平板横屏等「矮屏」下原规则不生效,菜单被推到屏外需滚到底才能点。
+   * 内容不足一屏时 sticky 不产生位移,桌面观感不变。 */
+  position: sticky;
+  bottom: max(8px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  z-index: 20;
+}
+/* 一级菜单 */
+.wf-main { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+/* 二级菜单:默认收起,点「更多」展开 */
+.wf-sub {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  padding-top: 8px; border-top: 1px dashed var(--border);
+  animation: wfSubIn 0.18s ease;
+}
+.wf-sub[hidden] { display: none; }
+@keyframes wfSubIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.wf-more.active {
+  border-color: var(--gold); color: var(--gold-bright);
+  background: rgba(240,199,94,0.14);
+}
+/* GM 调试入口 */
+.btn.gm-btn { border-color: rgba(150,120,255,0.6); color: #c3b0ff; }
+.btn.gm-btn:hover:not(:disabled) { border-color: #b39cff; color: #ded3ff; box-shadow: 0 0 10px rgba(140,110,255,0.35); }
+.wh-gm {
+  display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: normal; vertical-align: middle;
+  background: rgba(140,110,255,0.18); border: 1px solid rgba(150,120,255,0.55); color: #c3b0ff;
+}
+/* GM 面板 */
+.gm-banner {
+  margin-bottom: 12px; padding: 9px 12px; border-radius: 6px; font-size: 13px;
+  background: rgba(140,110,255,0.12); border: 1px solid rgba(150,120,255,0.45); color: #c3b0ff;
+}
+.gm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gm-travel { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gm-stats { font-size: 13px; color: var(--text-dim); line-height: 1.8; }
+/* GM 调试日志 */
+.gm-log {
+  max-height: 190px; overflow-y: auto; overscroll-behavior: contain;
+  border: 1px solid var(--border); border-radius: 6px; background: rgba(0,0,0,0.25);
+}
+.gm-log-full { max-height: 52vh; }
+.gm-log-row {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 6px 10px; font-size: 12.5px; line-height: 1.6;
+  border-bottom: 1px dashed rgba(255,255,255,0.07);
+}
+.gm-log-row:last-child { border-bottom: none; }
+.gm-log-time { color: var(--text-dim); font-family: monospace; white-space: nowrap; }
+.gm-log-kind {
+  flex: 0 0 auto; padding: 0 6px; border-radius: 8px; font-size: 11px;
+  background: rgba(140,110,255,0.18); border: 1px solid rgba(150,120,255,0.45); color: #c3b0ff;
+}
+.gm-log-text { color: var(--text); word-break: break-word; }
+.gm-log-empty, .gm-log-more { padding: 10px; font-size: 12.5px; color: var(--text-dim); }
+.gm-log-more { text-align: center; border-top: 1px dashed rgba(255,255,255,0.07); }
+.gm-travel select {
+  flex: 1 1 180px; min-width: 140px; padding: 8px 10px;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
 }
 
 /* ---------------- 战斗界面 ---------------- */
@@ -645,7 +709,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .buff-chip.shield { background: rgba(80,150,255,0.2); border-color: rgba(80,150,255,0.5); }
 
 /* 被动技能常驻标识(水印式图标行,仅玩家卡牌) */
-.passive-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; min-height: 15px; }
+.passive-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; padding-bottom: 7px; min-height: 15px; }
 .passive-chip {
   position: relative; width: 22px; height: 22px; font-size: 13px; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
@@ -664,9 +728,53 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   border: 1px solid rgba(255,215,0,0.55);
   text-shadow: 0 0 4px rgba(255,215,0,0.7);
 }
+/* 专属效果角标:减伤/免控/吸血/控场/起始护盾/自动标记,按类别配色 */
+.passive-chip .pp-badge {
+  position: absolute; left: -5px; bottom: -8px; z-index: 2;
+  display: flex; align-items: center; gap: 1px;
+  font-size: 7px; line-height: 1; font-weight: 400; font-style: normal; letter-spacing: 0.3px;
+  padding: 1px 3px; border-radius: 3px; white-space: nowrap;
+  background: rgba(14,18,30,0.94); border: 1px solid currentColor;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.55);
+  pointer-events: none;
+}
+/* 自动释放类技能标识行:与被动常驻行同排布,靠青色虚线区分 */
+.auto-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; padding-bottom: 7px; min-height: 15px; }
+@media (max-width: 640px) { .auto-bar { margin-top: 3px; } }
+.passive-chip.auto-chip {
+  background: rgba(90,224,255,0.07); border-color: rgba(90,224,255,0.45); color: rgba(190,240,255,0.85);
+}
+.passive-chip.auto-chip:hover { background: rgba(90,224,255,0.16); border-color: rgba(90,224,255,0.8); }
+.passive-chip .pp-mark.auto {
+  background: rgba(90,224,255,0.2); color: #7fe8ff; border-color: rgba(90,224,255,0.6);
+  text-shadow: 0 0 4px rgba(90,224,255,0.7); font-size: 7px;
+}
+.pp-badge.cd-badge { left: auto; right: -5px; color: #ffd166; }
+/* 自动释放技能效果角标:按元素/减益种类配色 */
+.pp-badge-bleed { color: #ff8a8a; }
+.pp-badge-poison { color: #9ce36f; }
+.pp-badge-curse { color: #c39bff; }
+.pp-badge-fire { color: #ff9f43; }
+.pp-badge-frost { color: #7fd8ff; }
+.pp-badge-holy { color: #ffe08a; }
+.pp-badge-arcane { color: #b9a3ff; }
+.pp-badge-heal { color: #ff9ec4; }
+.pp-badge-armor { color: #d8c08a; }
+.pp-badge-dot { color: #b0b7c3; }
+.pp-badge.on-badge { left: auto; right: -5px; color: #7dffb0; }
+/* 技能书:自动释放技能标记 */
+.sk-cost-tag.auto-tag { color: #7fe8ff; border-color: rgba(90,224,255,0.5); background: rgba(90,224,255,0.1); }
+.skill-row.auto-skill .sk-big-icon { filter: drop-shadow(0 0 6px rgba(90,224,255,0.45)); }
+.pp-badge-dmg { color: #7fc7ff; }
+.pp-badge-cc { color: #c9a2ff; }
+.pp-badge-leech { color: #ff7a8a; }
+.pp-badge-control { color: #ffd166; }
+.pp-badge-shield { color: #8fe3ff; }
+.pp-badge-mark { color: #ff9f6b; }
 @media (max-width: 640px) {
   .passive-chip { width: 18px; height: 18px; font-size: 11px; }
   .passive-chip .pp-mark { font-size: 7px; padding: 0 1px; }
+  .passive-chip .pp-badge { font-size: 6px; padding: 1px 2px; left: -4px; bottom: -7px; }
 }
 
 .combo { color: #ffe14d; font-size: 13px; letter-spacing: 2px; margin-top: 4px; text-shadow: 0 0 6px rgba(255,225,77,0.6); }
@@ -893,6 +1001,30 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .item-price { font-size: 12px; white-space: nowrap; color: var(--gold); }
 .item-row .btn { margin-left: 4px; }
 
+/* 等级段分区标题(商店购买/出售区 + 背包共用) */
+.lv-band-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: 1px; color: var(--gold-dim);
+  margin: 12px 0 2px; padding-bottom: 3px;
+  border-bottom: 1px solid rgba(240,199,94,0.16);
+}
+.lv-band-title:first-child { margin-top: 4px; }
+.lv-band-title.cur { color: var(--gold); border-bottom-color: var(--border-gold); }
+.lv-band-title .band-count { font-size: 11px; letter-spacing: 0; color: var(--text-dim); }
+.lv-band-title .tag { font-size: 11px; }
+.tag.lv-tag { color: var(--text-dim); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); letter-spacing: 0; }
+
+/* 背包筛选芯片(只看当前等级段 / 只看可装备,可叠加) */
+.bag-filter {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  margin: 2px 0 8px; padding: 6px 8px;
+  border: 1px dashed rgba(240,199,94,0.18); border-radius: 8px;
+}
+.bag-filter .bf-label { font-size: 12px; color: var(--gold); margin-right: 2px; }
+.bag-filter .btn.tiny.chip { white-space: nowrap; }
+.bag-filter .btn.tiny.chip.active { border-color: var(--gold); color: var(--gold-bright); background: rgba(240,199,94,0.14); }
+.bag-filter .bf-note { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+
 /* 旅行 */
 .travel-list { display: flex; flex-direction: column; gap: 6px; }
 .travel-row {
@@ -1105,6 +1237,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 .save-row.cur { border-color: var(--border-gold); background: rgba(240,199,94,0.06); }
 .save-row.empty { opacity: 0.6; justify-content: space-between; }
+/* 低等级存档要覆盖高等级存档:整行转警示边、行内给出原因(覆盖按钮已转危险态并二次确认) */
+.save-row.downgrade { border-color: rgba(255,110,94,0.45); background: rgba(255,90,80,0.05); }
+.save-warn { font-size: 11px; color: #ff8a80; margin-top: 3px; }
 .save-info { flex: 1; }  .save-name { font-weight: bold; color: #eee; }
   .save-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .save-meta .save-time { color: var(--text-dim); margin-left: 4px; }
@@ -1468,11 +1603,12 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
   .dm-lvl { margin-left: 0; }
   .dm-head { flex-wrap: wrap; }
   .dm-row { flex-wrap: wrap; }
-  .world-footer {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    position: sticky; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 20;
-  }
+  /* 底部导航的 sticky 已上提到基础样式(.world-footer),此处只管网格排布 */
+  .wf-main, .wf-sub { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .wf-sub[hidden] { display: none; }
   .world-footer .btn { padding: 10px 4px; font-size: 13px; min-height: 42px; }
+  .gm-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .gm-actions .btn { min-height: 42px; }
 
   /* 战斗界面 */
   .battle-header { flex-wrap: wrap; padding: 8px 10px; }
@@ -1527,7 +1663,8 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
   .fr-actions { width: 100%; justify-content: flex-end; }
   .fr-actions .btn { min-height: 40px; }
   .forge-row { padding: 10px 4px; }
-  .bag-batch-line, .batch-sell-row { flex-wrap: wrap; }
+  .bag-batch-line, .batch-sell-row, .bag-filter { flex-wrap: wrap; }
+  .bag-filter .bf-note { margin-left: 0; width: 100%; }
   .btn.tiny.chip { min-height: 30px; }
   .save-actions { flex-wrap: wrap; }
   .save-actions .btn { min-height: 40px; }
@@ -1544,8 +1681,9 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
   .wow-logo { font-size: 52px; letter-spacing: -3px; }
   .race-pick, .class-pick { grid-template-columns: 1fr 1fr; }
   .zone-actions { grid-template-columns: repeat(2, 1fr); }
-  .world-footer { grid-template-columns: repeat(4, 1fr); }
+  .wf-main, .wf-sub { grid-template-columns: repeat(3, 1fr); }
   .world-footer .btn { font-size: 12px; }
+  .gm-actions { grid-template-columns: 1fr; }
   .talent-node { width: 100%; }
   .status-grid { gap: 10px; }
   .wh-sub { font-size: 11px; }
@@ -1613,3 +1751,42 @@ button, .travel-row, .faction-card, .race-card, .class-card, .talent-node {
 .upd-log { border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.04); padding: 10px 12px; margin-bottom: 6px; max-height: 40vh; overflow-y: auto; }
 .upd-log-title { font-size: 12px; color: var(--gold); opacity: 0.85; margin-bottom: 6px; }
 .upd-log pre { margin: 0; font-family: inherit; font-size: 12px; color: var(--text); line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+
+/* ============================================================
+   触屏信息可达性 / 手机侧栏折叠
+   ============================================================ */
+/* 长按详情提示:仅触屏显示(桌面用悬停,无需占位) */
+.touch-hint {
+  display: none;
+  text-align: center; color: var(--text-dim);
+  font-size: 11px; letter-spacing: 0.5px; padding: 2px 0 0;
+  user-select: none; -webkit-user-select: none;
+}
+@media (hover: none), (pointer: coarse) { .touch-hint { display: block; } }
+
+/* 长按详情弹窗(技能说明 / 单位状态) */
+.info-text { font-size: 13.5px; line-height: 1.7; color: var(--text); }
+.info-text b { color: var(--gold-bright); }
+.info-sub { margin-top: 8px; font-size: 12px; color: #ffb0a8; }
+.info-sec { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px; }
+.info-sec-title { font-size: 12px; color: var(--gold); opacity: 0.9; margin-bottom: 6px; letter-spacing: 1px; }
+.info-list { font-size: 12.5px; line-height: 1.85; color: var(--text); }
+.info-list b { color: var(--gold-bright); }
+.info-empty { font-size: 12px; color: var(--text-dim); }
+
+/* 手机侧栏折叠:一行摘要,点开才展开任务日志与状态摘要
+ * ——竖屏下侧栏整体落在首屏之外(实测 top 565 / docH 1003),折叠后世界界面一屏放下 */
+.side-compact { padding: 0; overflow: hidden; }
+.side-compact .side-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 44px; padding: 12px 14px;
+  border: none; background: none; font-family: inherit; font-size: 13.5px;
+  color: var(--gold); text-align: left; cursor: pointer; letter-spacing: 0.5px;
+}
+.side-compact .side-toggle:hover { color: var(--gold-bright); }
+.side-compact .side-toggle .side-arrow { color: var(--text-dim); font-size: 12px; }
+.side-compact .side-body { padding: 10px 14px 12px; border-top: 1px dashed var(--border); }
+.side-compact .side-body[hidden] { display: none; }
+.side-compact .panel-title.sub { margin: 4px 0 6px; font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+.side-compact .panel-title.sub + * { margin-top: 0; }
+.dm-touch-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; }

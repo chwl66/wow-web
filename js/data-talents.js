@@ -21,7 +21,7 @@
         { id: 'w_arms_charge', name: '强化冲锋', icon: '💨', tier: 1, max: 3, desc: '冲锋冷却缩短 {n} 回合', mods: [{ t: 'cdSkill', skill: 'charge', per: 1 }] },
         { id: 'w_arms_mortal', name: '强化致死打击', icon: '💥', tier: 2, max: 5, desc: '致死打击伤害提高 {n}%', mods: [{ t: 'skillDmg', skill: 'mortal_strike', per: 0.08 }] },
         { id: 'w_arms_recklessness', name: '鲁莽', icon: '🔥', tier: 2, max: 1, active: 'recklessness', desc: '鲁莽常驻：攻击+9%，暴击+5%' },
-        { id: 'w_arms_shout', name: '破胆怒吼', icon: '😱', tier: 2, max: 1, active: 'intimidating_shout', desc: '激活破胆怒吼：恐惧所有敌人 1 回合' },
+        { id: 'w_arms_shout', name: '破胆怒吼', icon: '😱', tier: 2, max: 1, active: 'intimidating_shout', desc: '破胆怒吼常驻：战斗开始时恐惧首个敌人 1 回合' },
       ],
     },
     {
@@ -61,7 +61,7 @@
         { id: 'p_holy_focus', name: '圣光灌注', icon: '🕊️', tier: 1, max: 5, desc: '圣光术治疗量提高 {n}%，所有治疗提高 {n2}%', mods: [{ t: 'skillHeal', skill: 'holy_light', per: 0.04 }, { t: 'healMult', per: 0.02 }] },
         { id: 'p_holy_mana', name: '启迪', icon: '💡', tier: 1, max: 5, desc: '法力恢复速度提高 {n}%', mods: [{ t: 'manaRegenPct', per: 0.06 }] },
         { id: 'p_holy_grace', name: '神恩', icon: '😇', tier: 2, max: 5, desc: '所有治疗提高 {n}%，法力恢复提高 {n2}%', mods: [{ t: 'healMult', per: 0.03 }, { t: 'manaRegenPct', per: 0.03 }] },
-        { id: 'p_holy_loh', name: '圣疗术', icon: '🖐️', tier: 2, max: 1, active: 'lay_on_hands', desc: '激活圣疗术：立即恢复 100% 生命' },
+        { id: 'p_holy_loh', name: '圣疗术', icon: '🖐️', tier: 2, max: 1, active: 'lay_on_hands', desc: '圣疗术常驻：治疗效果 +10%' },
         { id: 'p_holy_wrath', name: '神圣愤怒', icon: '💥', tier: 2, max: 1, active: 'holy_wrath', desc: '激活神圣愤怒：对所有敌人造成神圣伤害' },
       ],
     },
@@ -87,7 +87,7 @@
         { id: 'p_ret_seal', name: '强化正义圣印', icon: '🔥', tier: 1, max: 5, desc: '神圣系伤害提高 {n}%，十字军打击提高 {n2}%', mods: [{ t: 'dmgType', type: 'holy', per: 0.02 }, { t: 'skillDmg', skill: 'crusader_strike', per: 0.03 }] },
         { id: 'p_ret_verdict', name: '圣光裁决', icon: '⚔️', tier: 2, max: 5, desc: '审判伤害提高 {n}%，神圣系伤害提高 {n2}%', mods: [{ t: 'skillDmg', skill: 'judgement', per: 0.05 }, { t: 'dmgType', type: 'holy', per: 0.02 }] },
         { id: 'p_ret_wrath', name: '复仇之怒', icon: '😤', tier: 2, max: 1, active: 'avenging_wrath', desc: '复仇之怒常驻：攻击+8%，暴击+3%' },
-        { id: 'p_ret_repent', name: '忏悔', icon: '🙏', tier: 2, max: 1, active: 'repentance', desc: '激活忏悔：令目标变形 2 回合' },
+        { id: 'p_ret_repent', name: '忏悔', icon: '🙏', tier: 2, max: 1, active: 'repentance', desc: '忏悔常驻：战斗开始时令首个敌人变形 2 回合' },
       ],
     },
   ];
@@ -127,8 +127,8 @@
         { id: 'h_surv_instinct', name: '生存本能', icon: '🛟', tier: 1, max: 5, desc: '最大生命提高 {n}%，护甲提高 {n2}%', mods: [{ t: 'hpPct', per: 0.03 }, { t: 'armorPct', per: 0.02 }] },
         { id: 'h_surv_agile', name: '灵巧', icon: '🦶', tier: 1, max: 5, desc: '闪避几率提高 {n}%', mods: [{ t: 'stat', stat: 'dodge', per: 0.01 }] },
         { id: 'h_surv_stim', name: '狩猎刺激', icon: '🏹', tier: 2, max: 5, desc: '自然持续伤害提高 {n}%，多重射击提高 {n2}%', mods: [{ t: 'dotType', type: 'nature', per: 0.03 }, { t: 'skillDmg', skill: 'multishot', per: 0.03 }] },
-        { id: 'h_surv_trap', name: '冰冻陷阱', icon: '❄️', tier: 2, max: 1, active: 'freezing_trap', desc: '激活冰冻陷阱：定身目标 2 回合' },
-        { id: 'h_surv_wyvern', name: '翼龙钉刺', icon: '🐉', tier: 2, max: 1, active: 'wyvern_sting', desc: '激活翼龙钉刺：令目标沉睡 2 回合' },
+        { id: 'h_surv_trap', name: '冰冻陷阱', icon: '❄️', tier: 2, max: 1, active: 'freezing_trap', desc: '冰冻陷阱常驻：战斗开始时定身首个敌人 2 回合' },
+        { id: 'h_surv_wyvern', name: '翼龙钉刺', icon: '🐉', tier: 2, max: 1, active: 'wyvern_sting', desc: '翼龙钉刺常驻：战斗开始时令首个敌人沉睡 2 回合' },
       ],
     },
   ];
@@ -143,7 +143,7 @@
         { id: 'r_assass_backstab', name: '强化背刺', icon: '🔪', tier: 1, max: 5, desc: '背刺伤害提高 {n}%', mods: [{ t: 'skillDmg', skill: 'backstab', per: 0.07 }] },
         { id: 'r_assass_focus', name: '专注', icon: '🎯', tier: 1, max: 5, desc: '技能能量消耗降低 {n}%', mods: [{ t: 'cost', per: 0.05 }] },
         { id: 'r_assass_lethal', name: '致命刺击', icon: '💥', tier: 2, max: 5, desc: '暴击伤害加成提高 {n}%', mods: [{ t: 'critMult', per: 0.06 }] },
-        { id: 'r_assass_cb', name: '冷血', icon: '❄️', tier: 2, max: 1, active: 'cold_blood', desc: '激活冷血：下一次攻击必定暴击' },
+        { id: 'r_assass_cb', name: '冷血', icon: '❄️', tier: 2, max: 1, active: 'cold_blood', desc: '冷血常驻：暴击 +4%' },
         { id: 'r_assass_kidney', name: '肾击', icon: '👊', tier: 2, max: 1, active: 'kidney_shot', desc: '激活肾击：消耗连击点眩晕目标 1 回合' },
       ],
     },
@@ -156,8 +156,8 @@
         { id: 'r_combat_master', name: '武器大师', icon: '🗡️', tier: 1, max: 5, desc: '攻击强度提高 {n}%', mods: [{ t: 'apPct', per: 0.04 }] },
         { id: 'r_combat_prec', name: '精准', icon: '👁️', tier: 1, max: 5, desc: '命中几率提高 {n}%', mods: [{ t: 'stat', stat: 'hit', per: 0.01 }] },
         { id: 'r_combat_train', name: '武器训练', icon: '💪', tier: 2, max: 5, desc: '攻击强度提高 {n}%，命中提高 {n2}%', mods: [{ t: 'apPct', per: 0.02 }, { t: 'stat', stat: 'hit', per: 0.005 }] },
-        { id: 'r_combat_ar', name: '冲动', icon: '⚡', tier: 2, max: 1, active: 'adrenaline_rush', desc: '激活冲动：能量恢复+25/回合，持续 2 回合' },
-        { id: 'r_combat_sprint', name: '疾跑', icon: '💨', tier: 2, max: 1, active: 'sprint', desc: '激活疾跑：攻击+15%，闪避+15%，持续 2 回合' },
+        { id: 'r_combat_ar', name: '冲动', icon: '⚡', tier: 2, max: 1, active: 'adrenaline_rush', desc: '冲动常驻：攻击 +3%' },
+        { id: 'r_combat_sprint', name: '疾跑', icon: '💨', tier: 2, max: 1, active: 'sprint', desc: '疾跑常驻：攻击 +4%、闪避 +4%' },
       ],
     },
     {
@@ -166,10 +166,10 @@
       talents: [
         { id: 'r_sub_stealth', name: '强化潜行', icon: '👤', tier: 0, max: 2, desc: '潜行持续时间延长 {n} 回合', mods: [{ t: 'buffDur', skill: 'stealth', per: 1 }] },
         { id: 'r_sub_decep', name: '欺诈高手', icon: '🎭', tier: 0, max: 5, desc: '闪避几率提高 {n}%', mods: [{ t: 'stat', stat: 'dodge', per: 0.01 }] },
-        { id: 'r_sub_sap', name: '强化闷棍', icon: '🥁', tier: 1, max: 3, desc: '闷棍冷却缩短 {n} 回合', mods: [{ t: 'cdSkill', skill: 'sap', per: 1 }] },
+        { id: 'r_sub_sap', name: '强化闷棍', icon: '🥁', tier: 1, max: 3, desc: '闷棍化为本能，攻击强度提高 {n}%', mods: [{ t: 'apPct', per: 0.02 }] },
         { id: 'r_sub_camo', name: '伪装', icon: '🌫️', tier: 1, max: 5, desc: '命中提高 {n}%，闪避提高 {n2}%', mods: [{ t: 'stat', stat: 'hit', per: 0.01 }, { t: 'stat', stat: 'dodge', per: 0.005 }] },
         { id: 'r_sub_deadly', name: '致命', icon: '💀', tier: 2, max: 5, desc: '暴击伤害加成提高 {n}%，背刺提高 {n2}%', mods: [{ t: 'critMult', per: 0.04 }, { t: 'skillDmg', skill: 'backstab', per: 0.03 }] },
-        { id: 'r_sub_prep', name: '预备', icon: '🔄', tier: 2, max: 1, active: 'preparation', desc: '激活预备：立即重置所有技能冷却' },
+        { id: 'r_sub_prep', name: '预备', icon: '🔄', tier: 2, max: 1, active: 'preparation', desc: '预备常驻：攻击 +2%' },
       ],
     },
   ];
@@ -185,7 +185,7 @@
         { id: 'pr_disc_renew', name: '强化恢复', icon: '💚', tier: 1, max: 5, desc: '恢复的持续治疗效果提高 {n}%', mods: [{ t: 'hotPct', skill: 'renew', per: 0.06 }] },
         { id: 'pr_disc_spirit', name: '神圣之灵', icon: '🕊️', tier: 2, max: 5, desc: '法术强度提高 {n}%，法力恢复提高 {n2}%', mods: [{ t: 'spellPowerPct', per: 0.04 }, { t: 'manaRegenPct', per: 0.03 }] },
         { id: 'pr_disc_if', name: '心灵之火', icon: '🕯️', tier: 2, max: 1, active: 'inner_fire', desc: '心灵之火常驻：攻击+12%，护甲+20%' },
-        { id: 'pr_disc_scream', name: '心灵尖啸', icon: '📢', tier: 2, max: 1, active: 'psychic_scream', desc: '激活心灵尖啸：恐惧目标 1 回合' },
+        { id: 'pr_disc_scream', name: '心灵尖啸', icon: '📢', tier: 2, max: 1, active: 'psychic_scream', desc: '心灵尖啸常驻：战斗开始时恐惧首个敌人 1 回合' },
       ],
     },
     {
@@ -250,7 +250,7 @@
         { id: 's_resto_guard', name: '自然守护', icon: '🌿', tier: 1, max: 5, desc: '最大生命提高 {n}%，护甲提高 {n2}%', mods: [{ t: 'hpPct', per: 0.03 }, { t: 'armorPct', per: 0.02 }] },
         { id: 's_resto_water', name: '水之精通', icon: '💧', tier: 1, max: 5, desc: '治疗波治疗量提高 {n}%，所有治疗提高 {n2}%', mods: [{ t: 'skillHeal', skill: 'healing_wave', per: 0.04 }, { t: 'healMult', per: 0.02 }] },
         { id: 's_resto_force', name: '强化潮汐', icon: '🌊', tier: 2, max: 5, desc: '法力恢复提高 {n}%，所有治疗提高 {n2}%', mods: [{ t: 'manaRegenPct', per: 0.05 }, { t: 'healMult', per: 0.02 }] },
-        { id: 's_resto_tide', name: '法力之潮', icon: '🌊', tier: 2, max: 1, active: 'mana_tide', desc: '激活法力之潮：立即恢复 30% 最大法力' },
+        { id: 's_resto_tide', name: '法力之潮', icon: '🌊', tier: 2, max: 1, active: 'mana_tide', desc: '法力之潮常驻：法力回复 +12%' },
       ],
     },
   ];
@@ -266,7 +266,7 @@
         { id: 'm_arc_agility', name: '奥术敏锐', icon: '👁️', tier: 1, max: 5, desc: '暴击几率提高 {n}%', mods: [{ t: 'stat', stat: 'crit', per: 0.01 }] },
         { id: 'm_arc_mind', name: '心灵掌握', icon: '🧠', tier: 2, max: 5, desc: '法术强度提高 {n}%，暴击提高 {n2}%', mods: [{ t: 'spellPowerPct', per: 0.02 }, { t: 'stat', stat: 'crit', per: 0.005 }] },
         { id: 'm_arc_power', name: '奥术强化', icon: '🔆', tier: 2, max: 1, active: 'arcane_power', desc: '奥术强化常驻：攻击+7%' },
-        { id: 'm_arc_pom', name: '气定神闲', icon: '🧘', tier: 2, max: 1, active: 'presence_of_mind', desc: '激活气定神闲：下一次技能零消耗且不进入冷却' },
+        { id: 'm_arc_pom', name: '气定神闲', icon: '🧘', tier: 2, max: 1, active: 'presence_of_mind', desc: '气定神闲常驻：法术强度 +6%' },
       ],
     },
     {
@@ -292,7 +292,7 @@
         { id: 'm_frost_winter', name: '深冬之寒', icon: '🌨️', tier: 1, max: 5, desc: '冰霜持续伤害提高 {n}%', mods: [{ t: 'dotType', type: 'frost', per: 0.05 }] },
         { id: 'm_frost_wind', name: '刺骨寒风', icon: '🌬️', tier: 2, max: 5, desc: '冰霜持续伤害提高 {n}%，冰霜伤害提高 {n2}%', mods: [{ t: 'dotType', type: 'frost', per: 0.03 }, { t: 'dmgType', type: 'frost', per: 0.02 }] },
         { id: 'm_frost_armor', name: '寒冰护体', icon: '🧊', tier: 2, max: 1, active: 'frost_armor', desc: '寒冰护体常驻：战斗开始自动获得冰霜护盾' },
-        { id: 'm_frost_nova', name: '冰霜新星', icon: '❄️', tier: 2, max: 1, active: 'frost_nova', desc: '激活冰霜新星：定身所有敌人 1 回合' },
+        { id: 'm_frost_nova', name: '冰霜新星', icon: '❄️', tier: 2, max: 1, active: 'frost_nova', desc: '冰霜新星常驻：战斗开始时定身首个敌人 1 回合' },
       ],
     },
   ];
@@ -305,9 +305,9 @@
         { id: 'wl_aff_corr', name: '强化腐蚀术', icon: '☠️', tier: 0, max: 5, desc: '暗影系持续伤害提高 {n}%', mods: [{ t: 'dotType', type: 'shadow', per: 0.07 }] },
         { id: 'wl_aff_drain', name: '强化吸取生命', icon: '🧛', tier: 0, max: 5, desc: '吸取生命伤害提高 {n}%，吸取效果提高 {n2}%', mods: [{ t: 'skillDmg', skill: 'drain_life', per: 0.06 }, { t: 'lifestealPct', per: 0.06 }] },
         { id: 'wl_aff_curse', name: '强化痛苦诅咒', icon: '😖', tier: 1, max: 5, desc: '暗影系持续伤害提高 {n}%', mods: [{ t: 'dotType', type: 'shadow', per: 0.03 }] },
-        { id: 'wl_aff_fear', name: '强化恐惧术', icon: '😱', tier: 1, max: 3, desc: '恐惧术冷却缩短 {n} 回合', mods: [{ t: 'cdSkill', skill: 'fear', per: 1 }] },
+        { id: 'wl_aff_fear', name: '强化恐惧术', icon: '😱', tier: 1, max: 3, desc: '恐惧术化为本能，法术强度提高 {n}%', mods: [{ t: 'spellPowerPct', per: 0.02 }] },
         { id: 'wl_aff_ruth', name: '无情', icon: '💀', tier: 2, max: 5, desc: '暴击伤害加成提高 {n}%，暗影持续伤害提高 {n2}%', mods: [{ t: 'critMult', per: 0.05 }, { t: 'dotType', type: 'shadow', per: 0.03 }] },
-        { id: 'wl_aff_curse2', name: '暗影诅咒', icon: '🔮', tier: 2, max: 1, active: 'shadow_curse', desc: '激活暗影诅咒：目标受到的伤害+20%，持续 3 回合' },
+        { id: 'wl_aff_curse2', name: '暗影诅咒', icon: '🔮', tier: 2, max: 1, active: 'shadow_curse', desc: '暗影诅咒常驻：战斗开始自动标记首个敌人，其受伤 +8%' },
         { id: 'wl_aff_coil', name: '死亡缠绕', icon: '🩸', tier: 2, max: 1, active: 'death_coil', desc: '激活死亡缠绕：暗影伤害+恐惧 1 回合+恢复生命' },
       ],
     },
@@ -349,7 +349,7 @@
         { id: 'd_bal_focus', name: '节能施法', icon: '🎯', tier: 1, max: 5, desc: '技能法力消耗降低 {n}%', mods: [{ t: 'cost', per: 0.05 }] },
         { id: 'd_bal_lunar', name: '月神之触', icon: '🌕', tier: 2, max: 5, desc: '法术强度提高 {n}%，奥术持续伤害提高 {n2}%', mods: [{ t: 'spellPowerPct', per: 0.04 }, { t: 'dotType', type: 'arcane', per: 0.03 }] },
         { id: 'd_bal_starfire', name: '星火术', icon: '🌟', tier: 2, max: 1, active: 'starfire', desc: '激活星火术：造成大量自然伤害' },
-        { id: 'd_bal_faerie', name: '精灵之火', icon: '✨', tier: 2, max: 1, active: 'faerie_fire', desc: '激活精灵之火：目标受到的伤害+10%，持续 3 回合' },
+        { id: 'd_bal_faerie', name: '精灵之火', icon: '✨', tier: 2, max: 1, active: 'faerie_fire', desc: '精灵之火常驻：战斗开始自动标记首个敌人，其受伤 +6%' },
       ],
     },
     {
@@ -407,7 +407,7 @@
     ],
     mage: [
       { name: '火焰爆发', icon: '🔥', tree: 'fire', desc: '焚尽万物：火球术+火焰系伤害拉满，燃烧开启爆发。', points: [['m_fire_fireball', 5], ['m_fire_incin', 5], ['m_fire_impact', 5], ['m_fire_combust', 1]] },
-      { name: '冰霜控场', icon: '❄️', tree: 'frost', desc: '冰封千里：寒冰箭与暴风雪强化，冰霜新星定身全场。', points: [['m_frost_frostbolt', 5], ['m_frost_chill', 5], ['m_frost_blizzard', 5], ['m_frost_nova', 1]] },
+      { name: '冰霜控场', icon: '❄️', tree: 'frost', desc: '冰封千里：寒冰箭与暴风雪强化，冰霜新星战斗开始时定身首个敌人。', points: [['m_frost_frostbolt', 5], ['m_frost_chill', 5], ['m_frost_blizzard', 5], ['m_frost_nova', 1]] },
     ],
     warlock: [
       { name: '痛苦折磨', icon: '😖', tree: 'aff', desc: '慢性死亡：腐蚀与吸取强化，暗影诅咒让敌人更脆弱。', points: [['wl_aff_corr', 5], ['wl_aff_drain', 5], ['wl_aff_curse', 5], ['wl_aff_curse2', 1]] },

@@ -141,10 +141,10 @@ function checkEq(name, got, want) {
       const c2 = W.Char.create('双戒回归', 'human', 'warrior');
       c2.level = 30;
       c2.equipment.ring1 = 'a_band';
-      c2.equipment.ring2 = 'a_band';
+      c2.equipment.ring2 = 'a_ring';
       c2.inventory.push({ id: 'a_band', count: 1, perf: true });
       const r4 = W.Char.Equipment.equip(c2, 'a_band', true);
-      check('双戒指槽位替换极品成功', r4 && ((c2.eqPerf && c2.eqPerf.ring1) || (c2.eqPerf && c2.eqPerf.ring2)) === true);
+      check('同名戒指就地升级为极品(不占用另一格)', r4 && c2.eqPerf.ring1 === true && c2.equipment.ring2 === 'a_ring');
     }
     const srcOf = (iid) => {
       if (Object.values(D.ZONES).some((z) => z.shop.includes(iid))) return true;
@@ -162,22 +162,37 @@ function checkEq(name, got, want) {
   }
   // 高级药水回归(审计 P2 修复):50/55 级药水数据 + 商店/掉落挂载 + 使用逻辑
   {
+    // 回复类消耗品已统一为百分比口径(healPct / manaPct)
     const pots = {
-      c_master_heal:  { lv: 50, heal: 750 },
-      c_master_mana:  { lv: 50, mana: 750 },
-      c_ultimate_heal: { lv: 55, heal: 1200 },
-      c_ultimate_mana: { lv: 55, mana: 1200 },
-      c_eternal_flask: { lv: 55, heal: 700, mana: 700 },
+      c_master_heal:  { lv: 50, healPct: 0.5 },
+      c_master_mana:  { lv: 50, manaPct: 0.4 },
+      c_ultimate_heal: { lv: 55, healPct: 0.6 },
+      c_ultimate_mana: { lv: 55, manaPct: 0.55 },
+      c_eternal_flask: { lv: 55, healPct: 0.45, manaPct: 0.35 },
     };
     const badP = [];
     for (const [id, exp] of Object.entries(pots)) {
       const it = D.ITEMS[id];
       if (!it) { badP.push(id + '缺失'); continue; }
       if (it.slot !== 'consumable' || it.level !== exp.lv) badP.push(id + '等级/类型');
-      if ((it.consumable.heal || 0) !== (exp.heal || 0) || (it.consumable.mana || 0) !== (exp.mana || 0)) badP.push(id + '数值');
+      if ((it.consumable.healPct || 0) !== (exp.healPct || 0) || (it.consumable.manaPct || 0) !== (exp.manaPct || 0)) badP.push(id + '数值');
       if (!it.icon || (it.buy == null && it.sell == null)) badP.push(id + '图标/价格');
     }
-    check('5件高级药水数据有效', badP.length === 0, badP.join(','));
+    check('5件高级药水数据有效(百分比口径)', badP.length === 0, badP.join(','));
+    // 全部回复类消耗品均为百分比,不留固定值(固定值在高等级会被稀释)
+    const flatLeft = Object.values(D.ITEMS).filter((it) => it.consumable && (it.consumable.heal || it.consumable.mana)).map((it) => it.id);
+    check('回复类消耗品无固定值残留', flatLeft.length === 0, flatLeft.join(','));
+    // 百分比阶梯单调递增(纯治疗药水:高档必然比低档回得多)
+    const healLadder = Object.values(D.ITEMS).filter((it) => it.consumable && it.consumable.healPct && !it.consumable.manaPct)
+      .sort((a, b) => a.level - b.level).map((it) => it.consumable.healPct);
+    check('纯治疗百分比随等级档位递增', healLadder.every((v, i) => i === 0 || v >= healLadder[i - 1]), healLadder.join('>'));
+    // 双效药水把强度分给了两条池,单一效果必然低于同等级及以下的纯药水
+    const duals = Object.values(D.ITEMS).filter((it) => it.consumable && it.consumable.healPct && it.consumable.manaPct);
+    check('双效药水单效果弱于同档纯药水', duals.length >= 3 && duals.every((it) => {
+      const pure = Object.values(D.ITEMS).filter((p) => p.consumable && p.consumable.healPct && !p.consumable.manaPct && p.level <= it.level)
+        .sort((a, b) => b.level - a.level)[0];
+      return !pure || it.consumable.healPct <= pure.consumable.healPct;
+    }), duals.map((it) => it.id + ':' + it.consumable.healPct).join(','));
     const shopIds = Object.values(D.ZONES).flatMap((z) => z.shop);
     check('高级药水覆盖主城+高级区商店', ['c_master_heal', 'c_ultimate_heal', 'c_eternal_flask'].every((id) => shopIds.includes(id)));
     const zShop = Object.values(D.ZONES).map((z) => z.shop);
@@ -199,14 +214,35 @@ function checkEq(name, got, want) {
     check('满血时无法使用药水', !W.Char.Equipment.use(char, 'c_ultimate_heal'));
     char.hp = 100;
     const hpBefore = char.hp;
-    check('缺血时使用终极治疗药水', W.Char.Equipment.use(char, 'c_ultimate_heal') && char.hp === Math.min(c.hpMax, hpBefore + 1200), `hp=${char.hp}`);
+    const ultAmt = Math.round(c.hpMax * D.ITEMS.c_ultimate_heal.consumable.healPct);
+    check('缺血时使用终极治疗药水(按最大生命百分比)', W.Char.Equipment.use(char, 'c_ultimate_heal') && char.hp === Math.min(c.hpMax, hpBefore + ultAmt), `hp=${char.hp} want=${hpBefore + ultAmt}`);
     check('使用消耗1瓶', W.Char.Inventory.count(char, 'c_ultimate_heal') === 2);
     const mage = W.Char.create('药水法师', 'human', 'mage');
     mage.level = 55;
     const cm = W.Char.computed(mage);
     mage.mana = 50; mage.manaMax = cm.manaMax;
     mage.inventory.push({ id: 'c_eternal_flask', count: 1 });
-    check('永恒圣水同时恢复生命与法力', W.Char.Equipment.use(mage, 'c_eternal_flask') && mage.mana === Math.min(cm.manaMax, 50 + 700), `mana=${mage.mana}`);
+    const flaskMana = Math.round(cm.manaMax * D.ITEMS.c_eternal_flask.consumable.manaPct);
+    check('永恒圣水同时恢复生命与法力(均按百分比)', W.Char.Equipment.use(mage, 'c_eternal_flask') && mage.mana === Math.min(cm.manaMax, 50 + flaskMana), `mana=${mage.mana}`);
+
+    // 百分比口径的核心收益:同一瓶药水在不同等级保持同一强度占比,越级嗑药也不会爆表
+    const lv10 = W.Char.create('低级药水', 'human', 'warrior');
+    lv10.level = 10;
+    lv10.inventory.push({ id: 'c_heal', count: 4 }, { id: 'c_ultimate_heal', count: 2 });
+    const c10 = W.Char.computed(lv10);
+    lv10.hp = 1;
+    const c10heal = Math.round(c10.hpMax * D.ITEMS.c_heal.consumable.healPct);
+    W.Char.Equipment.use(lv10, 'c_heal');
+    check('Lv10 治疗药水回复 ≈ 最大生命的 25%', lv10.hp === Math.min(c10.hpMax, 1 + c10heal), `hp=${lv10.hp} hpMax=${c10.hpMax}`);
+    const hp10 = lv10.hp;
+    lv10.hp = 1;
+    const c10ult = Math.round(c10.hpMax * D.ITEMS.c_ultimate_heal.consumable.healPct);
+    W.Char.Equipment.use(lv10, 'c_ultimate_heal');
+    const lv10UltEff = lv10.hp - 1;
+    const lv55UltEff = Math.round(c.hpMax * D.ITEMS.c_ultimate_heal.consumable.healPct);
+    check('越级喝终极药水不再爆表(回量仍按自身上限)', lv10UltEff === Math.min(c10.hpMax - 1, c10ult), `eff=${lv10UltEff}`);
+    check('同一瓶药水随等级同步放大(不随等级贬值)', lv55UltEff > lv10UltEff && lv10UltEff > 0, `10→${lv10UltEff} 55→${lv55UltEff}`);
+    check('固定值口径已彻底移除(consAmount 走百分比)', U.consAmount(D.ITEMS.c_heal.consumable, 'heal', 1000) === 250 && U.consEffectText(D.ITEMS.c_heal.consumable, 'heal') === '恢复 25% 生命', U.consEffectText(D.ITEMS.c_heal.consumable, 'heal'));
   }
 
   console.log('== 72 种组合角色创建 ==');
@@ -283,7 +319,43 @@ function checkEq(name, got, want) {
     check('Boss 战可正常结算', b.ended);
   }
 
-  console.log('== 控制效果(变羊术) ==');
+  console.log('== 30 级以上副本首领保底史诗 ==');
+  {
+    const HI = ['epic', 'purple', 'legendary', 'orange'];
+    // 把首领掉落表里的紫/橙几率清零 → 模拟「几率未触发」,看保底是否补发
+    const killBoss = async (mid, dgId) => {
+      const char = W.Char.create('保底测试', 'human', 'warrior');
+      char.level = 60;
+      // GM 一击必杀:确保首领必定被击杀(否则本该验证的「保底掉落」会因战斗胜负而抖动)
+      char.gm = { enabled: true, god: true, oneShot: true, infinite: true };
+      const c = W.Char.computed(char);
+      char.hp = c.hpMax; char.hpMax = c.hpMax; char.mana = c.manaMax; char.manaMax = c.manaMax;
+      for (const sid of D.CLASSES[char.classId].skills) {
+        const s = D.SKILLS[sid];
+        if (s && s.learn <= char.level && !char.learnedSkills.includes(sid)) char.learnedSkills.push(sid);
+      }
+      char.dungeon = { id: dgId, wave: 0 };
+      const saved = D.DROPS[mid];
+      D.DROPS[mid] = saved.map(([i, ch]) => [i, HI.includes(D.ITEMS[i].quality) ? 0 : ch]);
+      const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+      W.Combat.start(char, [D.MONSTERS[mid]], ui, { isDungeon: true, isBoss: true, context: 'dungeon' });
+      const b = W.Combat.battle;
+      let guard = 0;
+      while (!b.ended && guard++ < 200) {
+        const p = b.player;
+        const skill = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && W.Combat.canUse(s, p) && (s.dmg || s.dot))[0];
+        await W.Combat.playerAction(skill ? { type: 'skill', skill: skill.id, target: 'e0' } : { type: 'attack', target: 'e0' });
+      }
+      D.DROPS[mid] = saved;
+      return ((b.rewards && b.rewards.drops) || []).filter((i) => HI.includes(D.ITEMS[i].quality));
+    };
+    const high = await killBoss('archaledas', 'uldaman');
+    check('30 级以上副本首领保底 1 件史诗', high.length === 1, 'n=' + high.length + ' ' + high.join(','));
+    const low = await killBoss('vancleef', 'deadmines');
+    check('低等级副本首领不触发保底', low.length === 0, 'n=' + low.length + ' ' + low.join(','));
+  }
+
+  console.log('== 控制效果(变羊术·被动控场) ==');
   {
     const char = W.Char.create('控场大师', 'human', 'mage');
     char.level = 8;
@@ -298,20 +370,20 @@ function checkEq(name, got, want) {
     W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
     const b = W.Combat.battle;
     W.Utils.delay = () => Promise.resolve();
-    // 变羊
-    await W.Combat.playerAction({ type: 'skill', skill: 'polymorph', target: 'e0' });
-    // 数一数敌人被变形跳过的次数(日志含 HTML 标签)
-    let skipped = 0;
-    for (const l of log) if (/被<b>变形<\/b>住了/.test(l)) skipped++;
-    check('变羊后敌人无法行动', skipped >= 1, `skipped=${skipped}`);
-    // 造成伤害应打破变形(固定命中/免抗,避免随机未命中导致偶发失败)
+    // 变羊已转常驻被动:战斗开始时自动变形首个敌人
+    check('变羊术被动控场:战斗开始自动变形首个敌人', b.enemies[0].ccs.some((x) => x.type === 'sheep'), JSON.stringify(b.enemies[0].ccs));
+    // 加高血量,避免被打死导致无法验证后续行为;固定命中/免抗避免随机失败
+    b.enemies[0].hp = 9999; b.enemies[0].hpMax = 9999;
     b.player.hit = 1; b.enemies[0].dodge = 0; b.enemies[0].level = b.player.level;
     b.enemies[0].resists.fire = -1000;
-    const logLen = log.length;
     await W.Combat.playerAction({ type: 'skill', skill: 'fireball', target: 'e0' });
-    const broken = log.some((l, i) => i >= logLen && /变形<\/b>效果被打破/.test(l));
-    check('变羊受伤害解除', broken);
-    console.log('  变形跳过回合:', skipped, '· 变形解除:', broken);
+    // 数一数敌人被变形跳过的次数(日志含 HTML 标签)
+    const skipped = log.filter((l) => /被<b>变形<\/b>住了/.test(l)).length;
+    check('变羊后敌人无法行动', skipped >= 1, `skipped=${skipped}`);
+    // 被动控场不因受到伤害解除(以上一回合已造成火球伤害)
+    const broken = log.some((l) => /变形<\/b>效果被打破/.test(l));
+    check('被动控场不因受到伤害解除', !broken && b.enemies[0].ccs.some((x) => x.type === 'sheep'), `broken=${broken}`);
+    console.log('  变形跳过回合:', skipped, '· 被动控场保持:', !broken);
   }
 
   console.log('== 修复验证(混合技能DOT/宠物频率) ==');
@@ -507,22 +579,19 @@ function checkEq(name, got, want) {
     const a0 = mk2(false), a5 = mk2(true);
     check('奥术敏锐暴击+5%', Math.abs((a5.crit - a0.crit) * 100 - 5) < 0.15, `crit ${(a0.crit * 100).toFixed(1)}→${(a5.crit * 100).toFixed(1)}`);
   }
-  // 冷血:下一次攻击必定暴击(修复:持续到下一回合)
+  // 盗贼爽特性:冷血/疾跑/冲动/预备 → 常驻被动(第五批精简)
   {
     const char = W.Char.create('冷血刺客', 'human', 'rogue');
     char.level = 12;
-    const c = W.Char.computed(char);
-    char.hp = c.hpMax; char.hpMax = c.hpMax; char.energy = 100;
-    char.learnedSkills.push('cold_blood');
-    const log = [];
-    const ui = { log: (t, h) => log.push(h), float: () => {}, render: () => {}, onEnd: null };
-    W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
-    const b = W.Combat.battle;
-    W.Utils.delay = () => Promise.resolve();
-    b.player.hit = 1; b.enemies[0].dodge = 0;
-    await W.Combat.playerAction({ type: 'skill', skill: 'cold_blood', target: 'e0' });
-    await W.Combat.playerAction({ type: 'attack', target: 'e0' });
-    check('冷血后下一次攻击必定暴击', log.some((l) => l.includes('暴击')));
+    char.learnedSkills.push('cold_blood', 'sprint', 'adrenaline_rush', 'preparation');
+    const pm = W.Char.passiveMods(char);
+    check('冷血常驻暴击+4%', Math.abs(pm.crit - 0.04) < 0.001, `crit=${pm.crit}`);
+    check('疾跑/冲动/预备常驻攻击+9%', Math.abs(pm.atkPct - 0.09) < 0.001, `atkPct=${pm.atkPct}`);
+    check('疾跑常驻闪避+4%', Math.abs(pm.dodge - 0.04) < 0.001, `dodge=${pm.dodge}`);
+    check('盗贼新被动无消耗无冷却', ['cold_blood', 'sprint', 'adrenaline_rush', 'preparation'].every((id) => {
+      const s = D.SKILLS[id];
+      return s && s.passive && s.mod && !s.res && !s.cd && !s.cost && !s.buff && !s.buffs && !s.resetCd;
+    }));
   }
 
   // 第四批:天赋爆发短增益转被动(鲁莽/死亡之愿/盾墙/燃烧/奥术强化/复仇之怒/神圣防护/狂野怒火/急速射击/暗影形态/元素掌握/恶魔狂暴/狂暴/猛虎之怒)
@@ -538,6 +607,77 @@ function checkEq(name, got, want) {
     check('盾墙常驻护甲+12%', Math.abs(D.SKILLS.shield_wall.mod.armorPct - 0.12) < 0.001);
     check('狂野怒火/恶魔狂暴宠物攻+13%', Math.abs(D.SKILLS.bestial_wrath.mod.petAtkPct - 0.13) < 0.001 && Math.abs(D.SKILLS.demonic_frenzy.mod.petAtkPct - 0.13) < 0.001);
   }
+  // 第五批:全部主动技能通盘精简 —— 自身增益/防御/资源/解除/逃命/纯减益 → 常驻被动
+  {
+    const ids = ['divine_shield', 'feign_death', 'evocation', 'ice_block', 'lay_on_hands', 'cold_blood', 'adrenaline_rush', 'preparation', 'sprint', 'mana_tide', 'presence_of_mind', 'shadow_curse', 'faerie_fire', 'stoneform', 'shadowmeld', 'escape_artist', 'will_of_forsaken', 'cannibalize'];
+    const bad = ids.filter((id) => {
+      const s = D.SKILLS[id];
+      return !(s && s.passive && s.mod && Object.keys(s.mod).length > 0 && !s.res && !s.cd && !s.cost && !s.buff && !s.buffs && !s.shield && !s.cleanse && !s.manaHot && !s.resetCd && !s.healPct && !s.flee);
+    });
+    check('第五批18技能全部转被动', bad.length === 0, bad.join(','));
+    check('全部被动技能不占技能栏(无消耗/冷却)', Object.values(D.SKILLS).every((s) => !s.passive || (!s.res && !s.cd && !s.cost)));
+    check('被动技能已达 59 个(全部主动技能已通盘精简)', (() => {
+      const all = Object.values(D.SKILLS);
+      const passive = all.filter((s) => s.passive).length;
+      return passive >= 59;
+    })(), `passive=${Object.values(D.SKILLS).filter((s) => s.passive).length}/${Object.keys(D.SKILLS).length}`);
+    // 职业招牌输出 / 治疗仍为主动; 控制链(纯控场)已统一转常驻被动
+    const stillActive = ['fireball', 'frostbolt', 'arcane_missiles', 'heroic_strike', 'mortal_strike', 'whirlwind', 'heal', 'flash_heal', 'healing_wave', 'holy_light', 'wrath', 'moonfire', 'eviscerate', 'backstab', 'shadow_bolt', 'corruption', 'steady_shot', 'lightning_bolt', 'summon_pet_tiger', 'summon_voidwalker', 'stoneclaw_totem', 'kidney_shot', 'scatter_shot', 'hammer_of_justice', 'charge', 'death_coil'];
+    check('核心输出/治疗(含附带控制的伤害技能)仍为主动技能', stillActive.every((id) => D.SKILLS[id] && !D.SKILLS[id].passive), stillActive.filter((id) => !(D.SKILLS[id] && !D.SKILLS[id].passive)).join(','));
+    // 第六批:控制链(纯控场)统一转常驻被动——战斗开始时自动控制首个敌人
+    const controlPassive = ['polymorph', 'fear', 'sap', 'freezing_trap', 'wyvern_sting', 'repentance', 'psychic_scream', 'intimidating_shout', 'war_stomp', 'frost_nova'];
+    const ctlBad = controlPassive.filter((id) => {
+      const s = D.SKILLS[id];
+      return !(s && s.passive && s.mod && s.mod.startCc && s.mod.startCc.type && s.mod.startCc.rounds > 0 && !s.res && !s.cd && !s.cost && !s.cc);
+    });
+    check('第六批10控制链技能全部转被动', ctlBad.length === 0, ctlBad.join(','));
+    check('变羊被动控场为变形3回合', D.SKILLS.polymorph.mod.startCc.type === 'sheep' && D.SKILLS.polymorph.mod.startCc.rounds === 3);
+    check('冰霜新星/冰冻陷阱被动控场为定身', D.SKILLS.frost_nova.mod.startCc.type === 'root' && D.SKILLS.freezing_trap.mod.startCc.type === 'root');
+    check('战争践踏已由主动转被动', D.SKILLS.war_stomp.passive && D.SKILLS.war_stomp.mod.startCc.type === 'stun');
+    // 战斗开始自动控制首个敌人(实战)
+    const ws = W.Char.create('控场战', 'orc', 'warrior');
+    ws.level = 12;
+    ws.learnedSkills.push('intimidating_shout');
+    const bC = W.Combat.start(ws, [D.MONSTERS.elwynn_boar], { log: () => {}, float: () => {}, render: () => {}, onEnd: null }, {});
+    check('战斗开始自动控制首个敌人', bC.enemies[0].ccs.some((x) => x.type === 'fear'), JSON.stringify(bC.enemies[0].ccs));
+    // 种族天赋被动常驻生效
+    const df1 = W.Char.create('石像', 'dwarf', 'warrior');
+    check('石像形态常驻护甲+10%', Math.abs(W.Char.passiveMods(df1).armorPct - 0.1) < 0.001);
+    const ne1 = W.Char.create('影遁', 'night_elf', 'rogue');
+    check('影遁常驻闪避+5%', Math.abs(W.Char.passiveMods(ne1).dodge - 0.05) < 0.001);
+    const gn1 = W.Char.create('逃命', 'gnome', 'mage');
+    check('逃命专家常驻缩短受控时间25%', Math.abs(W.Char.computed(gn1).ccReduce - 0.25) < 0.001, `ccReduce=${W.Char.computed(gn1).ccReduce}`);
+    const ud1 = W.Char.create('亡灵', 'undead', 'warlock');
+    check('亡灵意志常驻缩短受控时间20%', Math.abs(W.Char.computed(ud1).ccReduce - 0.2) < 0.001, `ccReduce=${W.Char.computed(ud1).ccReduce}`);
+    check('吞噬尸体常驻吸血3%', Math.abs(W.Char.computed(ud1).weaponLifesteal - 0.03) < 0.001);
+    // 防御/治疗类被动计入面板
+    const pl1 = W.Char.create('圣盾', 'human', 'paladin');
+    pl1.level = 22;
+    pl1.learnedSkills.push('divine_shield');
+    check('圣盾术常驻减伤8%', Math.abs(W.Char.computed(pl1).dmgTaken - 0.08) < 0.001, `dmgTaken=${W.Char.computed(pl1).dmgTaken}`);
+    pl1.learnedSkills.push('lay_on_hands');
+    check('圣疗术常驻提升治疗10%', Math.abs(W.Char.computed(pl1).healPct - 0.1) < 0.001);
+    // 纯减益被动:战斗开始自动标记首个敌人(复用猎人印记钩子)
+    const dr1 = W.Char.create('精灵火', 'night_elf', 'druid');
+    dr1.level = 10;
+    dr1.learnedSkills.push('faerie_fire');
+    const dc1 = W.Char.computed(dr1);
+    dr1.hp = dc1.hpMax; dr1.mana = dc1.manaMax;
+    W.Utils.delay = () => Promise.resolve();
+    W.Combat.start(dr1, [D.MONSTERS.elwynn_boar], { log: () => {}, float: () => {}, render: () => {}, onEnd: null }, {});
+    check('精灵之火常驻战斗开始自动标记', W.Combat.battle.enemies[0].buffs.some((x) => x.mod && x.mod.takenPct > 0));
+    // 吸血在战斗中生效(基础攻击回复生命)
+    const ud2 = W.Char.create('吸血', 'undead', 'warrior');
+    ud2.level = 10;
+    ud2.hp = 50;
+    const log2 = [];
+    W.Combat.start(ud2, [D.MONSTERS.elwynn_boar], { log: (t, h) => log2.push(h), float: () => {}, render: () => {}, onEnd: null }, {});
+    const ub = W.Combat.battle;
+    ub.player.hit = 1; ub.enemies[0].dodge = 0; ub.player.rage = 100;
+    await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    check('吞噬尸体吸血随基础攻击回复生命', log2.some((l) => l.includes('生命偷取')), log2.filter((l) => l.includes('生命')).join(' | ') || '无吸血日志');
+  }
+
   // 战士学鲁莽:常驻攻击/暴击生效;卸载移除
   {
     const char = W.Char.create('鲁莽战士', 'human', 'warrior');
@@ -672,7 +812,7 @@ function checkEq(name, got, want) {
     const reck = armsTree && armsTree.talents.find((n) => n.active === 'recklessness');
     check('鲁莽来源:武器系tier2需本系10点', !!reck && reck.tier === 2 && reck.tier * 5 === 10, JSON.stringify(reck));
     // 总览基础数值展示覆盖性:所有被动技能 mod 键须在可展示集合内(防止未来新被动静默不显示数值)
-    const covered = ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'onHit', 'thorns'];
+    const covered = ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'onHit', 'thorns', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal', 'startCc'];
     const badKey = [];
     for (const s of Object.values(D.SKILLS)) {
       if (!(s && s.passive && s.mod)) continue;
@@ -723,32 +863,19 @@ function checkEq(name, got, want) {
     check('12级只能分配3点', r2.applied.length === 3 && r2.remaining > 0);
   }
 
-  // 气定神闲:下一技能零消耗且不进入冷却
+  // 法师防御/资源天赋:气定神闲/唤醒/寒冰屏障 → 常驻被动(第五批精简)
   {
     const char = W.Char.create('气定神闲', 'human', 'mage');
-    char.level = 12;
-    const c = W.Char.computed(char);
-    char.hp = c.hpMax; char.hpMax = c.hpMax; char.mana = 50; char.manaMax = c.manaMax;
-    char.learnedSkills.push('presence_of_mind');
-    for (const sid of D.CLASSES.mage.skills) {
-      const s = D.SKILLS[sid];
-      if (s && s.learn <= char.level && !char.learnedSkills.includes(sid)) char.learnedSkills.push(sid);
-    }
-    const log = [];
-    const ui = { log: (t, h) => log.push(h), float: () => {}, render: () => {}, onEnd: null };
-    W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
-    const b = W.Combat.battle;
-    W.Utils.delay = () => Promise.resolve();
-    b.enemies[0].dodge = 0; b.player.hit = 1;
-    await W.Combat.playerAction({ type: 'skill', skill: 'presence_of_mind', target: 'e0' });
-    check('气定神闲生效', b.player.buffs.some((x) => x.mod && x.mod.nextFree));
-    const manaBefore = b.player.mana;
-    await W.Combat.playerAction({ type: 'skill', skill: 'polymorph', target: 'e0' });
-    check('零消耗施放变羊术(60法力免消耗)', b.player.mana === manaBefore, `${b.player.mana} vs ${manaBefore}`);
-    check('气定神闲被消耗', !b.player.buffs.some((x) => x.mod && x.mod.nextFree));
-    check('变羊术不进入冷却', !(b.player.cd.polymorph > 0));
+    char.level = 20;
+    const sp0 = W.Char.computed(char).spellPower;
+    char.learnedSkills.push('presence_of_mind', 'evocation', 'ice_block');
+    const c1 = W.Char.computed(char);
+    check('气定神闲常驻提升法术强度', c1.spellPower > sp0, `sp ${sp0} → ${c1.spellPower}`);
+    check('唤醒常驻提升法力恢复15%', Math.abs(W.Char.passiveMods(char).manaRegenPct - 0.15) < 0.001);
+    check('寒冰屏障常驻降低所受伤害8%', Math.abs(c1.dmgTaken - 0.08) < 0.001, `dmgTaken=${c1.dmgTaken}`);
+    check('变羊术已转常驻被动(控制链精简)', D.SKILLS.polymorph.passive && D.SKILLS.polymorph.mod.startCc.type === 'sheep');
   }
-  // 冰霜新星:定身所有敌人
+  // 冰霜新星:被动控场——战斗开始时定身首个敌人
   {
     const char = W.Char.create('冰法', 'human', 'mage');
     char.level = 12;
@@ -760,10 +887,10 @@ function checkEq(name, got, want) {
     W.Combat.start(char, [D.MONSTERS.elwynn_boar, D.MONSTERS.elwynn_boar], ui, {});
     const b = W.Combat.battle;
     W.Utils.delay = () => Promise.resolve();
-    b.player.hit = 1; b.enemies.forEach((e) => { e.dodge = 0; e.resists.frost = -1000; });
-    await W.Combat.playerAction({ type: 'skill', skill: 'frost_nova', target: 'e0' });
-    check('冰霜新星命中全部敌人', log.filter((l) => l.includes('施放 <b>冰霜新星</b>，对')).length === 2);
-    check('两名敌人都被定身跳过回合', log.filter((l) => l.includes('被<b>定身</b>住了')).length === 2);
+    check('冰霜新星被动控场只控制首个敌人', b.enemies[0].ccs.some((x) => x.type === 'root') && !b.enemies[1].ccs.some((x) => x.type === 'root'));
+    b.player.hit = 1; b.enemies.forEach((e) => { e.dodge = 0; e.hp = 9999; e.hpMax = 9999; });
+    await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    check('首个敌人被定身跳过回合', log.some((l) => l.includes('被<b>定身</b>住了')));
   }
   // 暗言术:灭 击杀反噬
   {
@@ -781,25 +908,24 @@ function checkEq(name, got, want) {
     await W.Combat.playerAction({ type: 'skill', skill: 'shadow_word_death', target: 'e0' });
     check('暗言术:灭 击杀目标并触发反噬', b.enemies[0].hp <= 0 && b.player.hp < hpBefore, `hp ${hpBefore}→${b.player.hp}`);
   }
-  // 疾跑闪避增益 + 肾击连击点控制
+  // 肾击连击点控制(控制链保留为主动技能)
   {
-    const char = W.Char.create('疾跑贼', 'human', 'rogue');
+    const char = W.Char.create('肾击贼', 'human', 'rogue');
     char.level = 12;
     const c = W.Char.computed(char);
     char.hp = c.hpMax; char.hpMax = c.hpMax; char.energy = 100;
-    char.learnedSkills.push('sprint', 'kidney_shot');
+    char.learnedSkills.push('kidney_shot');
     const log = [];
     const ui = { log: (t, h) => log.push(h), float: () => {}, render: () => {}, onEnd: null };
     W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
     const b = W.Combat.battle;
     W.Utils.delay = () => Promise.resolve();
-    await W.Combat.playerAction({ type: 'skill', skill: 'sprint', target: 'e0' });
-    check('疾跑附带闪避增益', b.player.buffs.some((x) => x.mod && x.mod.dodgePct === 0.15));
     check('肾击需要连击点', !W.Combat.canUse(D.SKILLS.kidney_shot, b.player));
     b.player.combo = 1;
     b.enemies[0].dodge = 0;
     await W.Combat.playerAction({ type: 'skill', skill: 'kidney_shot', target: 'e0' });
     check('肾击眩晕目标并消耗连击点', b.player.combo === 0 && log.some((l) => l.includes('被<b>眩晕</b>住了')));
+    check('肾击不被误转被动', !D.SKILLS.kidney_shot.passive);
   }
 
   // 旧存档兼容(无 talents 字段)
@@ -1051,7 +1177,7 @@ function checkEq(name, got, want) {
       if (!dg.chest || !dg.chest.items || !dg.chest.items.length) { badChest.push(did + ': 无宝箱'); continue; }
       for (const [iid] of dg.chest.items) if (!D.ITEMS[iid]) badChest.push(did + ':' + iid + '不存在');
     }
-    check('副本宝箱数据有效(26副本)', Object.keys(D.DUNGEONS).length === 26 && badChest.length === 0, badChest.join(','));
+    check('副本宝箱数据有效(50副本)', Object.keys(D.DUNGEONS).length === 50 && badChest.length === 0, badChest.join(','));
     const bossCrystal = (mid) => (D.DROPS[mid] || []).find(([iid, ch]) => iid === 'm_crystal');
     const ALL_BOSSES = ['vancleef', 'mutanus', 'emperor_thaurissan', 'zhuzhun', 'arugal', 'archaledas', 'princess_theradras', 'gandling', 'kelthuzad',
       'drakkisath', 'rivendare', 'immolthar', 'ragnaros', 'nefarian', 'onyxia', 'hakkar', 'rajaxx', 'cthun'];
@@ -1178,6 +1304,68 @@ function checkEq(name, got, want) {
     check('30级以上副本最终Boss掉紫色史诗', ['archaledas', 'princess_theradras', 'zhuzhun', 'emperor_thaurissan', 'gandling', 'kelthuzad'].every(hasEpic));
     const hasLegendary = (mid) => (D.DROPS[mid] || []).some(([iid]) => { const it = D.ITEMS[iid]; return it && it.quality === 'legendary'; });
     check('50级以上副本Boss几率掉橙色传说', ['emperor_thaurissan', 'gandling', 'kelthuzad'].every(hasLegendary));
+    // ===== 橙色传说体系:防具补齐 + 品质预算 + 传说领先史诗 =====
+    {
+      const EQ = ['weapon', 'offhand', 'head', 'chest', 'gloves', 'legs', 'boots', 'cloak', 'neck', 'ring', 'trinket'];
+      const WT = { str: 1, agi: 1, int: 1, spi: 0.55, stam: 1.5, armor: 0.05, crit: 55, dodge: 50, hit: 55, lifesteal: 65, hp: 0.06, mp5: 2, dmg: 1.1 };
+      const FIT = { weapon: [9.66, 1.727], offhand: [0.47, 0.296], head: [2.71, 0.275], chest: [5.85, 0.364], gloves: [-1.94, 0.377], legs: [1.50, 0.375], boots: [0.99, 0.265], cloak: [1.89, 0.190], neck: [2.37, 0.212], ring: [1.18, 0.268], trinket: [0.07, 0.302] };
+      const QB = { white: 0.75, green: 1.0, blue: 1.15, epic: 1.40, purple: 1.40, legendary: 2.0 };
+      const gearBudget = (it) => { const s = it.stats || {}; let p = 0; for (const k in s) { const v = s[k]; if (k === 'dmg') p += ((v[0] + v[1]) / 2) * WT.dmg; else if (WT[k] != null) p += v * WT[k]; } return p; };
+      const lineOf = (it) => { const s = it.stats || {}; if ((s.int || 0) > 0 && !(s.str || 0) && !(s.agi || 0)) return 'caster'; if ((s.agi || 0) > 0 && !(s.str || 0)) return 'agile'; if ((s.int || 0) > (s.str || 0) + (s.agi || 0)) return 'caster'; return 'physical'; };
+      const gears = Object.values(D.ITEMS).filter((it) => EQ.includes(it.slot));
+      const legends = gears.filter((it) => it.quality === 'legendary');
+      // 橙色不再只是武器:除武器外至少覆盖 9 个防具/首饰槽位,且头胸手腿靴都有
+      const armorSlots = new Set(legends.filter((it) => it.slot !== 'weapon').map((it) => it.slot));
+      check('橙色传说覆盖防具首饰槽位(≥8)', armorSlots.size >= 8, [...armorSlots].join(','));
+      check('头/胸/手/腿/靴均有橙色传说', ['head', 'chest', 'gloves', 'legs', 'boots'].every((s) => armorSlots.has(s)));
+      check('法系橙色传说武器存在', legends.some((it) => it.slot === 'weapon' && lineOf(it) === 'caster'));
+      // 全部传说都有获取途径(掉落/军需官/成就/打造)
+      const obtainable = new Set();
+      for (const list of Object.values(D.DROPS)) for (const e of list) obtainable.add(e[0]);
+      for (const z of Object.values(D.ZONES)) for (const i of z.shop || []) obtainable.add(i);
+      for (const q of Object.values(D.QUESTS)) for (const i of q.rewardItems || []) obtainable.add(i);
+      for (const a of Object.values(D.ACHIEVEMENTS)) for (const i of (a.reward && a.reward.items) || []) obtainable.add(i);
+      for (const it of Object.values(D.ITEMS)) if (it.rep) obtainable.add(it.id);
+      for (const r of Object.values(D.CRAFTS)) if (r.item) obtainable.add(r.item);
+      const orphan = legends.filter((it) => !obtainable.has(it.id)).map((it) => it.id);
+      check('橙色传说全部可获取', orphan.length === 0, orphan.join(','));
+      // 品质预算带(±40%,武器另由伤害/战力规则把关)
+      const off = [];
+      for (const it of gears) {
+        if (it.slot === 'weapon' || it.level < 10) continue;
+        const base = Math.max(5, FIT[it.slot][0] + FIT[it.slot][1] * it.level);
+        const r = gearBudget(it) / base / (QB[it.quality] || 1);
+        if (r < 0.6 || r > 1.4) off.push(`${it.id}=${r.toFixed(2)}`);
+      }
+      check('装备属性落在品质预算带(±40%)', off.length === 0, off.slice(0, 5).join(','));
+      // 传说属性预算领先同槽位同线史诗 ≥1.25×
+      const weak = [];
+      for (const it of legends) {
+        const line = lineOf(it);
+        const peers = gears.filter((x) => x.slot === it.slot && lineOf(x) === line && (x.quality === 'epic' || x.quality === 'purple') && x.level >= 50);
+        if (!peers.length) continue;
+        const best = peers.reduce((a, b) => (gearBudget(a) >= gearBudget(b) ? a : b));
+        if (gearBudget(it) / gearBudget(best) < 1.25) weak.push(it.id);
+      }
+      check('传说属性预算领先同线史诗(≥1.25×)', weak.length === 0, weak.join(','));
+      // 传说武器引擎战力领先同线非传说 ≥1.20×(橙色必须真的更强)
+      const NAKED = { weapon: null, offhand: null, head: null, chest: null, gloves: null, legs: null, boots: null, cloak: null, neck: null, ring1: null, ring2: null, trinket1: null, trinket2: null };
+      const powerOf = (it) => {
+        const slot = it.slot === 'ring' ? 'ring1' : (it.slot === 'trinket' ? 'trinket1' : it.slot);
+        const mk = (eqId) => { const c = W.Char.create('audit', 'human', lineOf(it) === 'caster' ? 'mage' : (lineOf(it) === 'agile' ? 'rogue' : 'warrior')); c.level = it.level; c.equipment = Object.assign({}, NAKED, eqId ? { [slot]: eqId } : {}); return W.Char.computed(c); };
+        const m = (c) => { const dr = Math.min(W.Config.ARMOR_CAP, c.armor / (c.armor + W.Config.ARMOR_DENOM + 85 * c.lvl)); return { dps: (c.atkMin + c.atkMax) / 2 * c.hit * (1 + c.crit * (W.Config.CRIT_MULT + (c.critMult || 0) - 1)), ehp: c.hpMax / ((1 - dr) * (1 - c.dodge)), sp: c.spellPower }; };
+        const a = m(mk(null)), b = m(mk(it.id));
+        return 0.4 * (b.dps / a.dps) + 0.4 * (b.ehp / a.ehp) + 0.2 * (b.sp / a.sp);
+      };
+      const weakW = [];
+      for (const it of legends.filter((x) => x.slot === 'weapon')) {
+        const line = lineOf(it);
+        const peers = gears.filter((x) => x.slot === 'weapon' && lineOf(x) === line && x.quality !== 'legendary');
+        const best = peers.reduce((a, b) => (powerOf(a) >= powerOf(b) ? a : b));
+        if (powerOf(it) / powerOf(best) < 1.20) weakW.push(`${it.id}=${(powerOf(it) / powerOf(best)).toFixed(2)}`);
+      }
+      check('传说武器引擎战力领先同线(≥1.20×)', weakW.length === 0, weakW.join(','));
+    }
     // 战斗中卷轴:免费动作不占回合
     const sc = W.Char.create('卷轴使者', 'human', 'warrior');
     sc.level = 10;
@@ -1210,8 +1398,9 @@ function checkEq(name, got, want) {
       const pb = W.Combat.battle;
       const pr0 = pb.round;
       const hp0 = pb.player.hp;
+      const wantHeal = Math.round(pb.player.hpMax * D.ITEMS.c_heal.consumable.healPct);
       await W.Combat.usePotion('c_heal');
-      check('治疗药水不占回合且恢复', pb.round === pr0 && pb.player.hp > hp0 && pb.player.hp <= pb.player.hpMax);
+      check('治疗药水不占回合且按百分比恢复', pb.round === pr0 && pb.player.hp === hp0 + wantHeal && pb.player.hp <= pb.player.hpMax, `hp=${pb.player.hp} want=${hp0 + wantHeal}`);
       check('药水消耗背包1个', W.Char.Inventory.count(pc, 'c_heal') === 2);
       check('药水进入3回合冷却', pb.player.potionCd === 3);
       const hp1 = pb.player.hp;
@@ -1224,8 +1413,9 @@ function checkEq(name, got, want) {
       W.Combat._tickUnit(pb.player, true);
       check('冷却3回合后清零可再用', pb.player.potionCd === 0);
       const mana0 = pb.player.mana;
+      const wantMana = Math.round(pb.player.manaMax * D.ITEMS.c_mana.consumable.manaPct);
       await W.Combat.usePotion('c_mana');
-      check('法力药水恢复法力且不占回合', pb.player.mana > mana0 && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_mana') === 1);
+      check('法力药水按百分比恢复且不占回合', pb.player.mana === mana0 + wantMana && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_mana') === 1, `mana=${pb.player.mana} want=${mana0 + wantMana}`);
       // 满状态不消耗
       pb.player.hp = pb.player.hpMax; pb.player.mana = pb.player.manaMax;
       const cnt = W.Char.Inventory.count(pc, 'c_heal');
@@ -1692,6 +1882,39 @@ function checkEq(name, got, want) {
     S.save(9);
     check('支持写入第10槽(索引9)', S.saveSlots[9] && S.saveSlots[9].name === '扩容侠');
   }
+  // 低等级存档覆盖高等级存档:引擎侧判定 + 存档行警示 + 自动存档不顶掉高等级进度
+  console.log('== 低等级覆盖高等级存档 ==');
+  {
+    const S = W.State;
+    S.saveSlots = []; S._saveSlot = 1; S._lastAutoSave = 0; S._autoToast = true;
+    const hi = { name: '高等级甲', classCN: '战士', raceCN: '人类', level: 60, gold: 999, zoneCN: '熔火之心', savedAt: 1, src: 'manual', data: { classId: 'warrior', race: 'human', level: 60, gold: 999, zone: 'molten_core' } };
+    S.saveSlots[0] = hi;
+    const low = W.Char.create('低级乙', 'human', 'warrior');
+    low.level = 12;
+    S.newCharacter(low);
+    check('槽内存档等级更高时判定为降级覆盖', S.downgradeSlotLevel(0) === 60, String(S.downgradeSlotLevel(0)));
+    check('空槽 / 无角色时不判定为降级覆盖', S.downgradeSlotLevel(3) === 0);
+    const row = S.saveRowHtml(hi, 0, { save: true, load: true, del: true, downLv: S.downgradeSlotLevel(0) });
+    check('降级覆盖行标记 downgrade', row.includes('save-row downgrade'), row.slice(0, 60));
+    check('降级覆盖行给出原因文案', row.includes('save-warn') && row.includes('高于当前角色'), row.slice(0, 220));
+    check('降级覆盖按钮转危险态并标注等级', row.includes('btn small danger') && row.includes('⚠ 覆盖 Lv.60') && row.includes('data-down-lv="60"'), row.slice(0, 260));
+    const rowNo = S.saveRowHtml(hi, 0, { save: true, load: true, del: true, downLv: S.downgradeSlotLevel(1) });
+    check('非降级覆盖行无警示且按钮不变', !rowNo.includes('save-warn') && !rowNo.includes('data-down-lv') && rowNo.includes('写入'), rowNo.slice(0, 200));
+    low.level = 60;
+    check('同级覆盖不判定为降级', S.downgradeSlotLevel(0) === 0);
+    low.level = 61;
+    check('更高等级覆盖不判定为降级', S.downgradeSlotLevel(0) === 0);
+    // 自动存档无声:同名同职业同种族也不得顶掉高等级存档,改落空槽
+    low.level = 5;
+    low.name = '高等级甲';
+    S._saveSlot = 0;
+    const r = S.autoSave(true);
+    check('自动存档不顶掉同名高等级存档', r.saved && r.slot !== 0 && S.saveSlots[0].name === '高等级甲' && S.saveSlots[0].level === 60, `saved=${r.saved} slot=${r.slot} lv=${S.saveSlots[0].level}`);
+    check('自动存档改落空槽', r.slot === 1, String(r.slot));
+    low.level = 6;
+    S._saveSlot = 5;
+    check('扫描存档槽时跳过更高等级的槽', S._pickAutoSlot() === 1, String(S._pickAutoSlot()));
+  }
   // 存档落盘失败(存储空间已满)与格式迁移
   {
     const S = W.State;
@@ -1843,10 +2066,10 @@ function checkEq(name, got, want) {
 
   console.log('== 60 级内容扩展 ==');
   {
-    check('等级上限提升至 60', W.Config.LEVEL_CAP === 60, `LEVEL_CAP=${W.Config.LEVEL_CAP}`);
-    check('区域扩充至 49 个', Object.keys(D.ZONES).length === 49, `got ${Object.keys(D.ZONES).length}`);
-    check('副本扩充至 26 个', Object.keys(D.DUNGEONS).length === 26, `got ${Object.keys(D.DUNGEONS).length}`);
-    check('任务扩充至 130 个', Object.keys(D.QUESTS).length === 130, `got ${Object.keys(D.QUESTS).length}`);
+    check('等级上限提升至 70', W.Config.LEVEL_CAP === 70, `LEVEL_CAP=${W.Config.LEVEL_CAP}`);
+    check('区域扩充至 83 个', Object.keys(D.ZONES).length === 83, `got ${Object.keys(D.ZONES).length}`);
+    check('副本扩充至 50 个', Object.keys(D.DUNGEONS).length === 50, `got ${Object.keys(D.DUNGEONS).length}`);
+    check('任务扩充至 192 个', Object.keys(D.QUESTS).length === 192, `got ${Object.keys(D.QUESTS).length}`);
     check('新地图悬赏+副本讨伐任务已接入任务板', Object.keys(D.QUESTS).some((q) => q.startsWith('q_map_')) && Object.keys(D.QUESTS).some((q) => q.startsWith('q_dg_')));
     check('新副本区域入口存在', D.ZONES.blackrock_depths.dungeon === 'blackrock_depths' && D.ZONES.zulfarrak.dungeon === 'zulfarrak');
     check('黑石深渊 7 波(中途首领+索瑞森大帝)', D.DUNGEONS.blackrock_depths && D.DUNGEONS.blackrock_depths.waves.length === 7 && D.DUNGEONS.blackrock_depths.boss === 'emperor_thaurissan');
@@ -1878,19 +2101,24 @@ function checkEq(name, got, want) {
     check('部落线 杜隆塔尔→瘟疫之地 连通', reach('durotar', 'plaguelands'));
     check('跨阵营连通(联盟经商船可达部落主城)', reach('elwynn', 'durotar'));
     check('跨阵营连通(部落经商船可达联盟主城)', reach('durotar', 'elwynn'));
-    // 升级至 60
+    // 升级至 60(经典段)
     const lv = W.Char.create('远征者', 'human', 'warrior');
     lv.level = 59; lv.exp = W.Utils.expNeeded(59) - 1;
     W.Char.addExp(lv, 1);
     check('59 级可升至 60', lv.level === 60 && lv.exp === 0, `level=${lv.level} exp=${lv.exp}`);
-    W.Char.addExp(lv, 999999);
-    check('60 级封顶不再升级', lv.level === 60);
-    check('满级不再获得经验(exp 恒为 0)', lv.exp === 0, `exp=${lv.exp}`);
-    // 59 级一次性大额经验奖励升到 60:经验必须清零(不允许残留)
+    // 61-70(外域)曲线抬升后仍可正常升级,封顶于 LEVEL_CAP=70
+    const lv70 = W.Char.create('外域远征者', 'human', 'warrior');
+    lv70.level = 69; lv70.exp = W.Utils.expNeeded(69) - 1;
+    W.Char.addExp(lv70, 1);
+    check('69 级可升至 70', lv70.level === 70 && lv70.exp === 0, `level=${lv70.level} exp=${lv70.exp}`);
+    W.Char.addExp(lv70, 999999);
+    check('70 级封顶不再升级', lv70.level === 70);
+    check('满级不再获得经验(exp 恒为 0)', lv70.exp === 0, `exp=${lv70.exp}`);
+    // 69 级一次性大额经验奖励升到 70:经验必须清零(不允许残留)
     const big = W.Char.create('大额奖励', 'human', 'warrior');
-    big.level = 59; big.exp = W.Utils.expNeeded(59) - 1;
+    big.level = 69; big.exp = W.Utils.expNeeded(69) - 1;
     W.Char.addExp(big, 999999);
-    check('59 级大额奖励升 60 经验清零', big.level === 60 && big.exp === 0, `level=${big.level} exp=${big.exp}`);
+    check('69 级大额奖励升 70 经验清零', big.level === 70 && big.exp === 0, `level=${big.level} exp=${big.exp}`);
   }
 
   console.log('== 60 级高阶战斗 ==');
@@ -1993,10 +2221,10 @@ function checkEq(name, got, want) {
   {
     const e = W.Char.create('首领猎手', 'human', 'warrior');
     check('新角色 worldBosses 初始为空', e.worldBosses && Object.keys(e.worldBosses).length === 0);
-    check('世界首领注册表 2 个', Object.keys(D.WORLD_BOSSES || {}).length === 2);
+    check('世界首领注册表 3 个', Object.keys(D.WORLD_BOSSES || {}).length === 3);
     const st0 = W.Char.worldBossStatus(e);
-    check('未击杀时全部存活', st0.length === 2 && st0.every((s) => s.alive) &&
-      st0.some((s) => s.name === '卡扎克') && st0.some((s) => s.name === '艾萨拉绿龙'), JSON.stringify(st0));
+    check('未击杀时全部存活', st0.length === 3 && st0.every((s) => s.alive) &&
+      st0.some((s) => s.name === '卡扎克') && st0.some((s) => s.name === '艾萨拉绿龙') && st0.some((s) => s.name === '末日行者'), JSON.stringify(st0));
     check('世界首领怪物带 world 标记', !!D.MONSTERS.kazzak.world && !!D.MONSTERS.azuregos.world);
     check('世界首领出没区域正确', D.WORLD_BOSSES.kazzak.zone === 'burning' && D.WORLD_BOSSES.azuregos.zone === 'winterspring');
     check('世界首领挑战等级门槛 55', D.WORLD_BOSSES.kazzak.minLevel === 55 && D.WORLD_BOSSES.azuregos.minLevel === 55);
@@ -2025,6 +2253,8 @@ function checkEq(name, got, want) {
       trinket1: 'tr_kelthuzad_heart', trinket2: 'tr_abyssal_signet',
     };
     for (const bd of D.TALENT_BUILDS.warrior) W.Char.applyBuild(kz, bd);
+    // 世界首领经强度重调后血量/攻击大幅提升,此处聚焦「击杀后刷新计时」逻辑,显式开启 GM 一击必杀稳定取胜
+    kz.gm = { enabled: true, oneShot: true };
     const kzc = W.Char.computed(kz);
     kz.hp = kzc.hpMax; kz.hpMax = kzc.hpMax; kz.mana = kzc.manaMax; kz.manaMax = kzc.manaMax;
     for (const sid of D.CLASSES.warrior.skills) {
@@ -2132,6 +2362,28 @@ function checkEq(name, got, want) {
         D.ZONES[dg.zone].travel.includes(d) && dg.waves.length >= 5 && dg.chest && dg.chest.items && dg.chest.items.length;
     }));
     check('经典 8 副本 Boss 必掉水晶', classic8.every((d) => (D.DROPS[D.DUNGEONS[d].boss] || []).some(([i, c]) => i === 'm_crystal' && c === 1)));
+    // 回归:副本通关宝箱结算 —— chest 必须带合法金币区间,_dungeonChest 对缺失 items/gold 也要兜底不抛错
+    // (此前 8 个新副本 chest 只写了 items,结算读取 c.gold[0] 抛 TypeError,弹窗打不开、通关进度不落盘)
+    {
+      const badChest = Object.values(D.DUNGEONS)
+        .filter((d) => !d.chest || !Array.isArray(d.chest.gold) || d.chest.gold.length < 2)
+        .map((d) => d.id);
+      check('全部副本宝箱含金币区间(' + Object.keys(D.DUNGEONS).length + ')', badChest.length === 0, badChest.join(',') || '全部合法');
+      const bct = W.Char.create('宝箱测试', 'human', 'warrior');
+      const fail = [];
+      let missingGold = [];
+      for (const d of Object.values(D.DUNGEONS)) {
+        try {
+          if (!/金币/.test(W.World._dungeonChest(bct, d))) missingGold.push(d.id);
+        } catch (e) { fail.push(d.id + ':' + e.message); }
+      }
+      // 缺省 chest：既无 items 也无 gold 时同样不能抛错(宝箱数据可以只写其一)
+      for (const [name, chest] of [['无chest', undefined], ['仅items', { items: [['m_dust', 1]] }], ['仅gold', { gold: [10, 20] }]]) {
+        try { W.World._dungeonChest(bct, { id: 'probe_' + name, chest }); } catch (e) { fail.push(name + ':' + e.message); }
+      }
+      check('副本通关宝箱结算不抛错且必有金币', fail.length === 0 && missingGold.length === 0,
+        (fail.concat(missingGold).join(';')) || '全部通过');
+    }
     check('经典 8 副本任务接入任务板', classic8.every((d) => {
       const qid = (D.ZONES[d].quests || [])[0];
       return !!qid && D.QUESTS[qid] && D.QUESTS[qid].rewardItems.includes('m_crystal') && D.QUESTS[qid].zone === d;
@@ -2214,8 +2466,8 @@ function checkEq(name, got, want) {
   {
     const mapQs = Object.values(D.QUESTS).filter((q) => String(q.id).startsWith('q_map_'));
     const dgQs = Object.values(D.QUESTS).filter((q) => String(q.id).startsWith('q_dg_'));
-    check('地图悬赏 17 个(覆盖各等级段)', mapQs.length === 17, 'n=' + mapQs.length);
-    check('副本讨伐 25 个(除奥妮克希亚外每副本+1)', dgQs.length === 25, 'n=' + dgQs.length);
+    check('地图悬赏 24 个(覆盖各等级段，含外域 7 区)', mapQs.length === 24, 'n=' + mapQs.length);
+    check('副本讨伐 49 个(除奥妮克希亚外每副本+1)', dgQs.length === 49, 'n=' + dgQs.length);
     check('新任务全部接入任务板', [...mapQs, ...dgQs].every((q) => D.ZONES[q.zone] && D.ZONES[q.zone].quests.includes(q.id)));
     check('讨伐任务目标为中途首领', dgQs.every((q) => D.MONSTERS[q.target] && D.MONSTERS[q.target].sub === 1));
     check('新任务奖励含材料(按等级)', mapQs.every((q) => q.rewardItems.some((i) => ['m_dust', 'm_essence', 'm_crystal'].includes(i))));
@@ -2224,7 +2476,7 @@ function checkEq(name, got, want) {
 
   console.log('== 装备套装(T1-T4) ==');
   {
-    check('套装注册表 8 套(5 团本 + 3 中期)', Object.keys(D.SETS).length === 8);
+    check('套装注册表 10 套(5 团本 + 3 中期 + 2 传说)', Object.keys(D.SETS).length === 10);
     // 每个套装:名称/来源/件数列表/至少 2 档加成,加成 need 递增且有效
     check('套装结构有效', Object.values(D.SETS).every((s) =>
       s.name && s.source && s.pieces && s.pieces.length >= 5 && (s.bonuses || []).length >= 2
@@ -2233,6 +2485,30 @@ function checkEq(name, got, want) {
     // 每件套装物品 setId 有效,且套装 pieces 指向真实装备
     check('套装物品标记有效', Object.values(D.ITEMS).every((it) => !it.setId || D.SETS[it.setId]));
     check('套装件数均为真实装备', Object.values(D.SETS).every((s) => s.pieces.every((pid) => D.ITEMS[pid] && D.ITEMS[pid].setId === s.id)));
+    // 审计回归:每件套装散件都必须有获取途径,且每套最强加成可激活
+    // (此前 14 件团本散件无掉落源 → 黑翼/龙王/赞达拉 3 套最强加成永不可达)
+    {
+      const src = new Set();
+      for (const z of Object.values(D.ZONES)) for (const i of z.shop || []) src.add(i);
+      for (const list of Object.values(D.DROPS)) for (const [i] of list) src.add(i);
+      for (const q of Object.values(D.QUESTS)) for (const i of q.rewardItems || []) src.add(i);
+      for (const r of Object.values(Object.assign({}, D.SYNTH, D.CRAFTS))) if (r.item) src.add(r.item);
+      for (const a of Object.values(D.ACHIEVEMENTS)) for (const i of (a.reward && a.reward.items) || []) src.add(i);
+      for (const r of Object.values(D.CAPITAL_RAIDS || {})) for (const i of (r.rewards && r.rewards.items) || []) src.add(i);
+      for (const it of Object.values(D.ITEMS)) if (it.rep) src.add(it.id);
+      const orphans = [];
+      for (const st of Object.values(D.SETS)) for (const pid of st.pieces) if (!src.has(pid)) orphans.push(st.id + ':' + pid);
+      check('套装散件均有获取途径', orphans.length === 0, orphans.join(','));
+      check('每套套装最强加成可激活', Object.values(D.SETS).every((st) => {
+        const maxNeed = Math.max.apply(null, st.bonuses.map((b) => b.need));
+        return st.pieces.filter((pid) => src.has(pid)).length >= maxNeed;
+      }), Object.values(D.SETS).map((st) => st.id).join(','));
+    }
+    // 审计回归:新建角色需初始化全部装备槽(含饰品双槽),避免状态面板槽位缺失
+    check('初始装备含饰品双槽', (() => {
+      const eq = W.Char.create('槽位测试', 'human', 'warrior').equipment;
+      return W.Char.Equipment.SLOTS.every(([slot]) => slot in eq);
+    })());
     // 新增 20 件套装装备(slot 分布在头/胸/手/腿/靴/披风)
     check('套装装备 20 件新物品', ['a_mc_crown', 'a_mc_plate', 'a_mc_gauntlets', 'a_mc_leggings', 'a_mc_boots',
       'a_bwl_crown', 'a_bwl_plate', 'a_bwl_gauntlets', 'a_bwl_leggings', 'a_bwl_boots',
@@ -2273,6 +2549,46 @@ function checkEq(name, got, want) {
     const u = window.BuildPlayerUnit ? window.BuildPlayerUnit(s) : null;
     check('战斗单位携带套装字段', !u || (u.dmgTaken === 0 && u.healPct === 0));
 
+
+    // ===== 传说套装(泰坦铸卫 / 上古低语,2/4 件激活) =====
+    {
+      const lIds = ['s_titan', 's_oldgod'];
+      check('传说套装注册 2 套', lIds.every((id) => D.SETS[id]));
+      const lSets = lIds.map((id) => D.SETS[id]);
+      check('传说套装结构有效(2/4 档)', lSets.every((st) => (st.bonuses || []).length === 2
+        && st.bonuses[0].need === 2 && st.bonuses[1].need === 4 && st.source && st.pieces.length >= 6));
+      check('传说套装件均为橙色传说', lSets.every((st) => st.pieces.every((pid) => D.ITEMS[pid] && D.ITEMS[pid].quality === 'legendary' && D.ITEMS[pid].setId === st.id)));
+      check('泰坦铸卫 9 件含副手', D.SETS.s_titan.pieces.length === 9 && D.SETS.s_titan.pieces.includes('w_off_titan_wall'));
+      check('上古低语含传说法杖', D.SETS.s_oldgod.pieces.length === 6 && D.SETS.s_oldgod.pieces.includes('w_atiesh'));
+      // 泰坦铸卫:4 件激活攻击/暴击/吸血/减伤
+      const tt = W.Char.create('传说测试', 'human', 'warrior');
+      tt.level = 60;
+      tt.equipment.head = 'a_titan_crown';
+      tt.equipment.chest = 'a_titan_plate';
+      tt.equipment.gloves = 'a_titan_gauntlets';
+      tt.equipment.legs = 'a_titan_leggings';
+      check('泰坦铸卫计数 4', W.Char.setCounts(tt).s_titan === 4);
+      check('泰坦铸卫激活 2 档', W.Char.activeSetBonuses(tt, 's_titan').length === 2);
+      const ttC = W.Char.computed(tt);
+      const ttC0 = W.Char.computed(Object.assign({}, tt, { equipment: Object.assign({}, tt.equipment, { legs: null, gloves: null }) }));
+      check('泰坦铸卫攻击加成生效', ttC.atkMin > ttC0.atkMin && ttC.atkMax > ttC0.atkMax);
+      check('泰坦铸卫吸血生效', ttC.weaponLifesteal >= 0.05, `ls=${ttC.weaponLifesteal}`);
+      check('泰坦铸卫减伤生效', ttC.dmgTaken >= 0.05, `dt=${ttC.dmgTaken}`);
+      // 上古低语:2 件激活智力 + 法强
+      const og = W.Char.create('低语测试', 'human', 'mage');
+      og.level = 60;
+      og.equipment.chest = 'a_oldgod_robe';
+      og.equipment.head = 'a_oldgod_hood';
+      check('上古低语计数 2', W.Char.setCounts(og).s_oldgod === 2);
+      check('上古低语 2 件激活 2 档', W.Char.activeSetBonuses(og, 's_oldgod').length === 1);
+      const ogC = W.Char.computed(og);
+      const ogC0 = W.Char.computed(Object.assign({}, og, { equipment: Object.assign({}, og.equipment, { head: null }) }));
+      check('上古低语法强加成生效', ogC.spellPower > ogC0.spellPower);
+      og.equipment.gloves = 'a_oldgod_gloves';
+      og.equipment.legs = 'a_oldgod_legs';
+      check('上古低语计数 4', W.Char.setCounts(og).s_oldgod === 4);
+      check('上古低语 4 件激活 4 档', W.Char.activeSetBonuses(og, 's_oldgod').length === 2);
+    }
 
     // ===== 中期套装(21-30 段,2/3 件激活,三系 build) =====
     const midIds = ['s_stv_hunter', 's_badlands_wall', 's_marsh_arcane'];
@@ -2491,13 +2807,13 @@ function checkEq(name, got, want) {
   {
     // 团本标记:5 个团本副本
     const raidDgs = Object.values(D.DUNGEONS).filter((d) => d.raid);
-    check('团本副本标记 5 个', raidDgs.length === 5 && raidDgs.every((d) => D.MONSTERS[d.boss]),
+    check('团本副本标记 13 个', raidDgs.length === 13 && raidDgs.every((d) => D.MONSTERS[d.boss]),
       raidDgs.map((d) => d.id).join(','));
-    // 图鉴注册表:5 团本 + 13 副本 + 2 世界 = 20 首领
+    // 图鉴注册表:13 团本 + 37 副本 + 3 世界首领(含全部中途首领)
     const reg = W.Char.Codex.registry();
     const bySrc = { raid: 0, dungeon: 0, world: 0 };
     for (const r of reg) bySrc[r.src]++;
-    check('图鉴注册表覆盖全部首领(含中途首领)', reg.length === 129 && bySrc.raid >= 5 && bySrc.dungeon >= 21 && bySrc.world === 2,
+    check('图鉴注册表覆盖全部首领(含中途首领)', reg.length === 205 && bySrc.raid >= 13 && bySrc.dungeon >= 37 && bySrc.world === 3,
       `total=${reg.length} raid=${bySrc.raid} dungeon=${bySrc.dungeon} world=${bySrc.world}`);
     check('图鉴注册表首领均为真实怪物且带出没地', reg.every((r) => D.MONSTERS[r.mid] && !!r.source && !!r.icon), '');
     // Codex.record:首次击杀 / 次数 / 最快回合 / 首杀时间
@@ -2528,13 +2844,13 @@ function checkEq(name, got, want) {
   console.log('== 阵营声望 ==');
   {
     const reps = Object.values(D.REPS || {});
-    check('声望阵营 5 个且结构完整', reps.length === 5 && reps.every((r) => r.name && r.icon && r.color && r.faction && (r.zones || []).length && (r.dungeons || []).length),
+    check('声望阵营 8 个且结构完整', reps.length === 8 && reps.every((r) => r.name && r.icon && r.color && r.faction && (r.zones || []).length && (r.dungeons || []).length),
       reps.map((r) => r.id).join(','));
     // 军需官商品闭环
     const repItems = Object.values(D.ITEMS).filter((it) => it.rep);
     const badRep = repItems.filter((it) => !D.REPS[it.rep] || !W.Char.Reps.TIERS.some((t) => t.key === it.repTier));
-    check('军需官商品 25 件且阵营/等级有效', repItems.length === 25 && badRep.length === 0, repItems.length + ' items, bad=' + badRep.length);
-    check('每阵营含 1 匹坐骑(共 5 匹)', Object.values(D.REPS).every((r) => repItems.some((it) => it.rep === r.id && it.slot === 'mount')));
+    check('军需官商品 34 件且阵营/等级有效', repItems.length === 34 && badRep.length === 0, repItems.length + ' items, bad=' + badRep.length);
+    check('每阵营含 1 匹坐骑(共 8 匹)', Object.values(D.REPS).every((r) => repItems.some((it) => it.rep === r.id && it.slot === 'mount')));
     // 区域/副本映射闭环
     const badZone = [], badDg = [];
     for (const r of reps) {
@@ -2581,7 +2897,7 @@ function checkEq(name, got, want) {
     const badQZone = Object.values(D.QUESTS).filter((q) => !W.Char.Reps.forZone(q.zone));
     check('全部任务区域可映射声望', badQZone.length === 0, badQZone.map((q) => q.zone).join(','));
     // 声望徽章:5 阵营徽章物品 + 精英/Boss 掉落注入 + 上交逻辑
-    check('徽章注册表 5 阵营', Object.keys(D.BADGES).length === 5 && ['sw', 'og', 'argent', 'cenarion', 'thorium'].every((k) => D.BADGES[k]));
+    check('徽章注册表 8 阵营', Object.keys(D.BADGES).length === 8 && ['sw', 'og', 'argent', 'cenarion', 'thorium', 'cenarion_exp', 'shattar', 'scryers'].every((k) => D.BADGES[k]));
     check('徽章物品存在且标记阵营', ['r_badge_sw', 'r_badge_og', 'r_badge_ag', 'r_badge_ce', 'r_badge_th'].every((i) => D.ITEMS[i] && D.ITEMS[i].badge));
     const badgeSrc = {};
     for (const list of Object.values(D.DROPS)) {
@@ -2615,7 +2931,7 @@ function checkEq(name, got, want) {
 
   console.log('== 成就系统 ==');
   {
-    check('成就注册表 39 项(26副本成就+13其他)', Object.keys(D.ACHIEVEMENTS).length === 39, `n=${Object.keys(D.ACHIEVEMENTS).length}`);
+    check('成就注册表 67 项(50副本成就+17其他)', Object.keys(D.ACHIEVEMENTS).length === 67, `n=${Object.keys(D.ACHIEVEMENTS).length}`);
     // 成就结构:name/desc/cat/reward 齐全
     check('成就结构有效', Object.values(D.ACHIEVEMENTS).every((a) => a.name && a.desc && a.cat && a.reward));
     // 奖励物品均为真实物品
@@ -2639,12 +2955,12 @@ function checkEq(name, got, want) {
       W.Char.Achievements.trigger(c, 'dungeon', { mark: 'deadmines' });
       check('成就不重复发放', c.gold === goldBefore);
     }
-    // 26 副本成就结构:每副本一个 target,团本/5人本齐全
+    // 50 副本成就结构:每副本一个 target,团本/5人本齐全
     const dgAch = Object.values(D.ACHIEVEMENTS).filter((a) => a.cat === 'dungeon');
-    check('副本系成就 28 项(26对应+2通用)', dgAch.length === 28, `n=${dgAch.length}`);
+    check('副本系成就 52 项(50对应+2通用)', dgAch.length === 52, `n=${dgAch.length}`);
     check('每个副本都有对应成就', Object.keys(D.DUNGEONS).every((id) => D.ACHIEVEMENTS['ach_dg_' + id] && D.ACHIEVEMENTS['ach_dg_' + id].target === id));
-    check('副本成就 target 均有效', Object.values(D.ACHIEVEMENTS).filter((a) => a.target && D.DUNGEONS[a.target]).length === 26);
-    check('团本成就恰 5 座', Object.values(D.ACHIEVEMENTS).filter((a) => a.target && D.DUNGEONS[a.target] && D.DUNGEONS[a.target].raid).length === 5);
+    check('副本成就 target 均有效', Object.values(D.ACHIEVEMENTS).filter((a) => a.target && D.DUNGEONS[a.target]).length === 50);
+    check('团本成就恰 13 座', Object.values(D.ACHIEVEMENTS).filter((a) => a.target && D.DUNGEONS[a.target] && D.DUNGEONS[a.target].raid).length === 13);
     // 副本征服者进度按已通关副本数显示(trigger 打标驱动)
     {
       const pc = W.Char.create('进度', 'human', 'warrior');
@@ -2702,10 +3018,10 @@ function checkEq(name, got, want) {
       const todo = allAch.filter((a) => W.World._achMatchFilter(fs, a, fst));
       check('未完成筛掉已解锁', todo.length === allAch.length - W.Char.Achievements.unlocked(fs), 'n=' + todo.length + '/' + (allAch.length - W.Char.Achievements.unlocked(fs)));
       check('未完成不含死亡矿井成就', !todo.some((a) => a.id === 'ach_dg_deadmines'));
-      // 团本:仅指定团本副本成就(5 座),泛用成就不纳入
+      // 团本:仅指定团本副本成就(13 座),泛用成就不纳入
       W.World._achFilter = { q: '', done: 'all', raid: true, reach: false };
       const raid = allAch.filter((a) => W.World._achMatchFilter(fs, a, fst));
-      check('团本筛选恰 5 项', raid.length === 5, 'n=' + raid.length + ' ' + raid.map((a) => a.id).join(','));
+      check('团本筛选恰 13 项', raid.length === 13, 'n=' + raid.length + ' ' + raid.map((a) => a.id).join(','));
       check('团本筛选全部为团本成就', raid.every((a) => a.target && D.DUNGEONS[a.target] && D.DUNGEONS[a.target].raid));
       check('团本筛选不含泛用成就', !raid.some((a) => a.id === 'ach_dungeon_all'));
       // 可直达:20 级 → 5 座低阶副本 + 2 个泛用 = 7
@@ -2718,17 +3034,17 @@ function checkEq(name, got, want) {
       lowF.level = 10;
       const lowSt = W.Char.Achievements.state(lowF);
       check('可直达(10级)为 0', allAch.filter((a) => W.World._achMatchFilter(lowF, a, lowSt)).length === 0);
-      // 组合:团本 + 可直达(60级时全部团本可直达)
+      // 组合:团本 + 可直达(70 级时全部 13 座团本可直达)
       const f60 = W.Char.create('满级', 'human', 'warrior');
-      f60.level = 60;
+      f60.level = W.Config.LEVEL_CAP;
       const st60 = W.Char.Achievements.state(f60);
       W.World._achFilter = { q: '', done: 'all', raid: true, reach: true };
-      check('团本+可直达(60级)恰 5 项', allAch.filter((a) => W.World._achMatchFilter(f60, a, st60)).length === 5);
+      check('团本+可直达(70级)恰 13 项', allAch.filter((a) => W.World._achMatchFilter(f60, a, st60)).length === 13);
       // 实时芯片计数:随搜索/切换联动
       W.World._achFilter = { q: '', done: 'all', raid: false, reach: false };
-      check('全部计数=39', W.World._achCount(fs, fst, { done: 'all' }) === 39, 'n=' + W.World._achCount(fs, fst, { done: 'all' }));
-      check('未完成计数=37', W.World._achCount(fs, fst, { done: 'todo' }) === 37, 'n=' + W.World._achCount(fs, fst, { done: 'todo' }));
-      check('团本计数=5', W.World._achCount(fs, fst, { raid: true }) === 5, 'n=' + W.World._achCount(fs, fst, { raid: true }));
+      check('全部计数=67', W.World._achCount(fs, fst, { done: 'all' }) === 67, 'n=' + W.World._achCount(fs, fst, { done: 'all' }));
+      check('未完成计数=65', W.World._achCount(fs, fst, { done: 'todo' }) === 65, 'n=' + W.World._achCount(fs, fst, { done: 'todo' }));
+      check('团本计数=13', W.World._achCount(fs, fst, { raid: true }) === 13, 'n=' + W.World._achCount(fs, fst, { raid: true }));
       check('可直达计数=7', W.World._achCount(fs, fst, { reach: true }) === 7, 'n=' + W.World._achCount(fs, fst, { reach: true }));
       W.World._achFilter = { q: '熔火', done: 'all', raid: false, reach: false };
       check('搜索熔火后全部计数=1', W.World._achCount(fs, fst, { done: 'all' }) === 1, 'n=' + W.World._achCount(fs, fst, { done: 'all' }));
@@ -2782,6 +3098,30 @@ function checkEq(name, got, want) {
       c2.equipment.legs = 'a_mc_leggings';
       W.Char.Achievements.checkSpecial(c2);
       check('套装收集者成就解锁', !!W.Char.Achievements.state(c2).unlocked.ach_set_4);
+      // ===== 橙色传说成就:传说初临 / 登峰造极 / 群首猎尽 =====
+      const lg = W.Char.create('传说猎手', 'human', 'warrior');
+      lg.inventory.push({ id: 'a_titan_ring', count: 1 });
+      W.Char.Achievements.checkSpecial(lg);
+      check('传说初临成就解锁', !!W.Char.Achievements.state(lg).unlocked.ach_legend_1);
+      lg.equipment.head = 'a_titan_crown';
+      lg.equipment.chest = 'a_titan_plate';
+      lg.equipment.gauntlets = 'a_titan_gauntlets';
+      lg.equipment.legs = 'a_titan_leggings';
+      check('传说套装计数 4', W.Char.setCounts(lg).s_titan >= 4);
+      check('登峰造极进度 4/4', W.Char.Achievements.progressOf(lg, D.ACHIEVEMENTS.ach_set_legend) === 4);
+      W.Char.Achievements.checkSpecial(lg);
+      check('登峰造极成就解锁', !!W.Char.Achievements.state(lg).unlocked.ach_set_legend);
+      check('登峰造极奖励发放传说戒指', W.Char.Inventory.count(lg, 'a_titan_ring') >= 2);
+      const lex = W.Char.create('图鉴狂', 'human', 'warrior');
+      lex.codex = {};
+      for (const r of W.Char.Codex.registry()) lex.codex[r.mid] = { kills: 1, fastest: 1, firstAt: 1, lastAt: 1, src: r.src };
+      W.Char.Achievements.checkSpecial(lex);
+      check('群首猎尽成就解锁(图鉴全通)', !!W.Char.Achievements.state(lex).unlocked.ach_codex_all);
+      // 图鉴招牌掉落预览(含新增传说防具)
+      const cxHtml = W.World._codexDropHtml(W.Char.create('图鉴预览', 'human', 'warrior'), 'ragnaros');
+      check('图鉴展示首领招牌掉落', cxHtml.includes('a_titan_plate') && cxHtml.includes('w_ragnaros_hand'));
+      const cxEmpty = W.World._codexDropHtml(W.Char.create('图鉴空', 'human', 'warrior'), 'elwynn_boar');
+      check('无紫橙掉落的首领不显示掉落行', cxEmpty === '');
     }
     // 存档迁移兜底
     {
@@ -2896,9 +3236,9 @@ function checkEq(name, got, want) {
 
   console.log('== 团本/5人本标记 + 可装备标记 + 一键出售 ==');
   {
-    // 26 副本 = 5 团本 + 21 5人本
+    // 50 副本 = 13 团本 + 37 5人本
     const dgs = Object.values(D.DUNGEONS);
-    check('副本总数 26 (5 团本 + 21 5人本)', dgs.length === 26 && dgs.filter((d) => d.raid).length === 5 && dgs.filter((d) => !d.raid).length === 21,
+    check('副本总数 50 (13 团本 + 37 5人本)', dgs.length === 50 && dgs.filter((d) => d.raid).length === 13 && dgs.filter((d) => !d.raid).length === 37,
       `total=${dgs.length} raid=${dgs.filter((d) => d.raid).length} 5man=${dgs.filter((d) => !d.raid).length}`);
     // 成就副本类型标签(团本/5人本)
     check('团本成就标记团本(熔火之心)', W.World._achDungeonTag(D.ACHIEVEMENTS.ach_dg_molten_core).includes('团本'));
@@ -2906,7 +3246,7 @@ function checkEq(name, got, want) {
     check('5人本成就标记5人本(初次试炼)', W.World._achDungeonTag(D.ACHIEVEMENTS.ach_dungeon_1).includes('5人本'));
     check('全副本成就双标记(副本征服者)', W.World._achDungeonTag(D.ACHIEVEMENTS.ach_dungeon_all).includes('团本') && W.World._achDungeonTag(D.ACHIEVEMENTS.ach_dungeon_all).includes('5人本'));
     check('非副本成就无类型标记(锻造)', W.World._achDungeonTag(D.ACHIEVEMENTS.ach_forge_10) === '');
-    check('副本成就数量(28项:26对应+2通用)', Object.values(D.ACHIEVEMENTS).filter((a) => W.World._achDungeonTag(a) !== '').length === 28);
+    check('副本成就数量(52项:50对应+2通用)', Object.values(D.ACHIEVEMENTS).filter((a) => W.World._achDungeonTag(a) !== '').length === 52);
     // 可装备标记:等级达标 → 可装备;未达标 → 需要X级
     const mkc = W.Char.create('标记', 'human', 'warrior');
     mkc.level = 5;
@@ -3039,8 +3379,8 @@ function checkEq(name, got, want) {
     check('地图全连通(联盟可达全部区域)', ally.size === allIds.length, ally.size + '/' + allIds.length);
     check('地图全连通(部落可达全部区域)', horde.size === allIds.length, horde.size + '/' + allIds.length);
     const dgZones = Object.values(D.DUNGEONS).map((d) => Object.keys(Z).find((z) => Z[z].dungeon === d.id)).filter(Boolean);
-    check('联盟可达全部副本入口(26)', dgZones.every((z) => ally.has(z)) && dgZones.length === 26, dgZones.filter((z) => !ally.has(z)).join(',') || '全部可达');
-    check('部落可达全部副本入口(26)', dgZones.every((z) => horde.has(z)) && dgZones.length === 26, dgZones.filter((z) => !horde.has(z)).join(',') || '全部可达');
+    check('联盟可达全部副本入口(50)', dgZones.every((z) => ally.has(z)) && dgZones.length === 50, dgZones.filter((z) => !ally.has(z)).join(',') || '全部可达');
+    check('部落可达全部副本入口(50)', dgZones.every((z) => horde.has(z)) && dgZones.length === 50, dgZones.filter((z) => !horde.has(z)).join(',') || '全部可达');
     check('跨大陆航线(贫瘠之地↔荆棘谷)', !!(Z.barrens && Z.barrens.travel.includes('stv')) && !!(Z.stv && Z.stv.travel.includes('barrens')));
     const factionZones = Object.values(Z).filter((z) => z.faction === 'alliance' || z.faction === 'horde');
     check('仅主城/起始区保留阵营标签(4)', factionZones.length === 4 && factionZones.every((z) => ['elwynn', 'stormwind', 'durotar', 'orgrimmar'].includes(z.id)),
@@ -3250,6 +3590,393 @@ function checkEq(name, got, want) {
     tc.quests.q_boar.done = true;
     const tr = W.Char.QuestLog.turnIn(tc, 'q_boar');
     check('交付按新金币结算入账', !!tr && tc.gold === g0 + Math.floor(q.gold * W.Char.computed(tc).goldMult), 'gain=' + (tc.gold - g0));
+  }
+
+  console.log('== GM 调试模式 ==');
+  {
+    const gc = W.Char.create('GM测试', 'human', 'warrior');
+    const g = W.Char.GM.of(gc);
+    check('GM 配置默认全部关闭', g.enabled === false && g.god === false && g.oneShot === false && g.infinite === false);
+    g.god = true;
+    check('GM 总开关未开时单项不生效', W.Char.GM.has(gc, 'god') === false && W.Char.GM.on(gc) === false);
+    g.enabled = true;
+    check('GM 总开关开启后单项生效', W.Char.GM.has(gc, 'god') === true && W.Char.GM.on(gc) === true);
+
+    const ui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+    W.Utils.delay = () => Promise.resolve();
+    W.Combat.start(gc, [D.MONSTERS.hogger], ui, {});
+    const b = W.Combat.battle;
+    const p = b.player;
+    const hp0 = p.hp;
+    W.Combat._applyDamage(p, 9999);
+    check('GM 无敌:玩家受到的伤害归零', p.hp === hp0, 'hp=' + p.hp);
+
+    g.god = false;
+    W.Combat._applyDamage(p, 9999);
+    check('GM 关闭后伤害正常生效', p.hp === 0, 'hp=' + p.hp);
+
+    g.oneShot = true;
+    const e0 = b.enemies[0];
+    W.Combat._applyDamage(e0, 1);
+    check('GM 一击必杀:敌人被任意伤害清空生命', e0.hp === 0);
+    g.oneShot = false;
+
+    // 无限资源:资源不足 / 冷却中都视为可用
+    const costly = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && s.res && (s.cost || 0) > 0 && !s.passive)[0];
+    check('战士存在带消耗的主动技能', !!costly);
+    if (costly) {
+      p.rage = 0; p.energy = 0; p.mana = 0;
+      p.cd[costly.id] = 5;
+      check('GM 关闭:资源不足且冷却中不可用', W.Combat.canUse(costly, p) === false);
+      g.infinite = true;
+      check('GM 无限资源:无资源且冷却中仍可用', W.Combat.canUse(costly, p) === true);
+      check('GM 无限资源:消耗折算为 0', W.Combat._effCost(p, costly) >= 0);
+      g.infinite = false;
+    }
+    // 关闭总开关后一切恢复原样
+    g.enabled = false;
+    check('GM 总开关关闭后恢复常规判定', W.Char.GM.has(gc, 'god') === false && W.Combat._gm('god') === false);
+    check('GM 配置随角色对象持久化(存档可存)', 'gm' in gc);
+
+    // 调试日志:记录每一次 GM 操作
+    W.Char.GM.clearLog(gc);
+    check('清空后调试日志为空', W.Char.GM.logs(gc).length === 0);
+    g.enabled = true;
+    W.Char.GM.log(gc, 'toggle', '无敌模式 开启');
+    W.Char.GM.log(gc, 'action', '金币 +10000');
+    check('调试日志逐条记录操作', W.Char.GM.logs(gc, false).length === 2 && W.Char.GM.logs(gc, false)[0].text.includes('无敌'));
+    check('调试日志默认最新在前', W.Char.GM.logs(gc)[0].text.includes('金币'));
+    check('调试日志带时间戳', typeof W.Char.GM.logs(gc)[0].t === 'number' && W.Char.GM.logs(gc)[0].t > 0);
+    check('调试日志随角色对象持久化(存档可存)', Array.isArray(gc.gmLog) && gc.gmLog.length === 2);
+    // 水印/存档调试提示已移除,不再暴露「调试存档」标记接口
+    check('不再提供存档调试标记接口', typeof W.Char.GM.tainted === 'undefined');
+    for (let i = 0; i < W.Char.GM.LOG_MAX + 60; i++) W.Char.GM.log(gc, 'op', '测试日志 ' + i);
+    check(`调试日志最多保留 ${W.Char.GM.LOG_MAX} 条`, W.Char.GM.logs(gc).length === W.Char.GM.LOG_MAX);
+    check('溢出时丢弃最旧记录', W.Char.GM.logs(gc, false)[0].text === '测试日志 60');
+    // 战斗增益实际生效时也会写入日志
+    W.Char.GM.clearLog(gc);
+    g.god = true; g.infinite = true;
+    W.Combat.start(gc, [D.MONSTERS.hogger], ui, {});
+    check('GM 战斗增益生效时记入调试日志', W.Char.GM.logs(gc).some((e) => e.kind === 'battle' && e.text.includes('无敌')));
+    g.god = false; g.infinite = false;
+    W.Char.GM.clearLog(gc);
+    check('清空调试日志不影响 GM 总开关状态', g.enabled === true && W.Char.GM.on(gc) === true && W.Char.GM.logs(gc).length === 0);
+    g.enabled = false;
+    check('关闭 GM 总开关后战斗增益立即失效', W.Char.GM.has(gc, 'god') === false && W.Combat._gm('god') === false);
+  }
+
+  console.log('== 被动技能实效审计 ==');
+  {
+    // 逐个被动对比「学会 / 移除」的差异:属性快照 + 战斗开局探针(护盾/印记/控场/圣印/荆棘/宠物)
+    // 用满级 + 最强武器,避免小百分比加成被整数取整吞掉(如 2% 攻击在 1 级木杖上舍入后不可见)
+    const uiStub = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+    const bestW = Object.values(D.ITEMS).filter((i) => i.slot === 'weapon' && i.stats && i.stats.dmg)
+      .sort((a, b) => b.stats.dmg[1] - a.stats.dmg[1])[0];
+    const battleSnap = (ch) => {
+      W.Combat.start(ch, [D.MONSTERS.hogger], uiStub, {});
+      const b = W.Combat.battle, p = b.player, e = b.enemies[0];
+      const mk = e.buffs.find((x) => x.key === 'hunters_mark');
+      return [
+        p.shield ? p.shield.amount : 0,
+        p.shield ? (p.shield.healOnHit || 0) : 0,
+        mk ? mk.mod.takenPct : 0,
+        e.ccs.map((x) => x.type + ':' + x.rounds).join(','),
+        W.Combat._buffMod(p, 'onHit', 0),
+        W.Combat._buffMod(p, 'thorns', 0),
+        (p.passiveMod || {}).petAtkPct || 0,
+      ].join('|');
+    };
+    const dead = [];
+    const modKeys = {};
+    let audited = 0;
+    for (const sid in D.SKILLS) {
+      const s = D.SKILLS[sid];
+      if (!s || !s.passive || !s.mod) continue;
+      audited++;
+      for (const k in s.mod) modKeys[k] = (modKeys[k] || 0) + 1;
+      const cls = s.cls || 'warrior';
+      const race = s.race || (Object.values(D.RACES).find((r) => r.classes.includes(cls)) || {}).id || 'human';
+      const c = W.Char.create('实效审计', race, cls);
+      c.level = 60; c.equipment.weapon = bestW.id;
+      const cc = W.Char.computed(c);
+      c.hp = cc.hpMax; c.hpMax = cc.hpMax; c.mana = cc.manaMax; c.manaMax = cc.manaMax;
+      if (!c.learnedSkills.includes(sid)) c.learnedSkills.push(sid);
+      const c0 = W.Char.computed(c);
+      const clone = Object.assign({}, c, { learnedSkills: c.learnedSkills.filter((x) => x !== sid) });
+      const c1 = W.Char.computed(clone);
+      const statDiff = Object.keys(c0).filter((k) => k !== 'talents' && k !== 'race' && k !== 'cls'
+        && JSON.stringify(c0[k]) !== JSON.stringify(c1[k]));
+      const b0 = battleSnap(Object.assign({}, c, { learnedSkills: c.learnedSkills.slice() }));
+      const b1 = battleSnap(clone);
+      if (!statDiff.length && b0 === b1) dead.push(sid + '(' + s.name + ')');
+    }
+    check('全部被动技能都有可观测效果(属性或战斗)', dead.length === 0, dead.join(','));
+    check('被动审计覆盖 59 个技能', audited === 59, 'audited=' + audited);
+    // 每个 mod 键都要有消费方:属性类进 computed(),战斗类进 buildPlayerUnit/passiveMod 或 _applyPassiveStart
+    const consumed = ['atkPct', 'armorPct', 'spellPowerPct', 'hpPct', 'hit', 'dodge', 'crit', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal', 'manaRegenPct',
+      'onHit', 'thorns', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'startCc'];
+    const orphan = Object.keys(modKeys).filter((k) => !consumed.includes(k));
+    check('被动 mod 键全部有消费方', orphan.length === 0, orphan.join(','));
+  }
+
+  console.log('== 戒指/饰品双槽不可重复 ==');
+  {
+    const rc = W.Char.create('双戒', 'human', 'warrior');
+    rc.level = 30;
+    W.Char.Inventory.add(rc, 'a_band', 2); // 背包里两枚同名戒指
+    check('第 1 枚戒指装备到 ring1', W.Char.Equipment.equip(rc, 'a_band') && rc.equipment.ring1 === 'a_band', JSON.stringify(rc.equipment));
+    check('同名戒指不会再占 ring2', W.Char.Equipment.equip(rc, 'a_band') === false && !rc.equipment.ring2);
+    check('目标槽不会指向另一格同名装备', W.Char.Equipment.ringTarget(rc, 'a_band') === 'ring1');
+    check('拒绝原因标明同名互斥', /不能同时装备/.test(W.Char.Equipment.equipIssue(rc, 'a_band')), W.Char.Equipment.equipIssue(rc, 'a_band'));
+    W.Char.Inventory.add(rc, 'a_ring', 1);
+    check('不同戒指可正常填满 ring2', W.Char.Equipment.equip(rc, 'a_ring') && rc.equipment.ring2 === 'a_ring');
+    W.Char.Inventory.add(rc, 'a_silithus_ring', 1);
+    const ok3 = W.Char.Equipment.equip(rc, 'a_silithus_ring');
+    check('双满时替换较弱戒指且不出现同名双戴', ok3
+      && (rc.equipment.ring1 === 'a_silithus_ring' || rc.equipment.ring2 === 'a_silithus_ring')
+      && rc.equipment.ring1 !== rc.equipment.ring2, JSON.stringify(rc.equipment));
+
+    const tc = W.Char.create('双饰', 'human', 'warrior');
+    tc.level = 30;
+    W.Char.Inventory.add(tc, 'tr_brass_charm', 2);
+    check('第 1 件饰品装备到 trinket1', W.Char.Equipment.equip(tc, 'tr_brass_charm') && tc.equipment.trinket1 === 'tr_brass_charm');
+    check('同名饰品不会再占 trinket2', W.Char.Equipment.equip(tc, 'tr_brass_charm') === false && !tc.equipment.trinket2);
+    check('饰品拒绝原因标明同名互斥', /不能同时装备/.test(W.Char.Equipment.equipIssue(tc, 'tr_brass_charm')));
+    W.Char.Inventory.add(tc, 'tr_might_signet', 1);
+    check('不同饰品可正常填满 trinket2', W.Char.Equipment.equip(tc, 'tr_might_signet') && tc.equipment.trinket2 === 'tr_might_signet');
+    // 同名极品仍可就地升级原槽位(不新增槽位)
+    W.Char.Inventory.add(tc, 'tr_brass_charm', 1, { perf: true });
+    check('同名饰品极品可就地升级 trinket1', W.Char.Equipment.equip(tc, 'tr_brass_charm', true) === true && tc.eqPerf.trinket1 === true && tc.equipment.trinket2 === 'tr_might_signet');
+  }
+
+  console.log('== 减益/DOT 技能自动释放 ==');
+  {
+    const AUTO_IDS = ['rend', 'consecration', 'serpent_sting', 'shadow_word_pain', 'corruption', 'curse_of_agony'];
+    check('6 个纯减益/DOT 技能标记为自动释放', AUTO_IDS.every((id) => D.SKILLS[id] && D.SKILLS[id].autoCast === true));
+    check('自动释放技能免费(不消耗资源)', AUTO_IDS.every((id) => !D.SKILLS[id].res && !D.SKILLS[id].cost));
+    check('自动释放技能仍非被动(不计入常驻属性)', AUTO_IDS.every((id) => !D.SKILLS[id].passive && !D.SKILLS[id].mod));
+    check('带伤害的减益技能仍为手动主动', ['mortal_strike', 'frostbolt', 'immolate', 'moonfire', 'shield_slam', 'flame_shock', 'frost_shock', 'blizzard'].every((id) => D.SKILLS[id] && !D.SKILLS[id].autoCast && !D.SKILLS[id].passive));
+
+    const logs = [];
+    const uiA = { log: (cls, html) => logs.push(String(html)), float: () => {}, render: () => {}, onEnd: null };
+    const mkChar = (name, cls) => {
+      const c = W.Char.create(name, 'human', cls);
+      c.level = 20;
+      for (const sid of D.CLASSES[cls].skills) {
+        const s = D.SKILLS[sid];
+        if (s && s.learn <= c.level && !c.learnedSkills.includes(sid)) c.learnedSkills.push(sid);
+      }
+      const cc = W.Char.computed(c);
+      c.hp = cc.hpMax; c.hpMax = cc.hpMax; c.mana = cc.manaMax; c.manaMax = cc.manaMax;
+      return c;
+    };
+    // 牧师:暗言术：痛 第 1 回合自动挂上
+    const ac = mkChar('自动化牧师', 'priest');
+    const mana0 = ac.mana;
+    W.Combat.start(ac, [D.MONSTERS.hogger], uiA, {});
+    const ab = W.Combat.battle, ap = ab.player, ae = ab.enemies[0];
+    check('第 1 回合就自动释放减益(暗言术：痛)', ae.dots.some((d) => d.key === 'shadow_word_pain'), ae.dots.map((d) => d.key).join(','));
+    check('自动释放不消耗法力', ap.mana === mana0, 'mana=' + ap.mana);
+    check('自动释放写入战斗日志(标注自动施放)', logs.some((h) => h.includes('自动施放') && h.includes('暗言术：痛')));
+    check('自动释放技能不可手动施放', W.Combat.canUse(D.SKILLS.shadow_word_pain, ap) === false);
+    check('效果持续期间不重复施放', W.Combat._autoCastAll() === 0);
+    // 效果结束后由回合开始时自动补发
+    ae.dots = ae.dots.filter((d) => d.key !== 'shadow_word_pain');
+    const round0 = ab.round;
+    W.Combat._nextRound();
+    check('回合开始自动补下一发(效果已结束)', ab.round === round0 + 1 && ae.dots.some((d) => d.key === 'shadow_word_pain'));
+
+    // 圣骑士奉献(AOE + 冷却 4):首次自动释放后进入冷却
+    const pc = mkChar('奉献骑', 'paladin');
+    W.Combat.start(pc, [D.MONSTERS.elwynn_boar, D.MONSTERS.hogger], uiA, {});
+    const pb = W.Combat.battle, pp = pb.player;
+    check('奉献第 1 回合自动释放(全体敌人挂 DOT)', pb.enemies.every((e) => e.dots.some((d) => d.key === 'consecration')), pb.enemies.map((e) => e.dots.length).join(','));
+    check('奉献自动释放后进入冷却', pp.cd.consecration === 4, 'cd=' + pp.cd.consecration);
+    check('冷却中不再重复释放', W.Combat._autoCastAll() === 0);
+
+    // 战士:撕裂免费自动施放,且不占用玩家回合(仍可正常出招)
+    const wc = mkChar('撕裂战士', 'warrior');
+    W.Combat.start(wc, [D.MONSTERS.hogger], uiA, {});
+    const wb = W.Combat.battle, wp = wb.player, we = wb.enemies[0];
+    check('战士撕裂第 1 回合自动释放(不耗怒气)', we.dots.some((d) => d.key === 'rend') && wp.rage === wc.rage, 'rage=' + wp.rage);
+    const hpBefore = we.hp;
+    await W.Combat.playerAction({ type: 'attack', target: 'e0' });
+    check('自动释放不占用玩家回合(玩家仍可出招)', we.hp < hpBefore || wb.enemies.every((e) => e.hp <= 0), 'enemyHp=' + we.hp);
+  }
+
+  console.log('== 燃烧的远征(外域 · 等级上限 70) ==');
+  {
+    // ---------- 等级上限与经验曲线 ----------
+    check('等级上限为 70', W.Config.LEVEL_CAP === 70, 'cap=' + W.Config.LEVEL_CAP);
+    const classic = (lv) => Math.floor(W.Config.EXP_CURVE * Math.pow(lv, 1.7) + 12 * lv);
+    const lifted = (lv) => Math.floor((W.Config.EXP_CURVE * Math.pow(lv, 1.7) + 12 * lv) * (1 + W.Config.OUTLAND_CURVE * Math.max(0, lv - 60)));
+    check('1-60 级沿用经典经验曲线', [10, 40, 59, 60].every((lv) => U.expNeeded(lv) === classic(lv)),
+      `lv60=${U.expNeeded(60)} vs ${classic(60)}`);
+    check('61-70 级按外域系数叠乘抬升', [61, 65, 70].every((lv) => U.expNeeded(lv) === lifted(lv)),
+      `lv61=${U.expNeeded(61)} lv70=${U.expNeeded(70)}`);
+    let mono = true;
+    for (let lv = 1; lv < W.Config.LEVEL_CAP; lv++) if (U.expNeeded(lv + 1) <= U.expNeeded(lv)) mono = false;
+    check('1-70 升级需求单调递增', mono);
+
+    // ---------- 外域区域与交通 ----------
+    const TBC_ZONES = ['hellfire', 'zangarmarsh', 'terokkar', 'nagrand', 'bladesedge', 'netherstorm', 'shadowmoon'];
+    check('外域 7 张野外区域齐备(各 ≥5 种怪物)', TBC_ZONES.every((z) => D.ZONES[z] && D.ZONES[z].monsters.length >= 5));
+    check('枢纽区域存在(沙塔斯/时光之穴/卡拉赞/奎尔丹纳斯岛)',
+      ['shattrath', 'caverns_of_time', 'karazhan', 'quel_danas'].every((z) => D.ZONES[z]));
+    check('沙塔斯城有商人与旅店', (D.ZONES.shattrath.shop || []).length >= 30 && D.ZONES.shattrath.inn === true,
+      'shop=' + (D.ZONES.shattrath.shop || []).length);
+    check('外域商店只卖真实物品', TBC_ZONES.every((z) => (D.ZONES[z].shop || []).every((i) => D.ITEMS[i] && D.ITEMS[i].buy != null)));
+    // 从艾尔文森林 BFS:外域全部可达
+    const reachFromElwynn = (() => {
+      const seen = new Set(['elwynn']); const q = ['elwynn'];
+      while (q.length) {
+        const cur = D.ZONES[q.shift()]; if (!cur) continue;
+        for (const nxt of cur.travel || []) if (!seen.has(nxt)) { seen.add(nxt); q.push(nxt); }
+      }
+      return seen;
+    })();
+    check('黑暗之门连通(燃烧平原 → 地狱火半岛)', (D.ZONES.blasted_lands.travel || []).includes('hellfire'));
+    check('外域全部区域可从经典大陆抵达', TBC_ZONES.every((z) => reachFromElwynn.has(z)));
+    check('虚空飞艇连通主城与沙塔斯',
+      (D.AIRSHIPS.shattrath.to || []).includes('stormwind') && (D.AIRSHIPS.shattrath.to || []).includes('orgrimmar') &&
+      (D.AIRSHIPS.stormwind.to || []).includes('shattrath') && (D.AIRSHIPS.orgrimmar.to || []).includes('shattrath'));
+
+    // ---------- 副本(16 个 5 人本 + 8 座团本) ----------
+    const TBC_DUNGEONS = ['hellfire_ramparts', 'blood_furnace', 'shattered_halls', 'slave_pens', 'underbog', 'steamvault', 'mana_tombs',
+      'auchenai_crypts', 'sethekk_halls', 'shadow_labyrinth', 'old_hillsbrad', 'black_morass', 'mechanar', 'botanica', 'arcatraz', 'magisters_terrace',
+      'karazhan', 'gruuls_lair', 'magtheridons_lair', 'serpentshrine_cavern', 'tempest_keep', 'battle_for_hyjal', 'black_temple', 'sunwell_plateau'];
+    check('外域副本 24 座已注册', TBC_DUNGEONS.length === 24 && TBC_DUNGEONS.every((d) => D.DUNGEONS[d]),
+      TBC_DUNGEONS.filter((d) => !D.DUNGEONS[d]).join(','));
+    check('外域副本 16 个 5 人本 + 8 座团本',
+      TBC_DUNGEONS.filter((d) => D.DUNGEONS[d].raid).length === 8 && TBC_DUNGEONS.filter((d) => !D.DUNGEONS[d].raid).length === 16);
+    check('每座外域副本都有最终首领与掉落表',
+      TBC_DUNGEONS.every((d) => D.DUNGEONS[d].boss && D.MONSTERS[D.DUNGEONS[d].boss] && (D.DROPS[D.DUNGEONS[d].boss] || []).length));
+    check('每座外域副本都有宝箱与战斗波次',
+      TBC_DUNGEONS.every((d) => D.DUNGEONS[d].waves.length >= 3 && D.DUNGEONS[d].chest && D.DUNGEONS[d].chest.items.length));
+    check('外域副本入口区域闭环(区域→副本→区域)',
+      TBC_DUNGEONS.every((d) => D.ZONES[d] && D.ZONES[d].dungeon === d && (D.ZONES[D.DUNGEONS[d].zone].travel || []).includes(d)));
+    check('外域副本等级段 58-70', TBC_DUNGEONS.every((d) => D.DUNGEONS[d].minLevel >= 58 && D.DUNGEONS[d].minLevel <= 70));
+    check('30 级以上副本首领保底紫/橙战利品(含外域)',
+      TBC_DUNGEONS.every((d) => (D.DROPS[D.DUNGEONS[d].boss] || []).some(([iid]) => ['epic', 'purple', 'legendary', 'orange'].includes(D.ITEMS[iid].quality))));
+
+    // ---------- 任务接入任务板 ----------
+    check('每座外域副本都有讨伐任务并接入任务板',
+      TBC_DUNGEONS.every((d) => D.QUESTS['q_tbc_' + d] && (D.ZONES[d].quests || []).includes('q_tbc_' + d)));
+    check('外域野外区域悬赏接入任务板', TBC_ZONES.every((z) => (D.ZONES[z].quests || []).some((qid) => String(qid).startsWith('q_map_'))));
+    const tbcQuests = Object.values(D.QUESTS).filter((q) => String(q.id).startsWith('q_tbc_') || TBC_ZONES.includes(q.zone));
+    check('外域任务目标怪物存在', tbcQuests.every((q) => !q.target || D.MONSTERS[q.target]),
+      tbcQuests.filter((q) => q.target && !D.MONSTERS[q.target]).map((q) => q.id).join(','));
+    check('外域任务奖励物品存在', tbcQuests.every((q) => (q.rewardItems || []).every((i) => D.ITEMS[i])));
+    check('外域任务区域可映射声望', tbcQuests.every((q) => W.Char.Reps.forZone(q.zone)),
+      tbcQuests.filter((q) => !W.Char.Reps.forZone(q.zone)).map((q) => q.zone).join(','));
+
+    // ---------- 61-70 装备与武器 ----------
+    const reachableItems = new Set();
+    for (const z of Object.values(D.ZONES)) for (const i of z.shop || []) reachableItems.add(i);
+    for (const list of Object.values(D.DROPS)) for (const e of list) reachableItems.add(e[0]);
+    for (const q of Object.values(D.QUESTS)) for (const i of q.rewardItems || []) reachableItems.add(i);
+    for (const r of Object.values(Object.assign({}, D.SYNTH, D.CRAFTS))) if (r.item) reachableItems.add(r.item);
+    for (const a of Object.values(D.ACHIEVEMENTS)) for (const i of (a.reward && a.reward.items) || []) reachableItems.add(i);
+    for (const it of Object.values(D.ITEMS)) if (it.rep) reachableItems.add(it.id);
+    const SLOTS = ['weapon', 'offhand', 'head', 'chest', 'gloves', 'legs', 'boots', 'cloak', 'neck', 'ring', 'trinket'];
+    const lateItem = (slot) => Object.values(D.ITEMS).filter((it) => it.slot === slot && it.level >= 61 && reachableItems.has(it.id));
+    check('61-70 级每个槽位都有可获取装备', SLOTS.every((s) => lateItem(s).length >= 1),
+      SLOTS.filter((s) => !lateItem(s).length).join(','));
+    const lineOf = (it) => { const st = it.stats || {}; if ((st.int || 0) > 0 && !st.str && !st.agi) return 'caster'; if ((st.agi || 0) > 0 && !st.str) return 'agile'; if ((st.int || 0) > (st.str || 0) + (st.agi || 0)) return 'caster'; return 'physical'; };
+    check('61-70 武器三线齐全(物理/敏捷/法系)', ['physical', 'agile', 'caster'].every((line) => lateItem('weapon').some((w) => lineOf(w) === line)),
+      lateItem('weapon').map((w) => w.id + ':' + lineOf(w)).join(','));
+    check('外域材料与消耗品齐备', ['m_feliron', 'm_nether', 'c_out_heal', 'c_out_mana', 'c_nether_flask'].every((i) => D.ITEMS[i]));
+    check('外域打造配方产物真实存在',
+      ['craft_nether_edge', 'craft_nether_staff', 'craft_void_plate', 'craft_sun_robe'].every((c) => D.CRAFTS[c] && D.ITEMS[D.CRAFTS[c].item]));
+    const TBC_LEGEND = { w_warglaive: 'weapon', w_thori_dal: 'weapon', w_naaru_staff: 'weapon', w_black_temple_blade: 'weapon', w_void_staff: 'weapon', tr_skull_guldan: 'trinket' };
+    check('外域传说装备 6 件(5 武器 + 1 饰品)', Object.keys(TBC_LEGEND).every((i) => D.ITEMS[i] && D.ITEMS[i].quality === 'legendary' && D.ITEMS[i].slot === TBC_LEGEND[i]));
+    const dropSources = new Set();
+    for (const list of Object.values(D.DROPS)) for (const [iid] of list) dropSources.add(iid);
+    check('外域传说武器全部来自首领掉落', Object.keys(TBC_LEGEND).every((i) => dropSources.has(i)));
+    check('外域传说武器领先同线非传说武器(手工校验伤害阶)',
+      D.ITEMS.w_warglaive.stats.dmg[0] > D.ITEMS.w_nether_edge.stats.dmg[1] && D.ITEMS.w_naaru_staff.stats.dmg[0] > D.ITEMS.w_nether_staff.stats.dmg[1]);
+
+    // ---------- 声望 · 徽章 · 军需官 ----------
+    check('外域三声望阵营齐备(远征队/沙塔尔/占星者)', ['cenarion_exp', 'shattar', 'scryers'].every((r) => D.REPS[r] && D.BADGES[r]));
+    check('外域军需官含蓝装/紫装/坐骑', ['cenarion_exp', 'shattar', 'scryers'].every((r) => {
+      const items = Object.values(D.ITEMS).filter((it) => it.rep === r);
+      return items.some((it) => it.quality === 'blue') && items.some((it) => it.quality === 'purple') && items.some((it) => it.slot === 'mount');
+    }));
+    check('外域声望徽章有掉落来源', ['r_badge_cexp', 'r_badge_shattar', 'r_badge_scryers'].every((b) => dropSources.has(b)));
+    check('全部 50 座副本都映射到声望阵营', Object.keys(D.DUNGEONS).every((d) => W.Char.Reps.forDungeon(d)),
+      Object.keys(D.DUNGEONS).filter((d) => !W.Char.Reps.forDungeon(d)).join(','));
+
+    // ---------- 世界首领 · 成就 ----------
+    check('外域世界首领末日行者(Lv.70 影月谷)', D.WORLD_BOSSES.doomwalker && D.WORLD_BOSSES.doomwalker.zone === 'shadowmoon' &&
+      D.WORLD_BOSSES.doomwalker.minLevel === 70 && D.MONSTERS.doomwalker.level === 70 && D.MONSTERS.doomwalker.boss === 1);
+    check('末日行者掉落外域传说战刃', (D.DROPS.doomwalker || []).some(([i]) => i === 'w_black_temple_blade'));
+    check('每座外域副本都有通关成就', TBC_DUNGEONS.every((d) => D.ACHIEVEMENTS['ach_dg_' + d] && D.ACHIEVEMENTS['ach_dg_' + d].target === d));
+    check('70 级满级成就存在(外域远征军)', D.ACHIEVEMENTS.ach_level_70 && D.ACHIEVEMENTS.ach_level_70.count === 70);
+    const lv70c = W.Char.create('外域满级', 'human', 'warrior');
+    lv70c.level = 70;
+    W.Char.Achievements.checkSpecial(lv70c);
+    const st70 = W.Char.Achievements.state(lv70c);
+    check('70 级解锁满级成就(60 级成就同时保留)', !!st70.unlocked.ach_level_70 && !!st70.unlocked.ach_level_60);
+
+    // ---------- 实战烟测:外域野外 + 外域副本首领 ----------
+    const tc = W.Char.create('远征勇士', 'human', 'warrior');
+    tc.level = 70;
+    tc.equipment = {
+      weapon: 'w_outland_blade', head: 'a_out_helm', chest: 'a_out_chest', gloves: 'a_out_gloves',
+      legs: 'a_out_legs', boots: 'a_out_boots', cloak: 'a_out_cloak', neck: 'a_out_neck',
+      ring1: 'a_out_ring', ring2: 'a_out_ring', trinket1: 'tr_out_signet',
+    };
+    const tcc = W.Char.computed(tc);
+    tc.hp = tcc.hpMax; tc.hpMax = tcc.hpMax; tc.mana = tcc.manaMax; tc.manaMax = tcc.manaMax;
+    for (const sid of D.CLASSES.warrior.skills) { const s = D.SKILLS[sid]; if (s && s.learn <= tc.level && !tc.learnedSkills.includes(sid)) tc.learnedSkills.push(sid); }
+    const tui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+    W.Utils.delay = () => Promise.resolve();
+    const fight = async (who, enemyId) => {
+      W.Combat.start(who, [D.MONSTERS[enemyId]], tui, {});
+      const b = W.Combat.battle;
+      let g = 0;
+      while (!b.ended && g++ < 200) {
+        const p = b.player;
+        const skill = p.learned.map((id) => D.SKILLS[id]).filter((s) => s && W.Combat.canUse(s, p) && (s.dmg || s.heal || s.dot))[0];
+        await W.Combat.playerAction(skill ? { type: 'skill', skill: skill.id, target: 'e0' } : { type: 'attack', target: 'e0' });
+      }
+      return { victory: b.victory, rounds: g };
+    };
+    const field = await fight(tc, 'hell_elite');
+    check('外域稀有精英可正常击破', field.victory, `rounds=${field.rounds}`);
+    W.Char.rest(tc);
+    const dgBoss = D.DUNGEONS.hellfire_ramparts.boss;
+    const bossFight = await fight(tc, dgBoss);
+    check('外域 5 人本最终首领可正常击破(' + dgBoss + ')', bossFight.victory, `rounds=${bossFight.rounds}`);
+    // 外域团本可通关性回归:首领血量按经典曲线标定(5 人本 3600+60×(lv-58),团本 6600+60×(lv-60),终局 ×1.15),
+    // 不允许出现「满装也打不过」的死副本。
+    const raidWar = W.Char.create('团本回归', 'human', 'warrior');
+    raidWar.level = 70;
+    raidWar.equipment = {
+      weapon: 'w_warglaive', head: 'a_sun_crown', chest: 'a_sun_robe', gloves: 'a_sun_gloves',
+      legs: 'a_sun_legs', boots: 'a_sun_boots', cloak: 'a_sun_cloak', neck: 'a_sun_neck',
+      ring1: 'a_sun_ring', ring2: 'a_sun_ring', trinket1: 'tr_sun_seal',
+    };
+    for (const bd of D.TALENT_BUILDS.warrior) W.Char.applyBuild(raidWar, bd);
+    for (const sid of D.CLASSES.warrior.skills) { const s = D.SKILLS[sid]; if (s && s.learn <= raidWar.level && !raidWar.learnedSkills.includes(sid)) raidWar.learnedSkills.push(sid); }
+    const rw = W.Char.computed(raidWar);
+    raidWar.hp = rw.hpMax; raidWar.hpMax = rw.hpMax; raidWar.mana = rw.manaMax; raidWar.manaMax = rw.manaMax;
+    let raidWins = 0;
+    for (let i = 0; i < 3; i++) {
+      const r = await fight(raidWar, D.DUNGEONS.karazhan.boss);
+      if (r.victory) raidWins++;
+      W.Char.rest(raidWar);
+    }
+    check('70 级满装战士可击破外域团本首领(卡拉赞 ≥1/3)', raidWins >= 1, `wins=${raidWins}/3`);
+    let finalWins = 0;
+    for (let i = 0; i < 3; i++) {
+      const r = await fight(raidWar, D.DUNGEONS.sunwell_plateau.boss);
+      if (r.victory) finalWins++;
+      W.Char.rest(raidWar);
+    }
+    check('终局团本首领(太阳井高地)可被击败(≥1/3)', finalWins >= 1, `wins=${finalWins}/3`);
+    const worldBoss = await fight(raidWar, 'doomwalker');
+    check('外域世界首领末日行者可被击败', worldBoss.victory, `rounds=${worldBoss.rounds}`);
   }
 
   console.log(failed === 0 ? '\n🎉 全部通过' : `\n❌ ${failed} 项失败`);

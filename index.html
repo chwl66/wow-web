@@ -30,18 +30,26 @@
         <div class="side-panel"></div>
       </div>
       <div class="world-footer">
-        <button class="btn" data-act="status">📋 状态</button>
-        <button class="btn" data-act="bag">🎒 背包</button>
-        <button class="btn" data-act="skills">📖 技能</button>
-        <button class="btn" data-act="pets" style="display:none">🐾 宠物</button>
-        <button class="btn" data-act="talents">🌟 天赋</button>
-        <button class="btn" data-act="forge">⚒️ 锻造</button>
-        <button class="btn" data-act="ach">🏅 成就</button>
-<button class="btn" data-act="codex">👹 图鉴</button>
-<button class="btn" data-act="rep">🏛️ 声望</button>
-        <button class="btn" data-act="save">💾 存档</button>
-        <button class="btn" data-act="settings">⚙️ 设置</button>
-        <button class="btn ghost" data-act="title">🏠 标题</button>
+        <!-- 一级菜单:高频功能 -->
+        <div class="wf-main">
+          <button class="btn" data-act="status">📋 状态</button>
+          <button class="btn" data-act="bag">🎒 背包</button>
+          <button class="btn" data-act="skills">📖 技能</button>
+          <button class="btn" data-act="pets" style="display:none">🐾 宠物</button>
+          <button class="btn" data-act="talents">🌟 天赋</button>
+          <button class="btn wf-more" data-act="more" aria-expanded="false" aria-controls="world-subnav">✨ 更多</button>
+        </div>
+        <!-- 二级菜单:锻造 / 声望 / 图鉴 / 成就等低频功能 -->
+        <div class="wf-sub" id="world-subnav" hidden>
+          <button class="btn" data-act="forge">⚒️ 锻造</button>
+          <button class="btn" data-act="ach">🏅 成就</button>
+          <button class="btn" data-act="codex">👹 图鉴</button>
+          <button class="btn" data-act="rep">🏛️ 声望</button>
+          <button class="btn" data-act="save">💾 存档</button>
+          <button class="btn" data-act="settings">⚙️ 设置</button>
+          <button class="btn gm-btn" data-act="gm" hidden>🛠️ GM 模式</button>
+          <button class="btn ghost" data-act="title">🏠 标题</button>
+        </div>
       </div>
     </div>
 
@@ -53,6 +61,8 @@
         <div class="combat-log"></div>
         <div class="skill-bar"></div>
         <div class="scroll-bar"></div>
+        <!-- 触屏专属提示(桌面隐藏):title 悬停在触屏不可见,统一改为长按查看 -->
+        <div class="touch-hint">💡 长按技能 / 卡牌可查看说明与剩余回合</div>
       </div>
     </div>
 
