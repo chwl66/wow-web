@@ -22,3 +22,6 @@ www.zip
 
 # 在线更新产物(由 scripts/update-artifacts.js 生成)
 dist-update/
+
+# AI 助手工作目录(记忆/会话数据,不随代码分发)
+.workbuddy-ai/
