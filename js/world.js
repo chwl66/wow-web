@@ -3040,7 +3040,12 @@
     openSave() {
       const char = W.State.character;
       const slots = W.State.loadSlots();
-      let html = '<div class="save-slots">';
+      // 导出/导入与标题界面共用 UI 层实现;操作栏放列表上方,否则会被 10 个槽位推到弹窗之外
+      let html = `<div class="save-io">
+        <button class="btn" data-io="export">📤 导出文件</button>
+        <button class="btn" data-io="copy">📋 复制文本</button>
+        <button class="btn" data-io="import">📥 导入存档</button>
+      </div><div class="save-slots">`;
       for (let i = 0; i < C.MAX_SLOTS; i++) {
         const s = slots[i];
         const isCur = W.State._saveSlot === i;
@@ -3090,6 +3095,12 @@
       m.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', () => {
         W.State.erase(parseInt(btn.dataset.del, 10));
         this.openSave();
+      }));
+      m.querySelectorAll('[data-io]').forEach((btn) => btn.addEventListener('click', () => {
+        const act = btn.dataset.io;
+        if (act === 'export') W.UI.exportSaves();
+        else if (act === 'copy') W.UI.copySaves();
+        else if (act === 'import') W.UI.openImport(() => this.openSave());
       }));
     },
 

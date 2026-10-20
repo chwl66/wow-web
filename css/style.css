@@ -1330,6 +1330,25 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .wm-key.wm-direct::before { background: #8a8478; }
 .wm-key.wm-transit::before { background: rgba(138,132,120,0.4); }
 
+/* 存档导出 / 导入(零后端:用户自己搬 JSON 文件) */
+.save-io {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 14px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.save-io .btn { flex: 1; min-width: 108px; }
+.io-tip { font-size: 12.5px; color: var(--text-dim); line-height: 1.8; margin: 0 0 12px; }
+.io-hint { font-size: 11.5px; color: var(--text-dim); line-height: 1.7; margin: 10px 0 0; }
+.io-row { margin-bottom: 10px; }
+.io-text {
+  width: 100%; min-height: 150px; max-height: 40vh; resize: vertical;
+  background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px; line-height: 1.55; padding: 10px; outline: none;
+}
+.io-text:focus { border-color: var(--border-gold); }
+.io-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.io-actions .btn { flex: 1; min-width: 100px; }
 .save-row {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
   background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 5px;

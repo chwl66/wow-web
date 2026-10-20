@@ -358,10 +358,70 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   W.World.openSave();
   check('存档界面显示自动来源标签', !!doc.querySelector('.save-src-auto'));
   check('存档界面显示进度摘要(金币/位置)', text('.save-meta').includes('金币'));
+  // 游戏内「💾 存档」与标题「存档管理」是两套渲染,导出/导入必须两边都有(曾漏过游戏内)
+  check('游戏内存档界面有导出入口', !!doc.querySelector('#modal-root [data-io="export"]'));
+  check('游戏内存档界面有复制入口', !!doc.querySelector('#modal-root [data-io="copy"]'));
+  {
+    const impBtn = doc.querySelector('#modal-root [data-io="import"]');
+    check('游戏内存档界面有导入入口', !!impBtn);
+    if (impBtn) {
+      impBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      check('游戏内点导入能打开导入弹窗', !!doc.getElementById('io-import-text'));
+      const cancel = doc.querySelector('#modal-root [data-io-cancel]');
+      if (cancel) cancel.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      check('取消导入后回到存档界面', !!doc.querySelector('#modal-root [data-io="export"]'));
+    }
+  }
   const sv = doc.querySelector('[data-save]');
   if (sv) sv.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   check('存档成功', W.State.saveSlots.some(Boolean));
   check('手动保存后显示手动来源标签', !!doc.querySelector('.save-src-manual'));
+  // 存档导出 / 导入(零后端:用户自己搬 JSON 文件)
+  {
+    const snapshot = JSON.stringify({ slots: W.State.saveSlots, current: W.State._saveSlot });
+    const before = W.State.saveSlots.filter(Boolean).length;
+    const json = W.State.exportJson();
+    let parsed = null;
+    try { parsed = JSON.parse(json); } catch (e) {}
+    check('导出存档是合法 JSON', !!parsed && parsed.app === 'wow-web' && parsed.kind === 'save-export');
+    check('导出条目数与存档槽一致', parsed && parsed.slots.filter(Boolean).length === before);
+    check('导出条目含角色数据', parsed && parsed.slots.filter(Boolean).every((e) => e.data && e.data.name));
+
+    // 清空后合并导入,应完整恢复
+    for (let i = 0; i < W.Config.MAX_SLOTS; i++) W.State.erase(i);
+    const r1 = W.State.importJson(json, 'merge');
+    check('合并导入恢复全部存档', r1.ok && W.State.saveSlots.filter(Boolean).length === before, JSON.stringify(r1));
+
+    // 错误输入必须被挡在进入游戏之前
+    check('导入拒绝坏 JSON', !W.State.importJson('这不是 json', 'merge').ok);
+    check('导入拒绝缺 slots 的对象', !W.State.importJson('{"foo":1}', 'merge').ok);
+    check('导入拒绝空存档', !W.State.importJson('{"slots":[],"v":2}', 'merge').ok);
+    check('导入拒绝缺角色数据的条目', !W.State.importJson('{"slots":[{"name":"x","data":null}],"v":2}', 'merge').ok);
+    check('导入拒绝更高版本的存档', !W.State.importJson('{"slots":[{"name":"x","data":{"a":1}}],"v":999}', 'merge').ok);
+
+    // 满槽时合并不得覆盖已有存档
+    for (let i = 0; i < W.Config.MAX_SLOTS; i++) {
+      if (!W.State.saveSlots[i]) {
+        const filler = W.Char.create('填充' + i, 'orc', 'warrior');
+        W.State.newCharacter(filler);
+        W.State.save(i, 'manual');
+      }
+    }
+    const keep = W.State.saveSlots[0] && W.State.saveSlots[0].name;
+    const r2 = W.State.importJson(json, 'merge');
+    check('满槽时合并被拒绝', !r2.ok && /空存档槽/.test(r2.err || ''), r2.err);
+    check('满槽时合并不覆盖已有存档', (W.State.saveSlots[0] && W.State.saveSlots[0].name) === keep);
+
+    // 覆盖模式
+    const r3 = W.State.importJson(json, 'replace');
+    check('覆盖导入成功', r3.ok && W.State.saveSlots.filter(Boolean).length === before, JSON.stringify(r3));
+
+    // 还原测试前状态,避免影响后续用例
+    const snap = JSON.parse(snapshot);
+    W.State.saveSlots = snap.slots;
+    W.State._saveSlot = snap.current;
+    W.State.persist();
+  }
   {
     const t = doc.getElementById('toast');
     check('落盘成功才提示已保存', !!t && t.classList.contains('show') && t.textContent.includes('已保存'),

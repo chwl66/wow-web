@@ -199,6 +199,73 @@
       return this.persist();
     },
 
+    /* ============ 存档导出 / 导入 ============
+     * 零后端方案:把 localStorage 里的存档打成 JSON,用户自己搬文件。
+     * 之所以不做云同步,是因为本工程的前提是「双击 index.html 就能玩、无需服务器」,
+     * 引入账号体系会同时破坏离线和 APK 直装两条路径。 */
+
+    // 导出载荷:带来源标识与版本,便于导入时校验和给出可读的报错
+    exportData() {
+      this.loadSlots();
+      return {
+        app: 'wow-web',
+        kind: 'save-export',
+        v: C.SAVE_VERSION,
+        game: window.WOW_VERSION || '',
+        exportedAt: Date.now(),
+        current: this._saveSlot,
+        slots: this.saveSlots,
+      };
+    },
+
+    exportJson() {
+      return JSON.stringify(this.exportData(), null, 2);
+    },
+
+    /* 导入。mode: 'merge' 只填空槽 / 'replace' 覆盖全部
+     * 返回 { ok, added, replaced, err } */
+    importJson(text, mode) {
+      let obj;
+      try { obj = JSON.parse(text); } catch (e) { return { ok: false, err: '不是合法的 JSON 文件' }; }
+      if (!obj || typeof obj !== 'object') return { ok: false, err: '文件内容不是存档对象' };
+      // 兼容两种来源:本工程导出的完整载荷,或直接是 { slots, current, v } 的 localStorage 原文
+      if (!Array.isArray(obj.slots)) return { ok: false, err: '文件里没有存档数据（缺少 slots 字段）' };
+
+      const m = this.migrateSave({ slots: obj.slots, current: obj.current, v: obj.v });
+      if (m.from > C.SAVE_VERSION) {
+        return { ok: false, err: `该存档来自更新的游戏版本（v${m.from}），请先更新游戏再导入` };
+      }
+      const incoming = m.slots.filter(Boolean);
+      if (!incoming.length) return { ok: false, err: '存档是空的，没有可导入的内容' };
+      // 缺 data 的条目读进去会让角色变成 undefined,提前挡掉
+      const usable = incoming.filter((e) => e && e.data);
+      if (!usable.length) return { ok: false, err: '存档条目已损坏（缺少角色数据）' };
+
+      this.loadSlots();
+      const cur = this.saveSlots.slice();
+      let added = 0, replaced = 0;
+
+      if (mode === 'replace') {
+        for (let i = 0; i < C.MAX_SLOTS; i++) cur[i] = usable[i] || undefined;
+        replaced = Math.min(usable.length, C.MAX_SLOTS);
+        const wantCur = Number.isInteger(m.current) ? m.current : 0;
+        this._saveSlot = (wantCur >= 0 && wantCur < C.MAX_SLOTS && cur[wantCur]) ? wantCur : 0;
+      } else {
+        for (const e of usable) {
+          let idx = -1;
+          for (let i = 0; i < C.MAX_SLOTS; i++) { if (!cur[i]) { idx = i; break; } }
+          if (idx < 0) break;   // 槽位满了就停,不覆盖已有存档
+          cur[idx] = e;
+          added++;
+        }
+        if (!added) return { ok: false, err: `没有空存档槽（共 ${C.MAX_SLOTS} 个），请先删除旧存档或改用「覆盖」` };
+      }
+
+      this.saveSlots = cur;
+      const ok = this.persist();
+      return { ok, added, replaced, err: ok ? '' : '写入本地存储失败（可能空间已满）' };
+    },
+
     /* 新游戏重置 */
     reset() {
       this.character = null;
@@ -258,6 +325,111 @@
         '</div>', { title, close: false });
       const m = $('#modal-root');
       m.querySelector('[data-yes]').addEventListener('click', () => { UI.closeModal(); onYes && onYes(); });
+    },
+
+    /* ---------- 存档导出 / 导入(标题界面与游戏内共用) ----------
+     * 抽到 UI 层而不是留在 Main:两个入口(标题「存档管理」/ 世界界面「💾 存档」)都要用,
+     * 各写一份必然漂移。back() 由调用方给,决定取消/返回时刷新哪个界面。 */
+    _saveStamp() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+    },
+
+    exportSaves() {
+      const json = W.State.exportJson();
+      const name = `wow-save-${this._saveStamp()}.json`;
+      try {
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        UI.toast(`已导出 ${name}（若未开始下载，请改用「复制文本」）`, 'ok');
+      } catch (e) {
+        // 部分 WebView 不支持 Blob 下载,退回到文本展示
+        this.showSaveText(json, name, null);
+      }
+    },
+
+    copySaves() {
+      const json = W.State.exportJson();
+      const name = `wow-save-${this._saveStamp()}.json`;
+      const fallback = () => this.showSaveText(json, name, null);
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(json).then(
+            () => UI.toast('存档文本已复制到剪贴板', 'ok'),
+            fallback
+          );
+        } else fallback();
+      } catch (e) { fallback(); }
+    },
+
+    showSaveText(json, name, back) {
+      UI.openModal(
+        '<div class="io-export">' +
+          `<p class="io-tip">存档文本（${W.Utils.esc(name)}，${(json.length / 1024).toFixed(1)} KB）。全选复制后自行保存成 .json 文件即可备份。</p>` +
+          `<textarea class="io-text" id="io-export-text" readonly>${W.Utils.esc(json)}</textarea>` +
+          '<div class="io-actions"><button class="btn gold" data-io-back>' + (back ? '返回' : '关闭') + '</button></div>' +
+        '</div>', { title: '导出存档' });
+      const m = $('#modal-root');
+      const ta = document.getElementById('io-export-text');
+      if (ta) { ta.focus(); ta.select(); }
+      m.querySelectorAll('[data-io-back]').forEach((b) => b.addEventListener('click', () => {
+        if (back) back(); else UI.closeModal();
+      }));
+    },
+
+    openImport(back) {
+      UI.openModal(
+        '<div class="io-import">' +
+          '<p class="io-tip">选择之前导出的 .json 文件，或把存档文本粘贴到下面。导入不会影响当前正在进行的游戏进度。</p>' +
+          '<div class="io-row"><button class="btn" data-io-pick>📁 选择文件…</button>' +
+          '<input type="file" id="io-file" accept=".json,application/json" hidden></div>' +
+          '<textarea class="io-text" id="io-import-text" placeholder="在此粘贴存档 JSON…"></textarea>' +
+          '<div class="io-actions">' +
+            '<button class="btn gold" data-io-do="merge">合并到空槽</button>' +
+            '<button class="btn" data-io-do="replace">覆盖全部存档</button>' +
+            '<button class="btn ghost" data-io-cancel>取消</button>' +
+          '</div>' +
+          '<p class="io-hint">「合并」只填入空槽位，不动已有存档；「覆盖」会清空现有存档槽。</p>' +
+        '</div>', { title: '导入存档' });
+
+      const m = $('#modal-root');
+      const ta = document.getElementById('io-import-text');
+      const file = document.getElementById('io-file');
+
+      m.querySelectorAll('[data-io-pick]').forEach((b) => b.addEventListener('click', () => file && file.click()));
+      if (file) {
+        file.addEventListener('change', () => {
+          const f = file.files && file.files[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => { if (ta) { ta.value = String(reader.result || ''); UI.toast('已读取 ' + f.name, 'ok'); } };
+          reader.onerror = () => UI.toast('读取文件失败', 'warn');
+          reader.readAsText(f);
+        });
+      }
+
+      m.querySelectorAll('[data-io-do]').forEach((b) => b.addEventListener('click', () => {
+        const text = ta ? ta.value.trim() : '';
+        if (!text) { UI.toast('请先选择文件或粘贴存档文本', 'warn'); return; }
+        const mode = b.dataset.ioDo;
+        if (mode === 'replace' && !window.confirm('覆盖会清空当前所有存档槽，确定继续？')) return;
+        const r = W.State.importJson(text, mode);
+        if (!r.ok) { UI.toast(r.err || '导入失败', 'warn'); return; }
+        UI.toast(mode === 'replace' ? `已覆盖导入 ${r.replaced} 个存档` : `已合并导入 ${r.added} 个存档`, 'ok');
+        if (back) back();
+      }));
+
+      m.querySelectorAll('[data-io-cancel]').forEach((b) => b.addEventListener('click', () => {
+        if (back) back(); else UI.closeModal();
+      }));
     },
 
     /* 详情弹窗(长按查看技能/状态):统一入口,便于测试与复用 */

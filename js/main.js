@@ -99,8 +99,17 @@
     },
 
     titleSaves() {
+      this._withWorld(() => this._renderSaves());
+    },
+
+    _renderSaves() {
       const slots = W.State.loadSlots();
-      let html = '<div class="save-slots">';
+      // 操作栏放在列表上方:10 个槽位会把底部按钮推到弹窗之外,需要滚动才看得到
+      let html = `<div class="save-io">
+        <button class="btn" data-io="export">📤 导出文件</button>
+        <button class="btn" data-io="copy">📋 复制文本</button>
+        <button class="btn" data-io="import">📥 导入存档</button>
+      </div><div class="save-slots">`;
       for (let i = 0; i < C.MAX_SLOTS; i++) {
         const s = slots[i];
         if (s) {
@@ -121,7 +130,13 @@
       }));
       m.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', () => {
         W.State.erase(parseInt(btn.dataset.del, 10));
-        this.titleSaves();
+        this._renderSaves();
+      }));
+      m.querySelectorAll('[data-io]').forEach((btn) => btn.addEventListener('click', () => {
+        const act = btn.dataset.io;
+        if (act === 'export') W.UI.exportSaves();
+        else if (act === 'copy') W.UI.copySaves();
+        else if (act === 'import') W.UI.openImport(() => this._renderSaves());
       }));
     },
 
