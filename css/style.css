@@ -156,15 +156,19 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 #view-title.active { display: flex; }
 .title-content { padding: 40px 10px; }
 .wow-logo {
+  position: relative;
   font-size: 110px; font-weight: 900; letter-spacing: -8px; line-height: 1;
   font-family: Georgia, serif;
   text-shadow: 0 0 30px rgba(240,199,94,0.4), 0 4px 0 #3a2c08, 0 8px 24px rgba(0,0,0,0.9);
-  animation: logoGlow 2.6s ease-in-out infinite;
 }
-@keyframes logoGlow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(240,199,94,0.35)); }
-  50% { filter: drop-shadow(0 0 22px rgba(240,199,94,0.7)); }
+/* 光晕呼吸:原来是 filter:drop-shadow 无限循环(每帧重新栅格化整个 logo),
+ * 改成静态光晕层只动 opacity —— 走合成层,首屏不再持续占用 GPU */
+.wow-logo::before {
+  content: ''; position: absolute; inset: -18px -30px; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(240,199,94,0.3), rgba(240,199,94,0) 70%);
+  animation: logoHalo 2.6s ease-in-out infinite;
 }
+@keyframes logoHalo { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 .wow-w { color: #f7d774; }
 .wow-o { color: #8a6a1f; }
 .wow-sub { font-size: 20px; color: var(--gold-bright); margin-top: 6px; letter-spacing: 6px; }
@@ -394,9 +398,15 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .m-chips { margin-right: 10px; white-space: nowrap; }
 /* 稀有精英刷新 */
 .zone-elites { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-.elite-alive { background: linear-gradient(90deg, rgba(255,106,94,0.16), transparent); border: 1px solid rgba(255,106,94,0.45); border-radius: 6px; padding: 9px 12px; font-size: 12px; color: #ffb4a8; animation: elite-pulse 2.4s ease-in-out infinite; }
+.elite-alive { position: relative; background: linear-gradient(90deg, rgba(255,106,94,0.16), transparent); border: 1px solid rgba(255,106,94,0.45); border-radius: 6px; padding: 9px 12px; font-size: 12px; color: #ffb4a8; }
 .elite-alive b { color: #ff6a5e; }
-@keyframes elite-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,106,94,0.35); } 50% { box-shadow: 0 0 12px 2px rgba(255,106,94,0.25); } }
+/* 脉冲光晕:box-shadow 直接做无限动画会每帧触发重绘,这里把阴影放到伪元素上只动 opacity */
+.elite-alive::after {
+  content: ''; position: absolute; inset: 0; border-radius: 6px; pointer-events: none;
+  box-shadow: 0 0 12px 2px rgba(255,106,94,0.45);
+  opacity: 0; animation: eliteGlow 2.4s ease-in-out infinite;
+}
+@keyframes eliteGlow { 0%, 100% { opacity: 0; } 50% { opacity: .75; } }
 .elite-timer { padding: 6px 12px; font-size: 12px; color: var(--text-dim); }
 .elite-timer b { color: #e6c07a; }
 .elite-cd { color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
@@ -493,7 +503,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .rep-mount-chip { font-size: 12px; padding: 2px 8px; border: 1px solid rgba(255,200,87,0.4); border-radius: 12px; background: rgba(255,200,87,0.08); color: #ffd98a; }
 .tz-elite.wb { color: #c77dff; background: rgba(163,53,238,0.16); border-color: rgba(163,53,238,0.5); }
 .world-boss { margin-top: 10px; }
-.world-boss.alive { background: linear-gradient(135deg, rgba(163,53,238,0.22), rgba(120,20,200,0.08)); border: 1px solid rgba(163,53,238,0.55); border-radius: 8px; padding: 10px 12px; animation: elite-pulse 2.4s ease-in-out infinite; box-shadow: 0 0 18px rgba(163,53,238,0.25); }
+.world-boss.alive { position: relative; background: linear-gradient(135deg, rgba(163,53,238,0.22), rgba(120,20,200,0.08)); border: 1px solid rgba(163,53,238,0.55); border-radius: 8px; padding: 10px 12px; box-shadow: 0 0 18px rgba(163,53,238,0.25); }
+.world-boss.alive::after {
+  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  box-shadow: 0 0 16px 3px rgba(163,53,238,0.55);
+  opacity: 0; animation: eliteGlow 2.4s ease-in-out infinite;
+}
 .world-boss.dead { background: rgba(60,60,80,0.18); border: 1px solid rgba(150,150,180,0.3); border-radius: 8px; padding: 8px 12px; }
 .wb-head { font-size: 13px; color: #f3e8ff; }
 .wb-head b { color: #c77dff; }
