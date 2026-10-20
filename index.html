@@ -75,8 +75,10 @@
   <script src="js/ns.js"></script>
   <script src="js/portrait.js"></script>
   <script src="js/monster-art.js"></script>
+  <script src="js/loader.js"></script>
   <script src="js/data-races.js"></script>
-  <script src="js/data-world.js"></script>
+  <!-- data-world.js(342 KB 世界数据)不在此加载:标题界面用不到,
+       由 js/loader.js 在进入游戏时按需注入,首屏体积省下 1/3 -->
   <script src="js/data-talents.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/character.js"></script>

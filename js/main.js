@@ -17,6 +17,27 @@
       this._bindSettings();
       this.renderTitle();
       W.UI.showView('title');
+      // 空闲时预取世界数据:标题界面本身不需要它,但玩家几秒内就会点「创建/继续」,
+      // 提前拉取可以让后续跳转零等待(requestIdleCallback 在首帧渲染完成后才跑)
+      this._prefetchWorld();
+    },
+
+    /* 世界数据按需加载(见 js/loader.js):data-world.js 不在首屏。
+     * 已就绪时同步执行,调用方行为与懒加载前完全一致;
+     * 缺 Loader 模块(如测试环境直接 eval 脚本)时同样直接执行。 */
+    _withWorld(fn) {
+      if (!W.Loader || W.Loader.isWorldReady()) { fn(); return; }
+      W.UI.toast('正在加载世界数据…');
+      W.Loader.world().then(fn).catch(() => {
+        W.UI.toast('世界数据加载失败，请确认 js/data-world.js 存在后刷新重试', 'warn');
+      });
+    },
+
+    _prefetchWorld() {
+      if (!W.Loader || W.Loader.isWorldReady()) return;
+      const run = () => { W.Loader.world().catch(() => { /* 失败不打扰:真正点按钮时会再次尝试并提示 */ }); };
+      if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 3000 });
+      else setTimeout(run, 1200);
     },
 
     /* ============ 标题 ============ */
@@ -64,14 +85,17 @@
     continueGame() {
       const slots = W.State.loadSlots();
       if (!slots.some(Boolean)) { W.UI.toast('没有存档，请先创建角色', 'warn'); return; }
-      if (W.State.load(W.State._saveSlot)) {
-        W.UI.toast('欢迎回来，' + W.State.character.name, 'ok');
-        W.World.showWorld();
-      } else {
-        const idx = slots.findIndex(Boolean);
-        W.State.load(idx);
-        W.World.showWorld();
-      }
+      // 存档摘要要按 zone id 查区域名(slotSummary -> D.ZONES),所以读档前先确保世界数据就绪
+      this._withWorld(() => {
+        if (W.State.load(W.State._saveSlot)) {
+          W.UI.toast('欢迎回来，' + W.State.character.name, 'ok');
+          W.World.showWorld();
+        } else {
+          const idx = slots.findIndex(Boolean);
+          W.State.load(idx);
+          W.World.showWorld();
+        }
+      });
     },
 
     titleSaves() {
@@ -140,9 +164,11 @@
 
     /* ============ 角色创建 ============ */
     startCreate() {
-      this.create = { faction: null, race: null, classId: null, name: '' };
-      this.stepFaction();
-      W.UI.showView('create');
+      this._withWorld(() => {
+        this.create = { faction: null, race: null, classId: null, name: '' };
+        this.stepFaction();
+        W.UI.showView('create');
+      });
     },
 
     _bindCreate() {

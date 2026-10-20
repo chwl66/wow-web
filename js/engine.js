@@ -41,7 +41,7 @@
         level: c.level, zone: c.zone, savedAt: Date.now(),
         src: src || 'manual',          // 存档来源(自动/手动)
         gold: c.gold,                  // 金币摘要
-        zoneCN: (W.Data.ZONES[c.zone] || {}).name || c.zone, // 位置摘要
+        zoneCN: ((W.Data.ZONES || {})[c.zone] || {}).name || c.zone, // 位置摘要
         data: JSON.parse(JSON.stringify(c)),
       };
       this.saveSlots[idx] = entry;
@@ -55,7 +55,7 @@
     slotSummary(entry) {
       if (!entry) return null;
       const d = entry.data || {};
-      const zoneName = (zid) => (zid && W.Data.ZONES[zid] ? W.Data.ZONES[zid].name : null);
+      const zoneName = (zid) => (zid && W.Data.ZONES && W.Data.ZONES[zid] ? W.Data.ZONES[zid].name : null);
       return {
         level: entry.level != null ? entry.level : (d.level || 1),
         gold: entry.gold != null ? entry.gold : (d.gold || 0),
