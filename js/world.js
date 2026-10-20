@@ -275,7 +275,7 @@
       const isDungeon = !!dungeon;
       this.els.zone.innerHTML = `
         <div class="zone-hero ${isDungeon ? 'dungeon' : ''}">
-          <div class="zone-icon">${zone.icon}</div>
+          <div class="zone-icon">${(W.WorldMap && W.WorldMap.iconSvg(zone.id, 64)) || zone.icon}</div>
           <div class="zone-info">
             <div class="zone-name">${U.esc(zone.name)}${isDungeon ? `<span class="tag ${dungeon.raid ? 'raid-tag' : 'd5-tag'}">${dungeon.raid ? '团本' : '5人本'}</span>` : ''}</div>
             <div class="zone-level">推荐等级 ${zone.level}</div>
@@ -1120,7 +1120,9 @@
       const byAirZones = airHere ? airHere.to.filter((z) => dist[z] === 1) : [];
       // 中转区折叠偏好:默认折叠,点击标题展开/收起(跨会话持久化)
       const mapCollapsed = this._travelMapCollapsed();
-      let html = `<div class="travel-hint">📡 从 <b>${U.esc(zone.name)}</b> 出发 · 直连 <b>${direct}</b> 个区域${airHere ? ` · <b class="th-air">${airHere.icon} ${airHere.name} ${byAirZones.length} 条</b>` : ''} · 中转 <b>${mapZones.length}</b> 个 · 最远 ${maxHops} 站 · ${questOpenTotal ? `<b class="th-quest">📜 全图可接任务 ${questOpenTotal}</b>` : '📜 无待接任务'} · <b class="th-direct">🚀 直达=最近路径</b> · 中转区默认折叠,点击标题展开</div>`;
+      // 地图放在列表上方:先看全貌再选,比一上来就是 30 多行文字直观
+      let html = W.WorldMap ? W.WorldMap.html({ current: char.zone, dist }) : '';
+      html += `<div class="travel-hint">📡 从 <b>${U.esc(zone.name)}</b> 出发 · 直连 <b>${direct}</b> 个区域${airHere ? ` · <b class="th-air">${airHere.icon} ${airHere.name} ${byAirZones.length} 条</b>` : ''} · 中转 <b>${mapZones.length}</b> 个 · 最远 ${maxHops} 站 · ${questOpenTotal ? `<b class="th-quest">📜 全图可接任务 ${questOpenTotal}</b>` : '📜 无待接任务'} · <b class="th-direct">🚀 直达=最近路径</b> · 中转区默认折叠,点击标题展开</div>`;
       // ===== 分区一:直达(当前位置 + 飞艇/远洋 + 步行直达) =====
       html += `<div class="travel-sec direct-sec">${this._travelSecTitle('🚀', '直达', Math.max(0, directZones.length - 1), '')}<div class="travel-list">`;
       for (const zid of directZones) html += this._travelRowHtml(zid, { airHere, dist, prev });
@@ -1149,25 +1151,36 @@
         });
       }
       m.querySelectorAll('.travel-row:not(.locked)').forEach((row) => row.addEventListener('click', () => {
-        const zid = row.dataset.zone;
-        if (zid === char.zone) return; // 当前所在区域不可再次出发
-        // 直达航线:乘飞艇/商船直接抵达;多跳区域沿最近路径前往首站;其余直达区域直接出发
-        const byAir = !!airHere && airHere.to.includes(zid);
-        const hops = dist[zid];
-        const dest = byAir || hops === 1 ? zid : this._firstHop(zid, prev);
-        if (byAir) W.UI.toast(`${airHere.icon} 乘坐${airHere.name}直达 ${U.esc(D.ZONES[zid].name)}`, 'ok');
-        else if (hops > 1) W.UI.toast(`🛣️ ${U.esc(D.ZONES[zid].name)} 距此 ${hops} 站，沿最近路径先到 ${U.esc(D.ZONES[dest].name)}`, 'warn');
-        const dz = D.ZONES[dest];
-        if (!char.visited.includes(dest)) char.visited.push(dest);
-        if (dz.dungeon) { char.dungeon = { id: dz.dungeon, wave: 0 }; }
-        else if (char.dungeon) char.dungeon = null;
-        char.capitalRaid = null; // 旅行离开即放弃突袭进度
-        char.zone = dest;
-        W.State.autoSave(true);
-        W.Audio.click();
-        W.UI.closeModal();
-        this.showWorld();
+        this._travelTo(row.dataset.zone);
       }));
+      // 地图节点与列表共用同一套旅行逻辑(飞艇直达 / 多跳中转都在 _travelTo 里)
+      if (W.WorldMap) W.WorldMap.bind(m.querySelector('.wmap'), (zid) => this._travelTo(zid));
+    },
+
+    /* 前往区域(列表行与地图节点共用)。
+     * 直达航线乘飞艇/商船直接抵达;多跳区域沿最近路径先到首站;其余直达区域直接出发。 */
+    _travelTo(zid) {
+      const char = W.State.character;
+      if (!char || !zid || zid === char.zone) return; // 当前所在区域不可再次出发
+      const { dist, prev } = this._travelGraph();
+      if (dist[zid] == null) { W.UI.toast('该区域暂时无法抵达', 'warn'); return; }
+      const airHere = D.AIRSHIPS[char.zone] || null;
+      const byAir = !!airHere && airHere.to.includes(zid);
+      const hops = dist[zid];
+      const dest = byAir || hops === 1 ? zid : this._firstHop(zid, prev);
+      if (byAir) W.UI.toast(`${airHere.icon} 乘坐${airHere.name}直达 ${U.esc(D.ZONES[zid].name)}`, 'ok');
+      else if (hops > 1) W.UI.toast(`🛣️ ${U.esc(D.ZONES[zid].name)} 距此 ${hops} 站，沿最近路径先到 ${U.esc(D.ZONES[dest].name)}`, 'warn');
+      const dz = D.ZONES[dest];
+      if (!dz) return;
+      if (!char.visited.includes(dest)) char.visited.push(dest);
+      if (dz.dungeon) { char.dungeon = { id: dz.dungeon, wave: 0 }; }
+      else if (char.dungeon) char.dungeon = null;
+      char.capitalRaid = null; // 旅行离开即放弃突袭进度
+      char.zone = dest;
+      W.State.autoSave(true);
+      W.Audio.click();
+      W.UI.closeModal();
+      this.showWorld();
     },
     // 旅行分区划分(纯函数):直达区 = 当前 + 1 跳;中转区 = 多跳;并集覆盖全图
     _travelPartition(dist, char) {

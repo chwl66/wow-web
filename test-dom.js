@@ -563,6 +563,53 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       stvRow.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       check('部落乘船抵达荆棘谷', W.State.character.zone === 'stv', W.State.character.zone);
     }
+
+    // ---- 旅行地图(js/world-map.js) ----
+    {
+      const snap = JSON.stringify({ slots: W.State.saveSlots, current: W.State._saveSlot });
+      const mapT = W.Char.create('地图旅者', 'orc', 'warrior');
+      mapT.level = 30;
+      mapT.zone = 'durotar';
+      W.State.newCharacter(mapT);
+      W.World.showWorld();
+      W.World.openTravel();
+
+      check('旅行界面渲染了地图', !!doc.querySelector('.wmap .wm-svg'));
+      check('地图有 3 个大陆页签', doc.querySelectorAll('.wm-tab').length === 3);
+      check('地图渲染了区域节点', doc.querySelectorAll('.wm-node').length >= 10,
+        String(doc.querySelectorAll('.wm-node').length));
+      check('地图高亮当前所在区域', !!doc.querySelector('.wm-node.wm-current[data-zone="durotar"]'));
+      check('地图区分直达与需中转',
+        !!doc.querySelector('.wm-node.wm-direct') && !!doc.querySelector('.wm-node.wm-transit'));
+      check('地图节点是地形符号而非 emoji',
+        !!doc.querySelector('.wm-node svg, .wm-node path') && !/[\u{1F300}-\u{1FAFF}]/u.test(
+          (doc.querySelector('.wm-node') || {}).textContent || ''));
+
+      // 点击直达节点 → 直接抵达
+      const ogNode = doc.querySelector('.wm-node[data-zone="orgrimmar"]');
+      check('地图上有奥格瑞玛节点', !!ogNode);
+      if (ogNode) {
+        ogNode.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        check('点地图节点可旅行', W.State.character.zone === 'orgrimmar', W.State.character.zone);
+      }
+
+      // 点击需中转的节点 → 先走到最近路径的首站,而不是瞬移
+      W.World.openTravel();
+      const farNode = doc.querySelector('.wm-node.wm-transit');
+      check('地图上有需中转节点', !!farNode);
+      if (farNode) {
+        const target = farNode.dataset.zone;
+        farNode.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        check('点需中转节点先走首站', W.State.character.zone !== target && !!W.State.character.zone,
+          `${target} → ${W.State.character.zone}`);
+      }
+
+      // 还原,避免自动存档污染后续用例
+      const sp = JSON.parse(snap);
+      W.State.saveSlots = sp.slots;
+      W.State._saveSlot = sp.current;
+      W.State.persist();
+    }
     // 联盟深入部落侧区域(千针石林→尘泥沼泽)
     const allyD = W.Char.create('联盟副本旅', 'human', 'warrior');
     allyD.level = 40;
