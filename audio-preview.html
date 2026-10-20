@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音效试听 · 战大陆</title>
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #16161d; --border: #2c2c38;
+    --gold: #f0c75e; --text: #e8e2d4; --dim: #8a8478;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 30px 24px 60px;
+    background: radial-gradient(1000px 500px at 50% -10%, #241d16 0%, transparent 60%), var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: 1px; }
+  h1 .a { color: var(--gold); }
+  .sub { color: var(--dim); font-size: 13px; line-height: 1.8; margin-bottom: 8px; }
+  .warn {
+    display: inline-block; font-size: 12px; color: #ffb4a8;
+    background: rgba(255,106,94,0.12); border: 1px solid rgba(255,106,94,0.35);
+    border-radius: 6px; padding: 6px 12px; margin-bottom: 22px;
+  }
+  h2 {
+    font-size: 13px; color: var(--gold); letter-spacing: 2px;
+    margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sfx {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; min-width: 158px; cursor: pointer; user-select: none;
+    transition: border-color .15s, transform .1s, background .15s;
+  }
+  .sfx:hover { border-color: rgba(240,199,94,0.5); background: #1c1c25; }
+  .sfx:active { transform: scale(.97); }
+  .sfx b { display: block; font-size: 14px; margin-bottom: 3px; }
+  .sfx small { display: block; font-size: 10.5px; color: var(--dim); line-height: 1.55; font-family: monospace; }
+  .sfx.playing { border-color: var(--gold); box-shadow: 0 0 14px rgba(240,199,94,0.25); }
+
+  .note {
+    margin-top: 28px; font-size: 12px; color: var(--dim); line-height: 1.9;
+    background: #14141a; border-left: 2px solid var(--gold);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 820px;
+  }
+  .note b { color: var(--text); }
+  code { background: #22222c; padding: 1px 6px; border-radius: 4px; font-size: 11.5px; color: #9fd0ff; }
+</style>
+</head>
+<body>
+
+<h1>音效 <span class="a">纯 WebAudio 合成</span> · 17 种</h1>
+<div class="sub">
+  没有任何音频文件——全部由振荡器、白噪声和滤波器实时合成。点卡片试听。
+</div>
+<div class="warn">⚠️ 浏览器要求先有用户交互才能出声，所以第一次点击才会初始化音频</div>
+
+<h2>界面</h2>
+<div class="grid" data-group="ui"></div>
+
+<h2>物理打击</h2>
+<div class="grid" data-group="hit"></div>
+
+<h2>法术</h2>
+<div class="grid" data-group="magic"></div>
+
+<h2>结算</h2>
+<div class="grid" data-group="result"></div>
+
+<div class="note">
+  <b>打击感从哪来：</b>旧版只有一个振荡器下滑，听起来是「哔」一声。现在每个打击音由三层叠成——
+  <b>低频冲击</b>（sine 90~110Hz 滑到 40Hz，给"重"）+ <b>带通噪声</b>（给"实"，像钝器打在肉上）+
+  <b>短混响</b>（延迟反馈，给空间）。暴击再加 1480/2480Hz 的金属泛音和高通噪声，听起来"脆"。
+  <br><b>不会爆音：</b>总线挂了一个压限器，DoT 或多段伤害一回合连触发好几次也不会叠到削波；
+  同一音效 30~90ms 内重复触发会被限流。
+</div>
+
+<script src="js/ns.js"></script>
+<script src="js/engine.js"></script>
+<script>
+const A = WOW.Audio;
+A.muted = false;   // 试听页强制开启,不受存档里的静音偏好影响
+
+const SFX = [
+  { g: 'ui', n: 'click', cn: '点击', d: '430Hz 三角波 + 2.6k 带通噪声' },
+  { g: 'hit', n: 'hit', cn: '普通攻击', d: '108→46Hz 冲击 + 900→380 噪声' },
+  { g: 'hit', n: 'crit', cn: '暴击', d: '94Hz 冲击 + 1480/2480Hz 金属泛音' },
+  { g: 'hit', n: 'miss', cn: '闪避 / 未命中', d: '620→2400Hz 带通扫频（挥空）' },
+  { g: 'magic', n: 'spell', cn: '奥术法术', d: '520→1180Hz 上扬 + 高通噪声' },
+  { g: 'magic', n: 'fire', cn: '火焰', d: '1400→300 低通噪声 + 92Hz 锯齿' },
+  { g: 'magic', n: 'frost', cn: '冰霜', d: '1600→900Hz + 4.4k 高通' },
+  { g: 'magic', n: 'shadow', cn: '暗影', d: '70Hz 锯齿 + 400Hz 低通' },
+  { g: 'magic', n: 'holy', cn: '神圣', d: '大三和弦 880/1108/1320Hz' },
+  { g: 'magic', n: 'heal', cn: '治疗', d: '660/880/990Hz 琶音' },
+  { g: 'magic', n: 'dot', cn: '持续伤害', d: '300→180Hz + 700Hz 带通' },
+  { g: 'magic', n: 'stun', cn: '眩晕', d: '88Hz 方波 + 520Hz 低通' },
+  { g: 'hit', n: 'flee', cn: '逃跑', d: '1200→420Hz 扫频 + 420→240' },
+  { g: 'result', n: 'levelup', cn: '升级', d: 'C-E-G-C 琶音 + 高次泛音' },
+  { g: 'result', n: 'win', cn: '战斗胜利', d: '五音上行 + 长尾音' },
+  { g: 'result', n: 'lose', cn: '战斗失败', d: '400→196Hz 下行锯齿' },
+  { g: 'result', n: 'death', cn: '死亡', d: '600→90Hz 长滑音 + 噪声下扫' },
+];
+
+document.querySelectorAll('.grid').forEach((grid) => {
+  const g = grid.dataset.group;
+  grid.innerHTML = SFX.filter((s) => s.g === g).map((s) => `
+    <div class="sfx" data-n="${s.n}">
+      <b>${s.cn}</b>
+      <small>${s.n}()</small>
+      <small>${s.d}</small>
+    </div>`).join('');
+});
+
+document.body.addEventListener('click', (e) => {
+  const el = e.target.closest('.sfx');
+  if (!el) return;
+  const n = el.dataset.n;
+  A.init();
+  A[n]();
+  el.classList.add('playing');
+  setTimeout(() => el.classList.remove('playing'), 320);
+});
+</script>
+</body>
+</html>
