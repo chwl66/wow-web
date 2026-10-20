@@ -477,6 +477,9 @@
     _act(action) {
       const b = this.battle;
       if (!b || b.ended || b.busy) return;
+      // 伤害类动作才前冲(防御/逃跑/纯治疗不该有攻击性的位移)
+      const s = action.skill ? D.SKILLS[action.skill] : null;
+      if (action.type === 'attack' || (s && (s.dmg || s.aoe))) this._lunge('p');
       W.Combat.playerAction(action);
     },
 
@@ -580,6 +583,56 @@
       f.textContent = text;
       layer.appendChild(f);
       setTimeout(() => f.remove(), 900);
+      // 数值之外再给一点身体反应:受击抖、治疗回血、未命中侧身
+      this._fx(key, cls);
+    },
+
+    /* ============ 动作反馈(Web Animations API) ============
+     * 不用「加 class + 强制 reflow 重启动画」:战斗中飘字很频繁(DoT/多段伤害一回合能触发好几次),
+     * 每次同步布局会掉帧;WAAPI 直接跑一次性动画,不碰 CSS 的 hover transform,结束后自动回到原状态。 */
+    _fx(key, cls) {
+      const card = this.els.stage.querySelector(`.unit[data-key="${key}"]`);
+      if (!card || !card.animate) return;
+      this._fxAnims = this._fxAnims || new WeakMap();
+      const prev = this._fxAnims.get(card);
+      if (prev) prev.cancel(); // 同一目标连续受击时,先停掉上一次避免 transform 打架
+
+      let frames;
+      if (cls === 'heal') {
+        frames = [
+          { transform: 'translateY(0)', boxShadow: 'inset 0 0 0 999px rgba(90,220,130,0.22)' },
+          { transform: 'translateY(-2px)', boxShadow: 'inset 0 0 0 999px rgba(90,220,130,0)' },
+        ];
+      } else if (cls === 'miss' || cls === 'shield') {
+        frames = [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(4px)', offset: 0.35 },
+          { transform: 'translateX(-2px)', offset: 0.7 },
+          { transform: 'translateX(0)' },
+        ];
+      } else {
+        frames = [
+          { transform: 'translateX(0)', boxShadow: 'inset 0 0 0 999px rgba(255,70,50,0.26)' },
+          { transform: 'translateX(-5px)', boxShadow: 'inset 0 0 0 999px rgba(255,70,50,0.16)', offset: 0.28 },
+          { transform: 'translateX(4px)', boxShadow: 'inset 0 0 0 999px rgba(255,70,50,0.08)', offset: 0.6 },
+          { transform: 'translateX(0)', boxShadow: 'inset 0 0 0 999px rgba(255,70,50,0)' },
+        ];
+      }
+      this._fxAnims.set(card, card.animate(frames, { duration: cls === 'heal' ? 300 : 240, easing: 'ease-out' }));
+    },
+
+    /* 出手前冲:玩家打出伤害类动作时向敌人方向轻推一下,让「我打出去了」有实感 */
+    _lunge(key) {
+      const card = this.els.stage.querySelector(`.unit[data-key="${key}"]`);
+      if (!card || !card.animate) return;
+      this._fxAnims = this._fxAnims || new WeakMap();
+      const prev = this._fxAnims.get(card);
+      if (prev) prev.cancel();
+      this._fxAnims.set(card, card.animate([
+        { transform: 'translateY(0)' },
+        { transform: 'translateY(-7px)', offset: 0.35 },
+        { transform: 'translateY(0)' },
+      ], { duration: 200, easing: 'ease-out' }));
     },
   };
 
