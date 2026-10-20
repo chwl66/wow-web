@@ -448,7 +448,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .cx-list { display: flex; flex-direction: column; gap: 5px; margin-top: 3px; }
 .cx-row { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid rgba(120,130,150,0.25); border-radius: 8px; background: rgba(120,130,150,0.06); }
 .cx-row.locked { opacity: 0.55; filter: grayscale(0.4); }
-.cx-row .cx-icon { font-size: 20px; width: 26px; text-align: center; }
+.cx-row .cx-icon { font-size: 20px; width: 30px; flex: 0 0 30px; text-align: center; line-height: 0; }
+.cx-row .cx-icon .cx-portrait { display: block; width: 30px; height: 30px; border-radius: 50%; }
 .cx-row .cx-info { flex: 1; min-width: 0; }
 .cx-row .cx-name { font-weight: bold; }
 .cx-row .cx-desc { font-size: 12px; color: #9a8fae; }

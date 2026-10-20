@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>怪物贴图预览 · 战大陆</title>
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #14141a; --border: #2c2c38;
+    --gold: #f0c75e; --text: #e8e2d4; --dim: #8a8478;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 24px 60px;
+    background: radial-gradient(1200px 600px at 50% -10%, #241d16 0%, transparent 60%), var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: 1px; }
+  h1 .a { color: var(--gold); }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 22px; line-height: 1.8; }
+  h2 {
+    font-size: 14px; color: var(--gold); letter-spacing: 2px;
+    margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .hint { color: var(--dim); font-weight: normal; letter-spacing: 0; font-size: 12px; }
+  h3 { font-size: 12px; color: var(--dim); font-weight: normal; margin: 20px 0 8px; letter-spacing: 1px; }
+  h3 b { color: var(--text); font-weight: bold; }
+
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .stat {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 16px; min-width: 120px;
+  }
+  .stat b { display: block; font-size: 20px; color: var(--gold); line-height: 1.3; }
+  .stat span { font-size: 11px; color: var(--dim); }
+
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .cell { text-align: center; width: 104px; }
+  .cell .pic { line-height: 0; }
+  .cell svg { display: block; margin: 0 auto; border-radius: 50%; }
+  .cell b { display: block; font-size: 11px; margin-top: 6px; color: #d8d2c4;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell small { display: block; font-size: 9px; color: #5a564c; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: monospace; }
+
+  .row.small { gap: 7px; }
+  .row.small .cell { width: 62px; }
+  .row.small .cell b { font-size: 10px; margin-top: 4px; }
+
+  .note {
+    margin-top: 14px; font-size: 12px; color: var(--dim); line-height: 1.9;
+    background: var(--panel); border-left: 2px solid var(--gold);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 820px;
+  }
+  .note b { color: var(--text); }
+  code { background: #22222c; padding: 1px 6px; border-radius: 4px; font-size: 11.5px; color: #9fd0ff; }
+</style>
+</head>
+<body>
+
+<h1>怪物贴图 <span class="a">18 种程序化剪影</span> · 501 个怪物</h1>
+<div class="sub">
+  零图片文件。按「kind 定骨架 + emoji 定物种 + 名字定染色」三层解析，未收录的怪物自动回退到 kind 骨架，不会出现没有贴图的怪。
+</div>
+
+<div class="stats" id="stats"></div>
+
+<h2>18 种剪影 <span class="hint">各取一个代表怪物</span></h2>
+<div class="row" id="shapes"></div>
+
+<h2>按类型抽样 <span class="hint">48px 实际战斗尺寸</span></h2>
+<div id="kinds"></div>
+
+<h2>强度圆环 <span class="hint">同一只怪，普通 / 精英 / 首领 / 世界首领</span></h2>
+<div class="row" id="rings"></div>
+
+<div class="note">
+  <b>解析顺序：</b>名字关键词（强盗→刺客、冰霜→水元素）→ emoji 同族匹配（🐺→狼头）→ kind 兜底。
+  跨族时回到 kind 骨架，避免「豺狼人长出恶魔角」——因为 👹 同时被霍格（humanoid）和卡扎克（demon）使用。
+  最后用怪物 id 的哈希对主色做 ±10% 冷暖偏移，让 143 个人形怪不会像克隆人。
+</div>
+
+<script src="js/ns.js"></script>
+<script src="js/data-races.js"></script>
+<script src="js/data-world.js"></script>
+<script src="js/monster-art.js"></script>
+<script>
+  const D = WOW.Data, MA = WOW.MonsterArt;
+  const mons = Object.values(D.MONSTERS);
+
+  // ---- 统计 ----
+  const shapes = {};
+  let exact = 0;
+  mons.forEach((m) => {
+    shapes[MA.shapeOf(m)] = (shapes[MA.shapeOf(m)] || 0) + 1;
+    if (m.icon && MA.EMOJI[m.icon]) exact++;
+  });
+  document.getElementById('stats').innerHTML = [
+    ['501', '怪物总数'],
+    [Object.keys(shapes).length, '剪影种类'],
+    [exact, 'emoji 精确映射'],
+    [mons.length - exact, 'kind 兜底'],
+    ['0', '图片文件'],
+  ].map(([v, k]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+
+  // ---- 每种剪影一个代表 ----
+  const ORDER = ['beast_wolf', 'beast_boar', 'beast_spider', 'beast_serpent', 'beast_turtle',
+    'humanoid_brute', 'humanoid_caster', 'humanoid_rogue', 'undead_skeleton', 'undead_zombie', 'undead_ghost',
+    'elem_fire', 'elem_water', 'elem_stone', 'elem_tree', 'demon_horned', 'dragon_wyrm', 'mech_bot'];
+  const seen = {}, reps = [];
+  mons.forEach((m) => {
+    const s = MA.shapeOf(m);
+    if (!seen[s]) { seen[s] = 1; reps.push(m); }
+  });
+  reps.sort((a, b) => ORDER.indexOf(MA.shapeOf(a)) - ORDER.indexOf(MA.shapeOf(b)));
+  document.getElementById('shapes').innerHTML = reps.map((m) => `
+    <div class="cell">
+      <div class="pic">${MA.svg(m, { size: 96 })}</div>
+      <b>${m.name}</b><small>${MA.shapeOf(m)}</small>
+    </div>`).join('');
+
+  // ---- 按 kind 抽样 ----
+  const KINDS = [['humanoid', '人形'], ['beast', '野兽'], ['undead', '亡灵'],
+    ['elemental', '元素'], ['demon', '恶魔'], ['dragon', '龙类'], ['mechanical', '机械']];
+  document.getElementById('kinds').innerHTML = KINDS.map(([k, cn]) => {
+    const all = mons.filter((m) => m.kind === k);
+    const list = all.slice(0, 12);
+    return `<h3><b>${cn}</b> · ${k} · ${all.length} 个</h3><div class="row small">` +
+      list.map((m) => `<div class="cell">${MA.html(m, { size: 48 })}<b>${m.name}</b></div>`).join('') +
+      '</div>';
+  }).join('');
+
+  // ---- 强度圆环 ----
+  const base = { name: '灰狼', icon: '🐺', kind: 'beast' };
+  document.getElementById('rings').innerHTML = [
+    ['普通', {}], ['精英', { elite: 1 }], ['首领', { boss: 1 }], ['世界首领', { world: 1 }],
+  ].map(([label, extra]) => {
+    const m = Object.assign({}, base, extra);
+    return `<div class="cell" style="width:120px">
+      <div class="pic">${MA.svg(m, { size: 92 })}</div><b>${label}</b>
+    </div>`;
+  }).join('');
+</script>
+</body>
+</html>

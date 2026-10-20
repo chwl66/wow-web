@@ -1428,6 +1428,14 @@
       return `<div class="cx-drops"><span class="cx-drops-label">🎁 招牌掉落</span>${chips}</div>`;
     },
 
+    /* 图鉴图标:用怪物程序化剪影,取不到时回退 emoji */
+    _cxIcon(m) {
+      try {
+        if (W.MonsterArt) return W.MonsterArt.html(m, { size: 30, cls: 'cx-portrait' });
+      } catch (e) { /* 回退 emoji */ }
+      return U.esc(m.icon);
+    },
+
     /* ---------- 首领图鉴 ---------- */
     openCodex() {
       const char = W.State.character;
@@ -1444,7 +1452,7 @@
           const e = codex[r.mid];
           if (!e) {
             return `<div class="cx-row locked">
-              <span class="cx-icon">${U.esc(m.icon)}</span>
+              <span class="cx-icon">${this._cxIcon(m)}</span>
               <div class="cx-info">
                 <div class="cx-name">${U.esc(m.name)} <span class="tag boss-tag">未击杀</span></div>
                 <div class="cx-desc">${U.esc(r.source)} · Lv.${m.level}${m.title ? ' · ' + U.esc(m.title) : ''}</div>
@@ -1454,7 +1462,7 @@
             </div>`;
           }
           return `<div class="cx-row">
-            <span class="cx-icon">${U.esc(m.icon)}</span>
+            <span class="cx-icon">${this._cxIcon(m)}</span>
             <div class="cx-info">
               <div class="cx-name">${U.esc(m.name)} <span class="tag cx-tag-${r.src}">${srcName[r.src]}</span></div>
               <div class="cx-desc">${U.esc(r.source)} · Lv.${m.level} · 首杀 ${e.firstAt ? U.fmtRelTime(e.firstAt) : '—'}</div>
