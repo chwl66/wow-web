@@ -699,7 +699,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .unit.dead { opacity: 0.45; filter: grayscale(1); }
 
 .unit-top { display: flex; gap: 10px; align-items: center; }
+/* 局部更新的占位容器:空的时候不参与 flex 布局,避免多出一个 gap */
+.cc-slot:empty { display: none; }
 .unit-icon { font-size: 34px; position: relative; }
+/* 程序化角色贴图(js/portrait.js):与 emoji 图标同尺寸占位,避免卡牌高度跳动 */
+.unit-icon .u-portrait {
+  display: block; width: 40px; height: 40px; border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.45);
+}
 .skull { position: absolute; top: -8px; right: -10px; font-size: 15px; animation: pulseVs 1s infinite; }
 .unit-info { flex: 1; min-width: 0; }
 .unit-name { font-weight: bold; color: #f2ead6; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

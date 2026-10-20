@@ -126,6 +126,9 @@
     start(encounter, opts) {
       const char = W.State.character;
       this.targetKey = 'e0';
+      // 新战斗:卡牌 key 可能与上一场相同(e0/e1),必须强制重建,否则会复用上一场的节点
+      this._stageSig = null;
+      this._skillbarHtml = null;
       const battle = W.Combat.start(char, encounter.enemies, {
         log: (type, html) => this._log(type, html),
         float: (key, text, cls) => this._float(key, text, cls),
@@ -172,64 +175,22 @@
           if (alive) this.targetKey = alive.key;
         }
       }
-      // 保留正在播放的飘字,避免被重绘清除
-      const floats = {};
-      this.els.stage.querySelectorAll('.float-layer').forEach((layer) => {
-        const nodes = Array.from(layer.querySelectorAll('.float-num'));
-        if (nodes.length) floats[layer.dataset.float] = nodes;
-      });
-      // 头部
+
+      // 头部(纯文本,内容没变就不写)
       const ctx = b.isDungeon ? '副本' : '野外';
       const zoneName = c ? (D.ZONES[c.zone] ? D.ZONES[c.zone].name : '') : '';
-      this.els.header.innerHTML =
+      this._setHtml(this.els.header,
         `<span class="bt-ctx">${ctx}</span>` +
         `<span class="bt-zone">${U.esc(zoneName)}</span>` +
-        `<span class="bt-round">第 ${b.round} 回合</span>`;
+        `<span class="bt-round">第 ${b.round} 回合</span>`);
 
-      // 敌人
-      let enemyHtml = '';
-      b.enemies.forEach((e, i) => {
-        const pct = e.hp / e.hpMax;
-        const isTarget = this.targetKey === e.key;
-        const isBoss = e.boss;
-        const isElite = e.elite;
-        const isWorld = e.world;
-        // 团本首领:等级以骷髅显示(如 WoW 的 ??)
-        const isRaidBoss = isBoss && b.context === 'dungeon' && c && c.dungeon && D.DUNGEONS[c.dungeon.id] && !!D.DUNGEONS[c.dungeon.id].raid;
-        const cc = e.ccs[0] ? `<span class="cc-icon" title="${CC_CN[e.ccs[0].type]}">${CC_ICON[e.ccs[0].type]}</span>` : '';
-        enemyHtml += `
-          <div class="unit enemy-card ${isTarget ? 'targeted' : ''} ${isBoss ? 'boss' : ''} ${e.hp <= 0 ? 'dead' : ''}" data-key="${e.key}">
-            <div class="unit-top">
-              <span class="unit-icon">${e.icon}${isWorld ? '<b class="skull">👑</b>' : isBoss ? '<b class="skull">💀</b>' : isElite ? '<b class="skull">⭐</b>' : ''}</span>
-              <div class="unit-info">
-                <div class="unit-name ${isBoss ? 'boss-name' : ''}" ${e.mSkills && e.mSkills.length ? `title="技能：${U.esc(e.mSkills.map((sid) => { const s = D.MONSTER_SKILLS[sid]; return s ? s.icon + ' ' + s.name + '（' + s.desc + '）' : ''; }).join(' / '))}"` : ''}>${U.esc(e.name)}${isWorld ? '<span class="tag world-tag">世界首领</span>' : isBoss ? '<span class="tag boss-tag">首领</span>' : isElite ? '<span class="tag elite-tag">精英</span>' : ''}</div>
-                <div class="unit-lvl">${isRaidBoss ? '💀' : 'Lv.' + e.level} ${e.world ? ' · 世界首领' : e.boss ? ' · 首领' : ''}${e.boss || e.world ? (U.isTouch() ? ' · 长按看技能' : ' · 悬停看技能') : ''}</div>
-              </div>
-              ${cc}
-            </div>
-            ${U.bar(pct, 'hp', `<b>${Math.ceil(e.hp)}</b> / ${e.hpMax}`)}
-            <div class="unit-buffs">${this._buffChips(e, true)}</div>
-            <div class="float-layer" data-float="${e.key}"></div>
-          </div>`;
-      });
-      this.els.stage.innerHTML = `
-        <div class="enemy-side">${enemyHtml}</div>
-        <div class="vs">⚔️</div>
-        <div class="ally-side">${this._allyCard(b.player)}${b.pets.map((p) => this._allyCard(p, true)).join('')}</div>`;
-
-      // 目标绑定
-      this.els.stage.querySelectorAll('.enemy-card').forEach((card) => {
-        card.addEventListener('click', () => {
-          const key = card.dataset.key;
-          const e = b.enemies.find((x) => x.key === key);
-          if (e && e.hp > 0) { this.targetKey = key; this.render(); W.Audio.click(); }
-        });
-      });
-
-      // 恢复飘字
-      for (const key in floats) {
-        const layer = this.els.stage.querySelector(`[data-float="${key}"]`);
-        if (layer) floats[key].forEach((n) => layer.appendChild(n));
+      // 战场:卡牌集合(敌人/宠物)不变时只更新数值,集合变了才重建
+      const sig = b.enemies.map((e) => e.key).join(',') + '|' + b.pets.map((p) => p.key).join(',');
+      if (sig !== this._stageSig) {
+        this._stageSig = sig;
+        this._buildStage(b, c);
+      } else {
+        this._patchStage(b);
       }
 
       // 技能栏
@@ -238,6 +199,144 @@
 
       // 日志滚动
       this.els.log.scrollTop = this.els.log.scrollHeight;
+    },
+
+    /* ============ 战场:全量构建(首次进入 / 卡牌集合变化) ============ */
+    _buildStage(b, c) {
+      // 保留正在播放的飘字:重建会清空 stage,不搬移就会被抹掉
+      const floats = {};
+      this.els.stage.querySelectorAll('.float-layer').forEach((layer) => {
+        const nodes = Array.from(layer.querySelectorAll('.float-num'));
+        if (nodes.length) floats[layer.dataset.float] = nodes;
+      });
+
+      let enemyHtml = '';
+      b.enemies.forEach((e) => {
+        enemyHtml += this._enemyCard(e, b, c);
+      });
+      this.els.stage.innerHTML = `
+        <div class="enemy-side">${enemyHtml}</div>
+        <div class="vs">⚔️</div>
+        <div class="ally-side">${this._allyCard(b.player)}${b.pets.map((p) => this._allyCard(p, true)).join('')}</div>`;
+
+      // 目标绑定(节点被复用时不重复绑定,所以只在这里挂)
+      this.els.stage.querySelectorAll('.enemy-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          const key = card.dataset.key;
+          const e = b.enemies.find((x) => x.key === key);
+          if (e && e.hp > 0) { this.targetKey = key; this.render(); W.Audio.click(); }
+        });
+      });
+
+      for (const key in floats) {
+        const layer = this.els.stage.querySelector(`[data-float="${key}"]`);
+        if (layer) floats[key].forEach((n) => layer.appendChild(n));
+      }
+    },
+
+    _enemyCard(e, b, c) {
+      const pct = e.hp / e.hpMax;
+      const isTarget = this.targetKey === e.key;
+      const isBoss = e.boss;
+      const isElite = e.elite;
+      const isWorld = e.world;
+      // 团本首领:等级以骷髅显示(如 WoW 的 ??)
+      const isRaidBoss = isBoss && b.context === 'dungeon' && c && c.dungeon && D.DUNGEONS[c.dungeon.id] && !!D.DUNGEONS[c.dungeon.id].raid;
+      const cc = e.ccs[0] ? `<span class="cc-icon" title="${CC_CN[e.ccs[0].type]}">${CC_ICON[e.ccs[0].type]}</span>` : '';
+      return `
+          <div class="unit enemy-card ${isTarget ? 'targeted' : ''} ${isBoss ? 'boss' : ''} ${e.hp <= 0 ? 'dead' : ''}" data-key="${e.key}">
+            <div class="unit-top">
+              <span class="unit-icon">${this._mIcon(e)}${isWorld ? '<b class="skull">👑</b>' : isBoss ? '<b class="skull">💀</b>' : isElite ? '<b class="skull">⭐</b>' : ''}</span>
+              <div class="unit-info">
+                <div class="unit-name ${isBoss ? 'boss-name' : ''}" ${e.mSkills && e.mSkills.length ? `title="技能：${U.esc(e.mSkills.map((sid) => { const s = D.MONSTER_SKILLS[sid]; return s ? s.icon + ' ' + s.name + '（' + s.desc + '）' : ''; }).join(' / '))}"` : ''}>${U.esc(e.name)}${isWorld ? '<span class="tag world-tag">世界首领</span>' : isBoss ? '<span class="tag boss-tag">首领</span>' : isElite ? '<span class="tag elite-tag">精英</span>' : ''}</div>
+                <div class="unit-lvl">${isRaidBoss ? '💀' : 'Lv.' + e.level} ${e.world ? ' · 世界首领' : e.boss ? ' · 首领' : ''}${e.boss || e.world ? (U.isTouch() ? ' · 长按看技能' : ' · 悬停看技能') : ''}</div>
+              </div>
+              <span class="cc-slot">${cc}</span>
+            </div>
+            ${U.bar(pct, 'hp', `<b>${Math.ceil(e.hp)}</b> / ${e.hpMax}`)}
+            <div class="unit-buffs">${this._buffChips(e, true)}</div>
+            <div class="float-layer" data-float="${e.key}"></div>
+          </div>`;
+    },
+
+    /* ============ 战场:局部更新 ============
+     * 战斗里最频繁的重绘是「点一次技能」:只有血条/buff/资源在变。
+     * 全量重建 innerHTML 会让 .bar-fill 的 0.45s 过渡从 0 重播一遍
+     * (每次操作所有血条都"重新长出来"一次),还会冲掉飘字节点。
+     * 所以卡牌集合不变时只改数值。 */
+    _setHtml(node, html) {
+      if (!node) return;
+      if (node._wowHtml === html) return;
+      node._wowHtml = html;
+      node.innerHTML = html;
+    },
+
+    _setBar(card, cls, pct, label) {
+      const bar = card.querySelector('.bar.' + cls);
+      if (!bar) return;
+      const fill = bar.querySelector('.bar-fill');
+      const w = (U.clamp01(pct) * 100).toFixed(2) + '%';
+      if (fill && fill.style.width !== w) fill.style.width = w;
+      this._setHtml(bar.querySelector('.bar-label'), label);
+    },
+
+    _patchStage(b) {
+      const stage = this.els.stage;
+      b.enemies.forEach((e) => {
+        this._patchEnemy(stage.querySelector(`.enemy-card[data-key="${e.key}"]`), e);
+      });
+      this._patchAlly(stage.querySelector('.ally-card[data-key="p"]'), b.player, false);
+      b.pets.forEach((p) => {
+        this._patchAlly(stage.querySelector(`.ally-card[data-key="${p.key}"]`), p, true);
+      });
+    },
+
+    _patchEnemy(card, e) {
+      if (!card) return;
+      card.classList.toggle('targeted', this.targetKey === e.key);
+      card.classList.toggle('dead', e.hp <= 0);
+      this._setBar(card, 'hp', e.hp / e.hpMax, `<b>${Math.ceil(e.hp)}</b> / ${e.hpMax}`);
+      const cc = e.ccs[0] ? `<span class="cc-icon" title="${CC_CN[e.ccs[0].type]}">${CC_ICON[e.ccs[0].type]}</span>` : '';
+      this._setHtml(card.querySelector('.cc-slot'), cc);
+      this._setHtml(card.querySelector('.unit-buffs'), this._buffChips(e, true));
+    },
+
+    _patchAlly(card, unit, isPet) {
+      if (!card) return;
+      card.classList.toggle('dead', unit.hp <= 0);
+      this._setBar(card, 'hp', unit.hp / unit.hpMax, `<b>${Math.ceil(unit.hp)}</b> / ${unit.hpMax}`);
+      this._setHtml(card.querySelector('.unit-lvl'), `Lv.${unit.level}${unit.taunt ? ' · 嘲讽' : ''}`);
+      const cc = unit.ccs[0] ? `<span class="cc-icon" title="${CC_CN[unit.ccs[0].type]}">${CC_ICON[unit.ccs[0].type]}</span>` : '';
+      this._setHtml(card.querySelector('.cc-slot'), cc);
+      this._setHtml(card.querySelector('.res-slot'), this._resBar(unit));
+      const combo = unit.combo ? `<div class="combo">${'✦'.repeat(unit.combo)}${'✧'.repeat(Math.max(0, 5 - unit.combo))}</div>` : '';
+      this._setHtml(card.querySelector('.combo-slot'), combo);
+      this._setHtml(card.querySelector('.unit-buffs'), this._buffChips(unit, false));
+      if (!isPet) this._setHtml(card.querySelector('.passive-slot'), this._passiveBadges(unit));
+      this._setHtml(card.querySelector('.auto-slot'), this._autoCastBar(unit));
+    },
+
+    /* 怪物图标:用 monster-art.js 的程序化剪影;取不到时回退 emoji。
+     * 战斗实例只带 mid/icon,kind 要回查 D.MONSTERS 才能拿到。 */
+    _mIcon(e) {
+      try {
+        if (W.MonsterArt) {
+          const mon = (e && e.mid && D.MONSTERS[e.mid]) || e;
+          return W.MonsterArt.html(mon, { size: 40, cls: 'u-portrait' });
+        }
+      } catch (err) { /* 回退 emoji */ }
+      return (e && e.icon) || '⚔️';
+    },
+
+    /* 单位图标:玩家有 race/cls 时用程序化 SVG 贴图,其余(宠物/怪物)保留 emoji。
+     * 贴图带缓存,且任何异常都静默回退 emoji——缺 Portrait 模块也不会崩战斗界面。 */
+    _icon(unit) {
+      try {
+        if (unit && unit.race && unit.cls && W.Portrait) {
+          return W.Portrait.html(unit.race, unit.cls, { size: 40, cls: 'u-portrait' });
+        }
+      } catch (e) { /* 回退 emoji */ }
+      return (unit && unit.icon) || '⚔️';
     },
 
     _allyCard(unit, isPet) {
@@ -249,19 +348,19 @@
       return `
         <div class="unit ally-card ${unit.hp <= 0 ? 'dead' : ''}" data-key="${unit.key}">
           <div class="unit-top">
-            <span class="unit-icon">${unit.icon}</span>
+            <span class="unit-icon">${this._icon(unit)}</span>
             <div class="unit-info">
               <div class="unit-name">${U.esc(unit.name)}${isPet ? '<span class="tag pet-tag">宠物</span>' : ''}</div>
               <div class="unit-lvl">Lv.${unit.level}${unit.taunt ? ' · 嘲讽' : ''}</div>
             </div>
-            ${cc}
+            <span class="cc-slot">${cc}</span>
           </div>
           ${U.bar(pct, 'hp', `<b>${Math.ceil(unit.hp)}</b> / ${unit.hpMax}`)}
-          ${resHtml}
-          ${combo}
+          <div class="res-slot">${resHtml}</div>
+          <div class="combo-slot">${combo}</div>
           <div class="unit-buffs">${this._buffChips(unit, false)}</div>
-          ${this._passiveBadges(unit)}
-          ${this._autoCastBar(unit)}
+          <div class="passive-slot">${this._passiveBadges(unit)}</div>
+          <div class="auto-slot">${this._autoCastBar(unit)}</div>
           <div class="float-layer" data-float="${unit.key}"></div>
         </div>`;
     },
@@ -360,6 +459,9 @@
 
       const noFlee = b.isDungeon || b.isBoss; // 副本/首领战无法逃跑(与引擎 _flee 判定一致)
       html += `<button class="skill-btn action flee ${noFlee ? 'disabled' : ''}" data-act="flee" ${noFlee ? 'disabled' : ''} title="${noFlee ? '副本/首领战中无法逃跑' : '尝试逃跑'}"><span class="sk-icon">🏃</span><span class="sk-name">逃跑</span></button>`;
+      // 内容没变就不重写:避免无谓的按钮重建(冷却遮罩/按下态会被冲掉)
+      if (this._skillbarHtml === html) return;
+      this._skillbarHtml = html;
       this.els.skillbar.innerHTML = html;
 
       this.els.skillbar.querySelectorAll('button').forEach((btn) => {
