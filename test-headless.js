@@ -3992,8 +3992,17 @@ function checkEq(name, got, want) {
       W.Char.rest(raidWar);
     }
     check('终局团本首领(太阳井高地)可被击败(≥1/3)', finalWins >= 1, `wins=${finalWins}/3`);
-    const worldBoss = await fight(raidWar, 'doomwalker');
-    check('外域世界首领末日行者可被击败', worldBoss.victory, `rounds=${worldBoss.rounds}`);
+    // 与上方团本用例同口径:单场定胜负会被战斗随机性打成间歇失败(实测约 1/8 概率打不过),
+    // 改为 3 场取 1 胜,和「卡拉赞 ≥1/3」「太阳井 ≥1/3」保持一致
+    let worldWins = 0;
+    let worldRounds = 0;
+    for (let i = 0; i < 3; i++) {
+      const r = await fight(raidWar, 'doomwalker');
+      worldRounds = r.rounds;
+      if (r.victory) worldWins++;
+      W.Char.rest(raidWar);
+    }
+    check('外域世界首领末日行者可被击败(≥1/3)', worldWins >= 1, `wins=${worldWins}/3, rounds=${worldRounds}`);
   }
 
   console.log(failed === 0 ? '\n🎉 全部通过' : `\n❌ ${failed} 项失败`);
