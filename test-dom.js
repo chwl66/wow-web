@@ -22,7 +22,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
   // 按序加载脚本
-  const jsFiles = ['ns.js', 'data-races.js', 'data-world.js', 'data-talents.js', 'engine.js', 'character.js', 'combat.js', 'battle.js', 'world.js', 'main.js'];
+  const jsFiles = ['ns.js', 'portrait.js', 'monster-art.js', 'world-map.js', 'loader.js', 'data-races.js', 'data-world.js', 'data-talents.js', 'engine.js', 'character.js', 'combat.js', 'battle.js', 'world.js', 'main.js'];
   for (const f of jsFiles) {
     const code = fs.readFileSync(path.join(__dirname, 'js', f), 'utf8');
     window.eval(code);

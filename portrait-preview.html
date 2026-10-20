@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色贴图预览 · 战大陆</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --panel: #14141a;
+    --panel2: #1b1b23;
+    --border: #2c2c38;
+    --gold: #f0c75e;
+    --text: #e8e2d4;
+    --dim: #8a8478;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 24px 60px;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #241d16 0%, transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: 1px; }
+  h1 .accent { color: var(--gold); }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 26px; line-height: 1.7; }
+  h2 {
+    font-size: 14px; color: var(--gold); letter-spacing: 2px;
+    margin: 34px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .hint { color: var(--dim); font-weight: normal; letter-spacing: 0; font-size: 12px; }
+
+  /* 矩阵 */
+  .matrix { overflow-x: auto; padding-bottom: 8px; }
+  table { border-collapse: separate; border-spacing: 6px; }
+  th {
+    font-size: 11px; color: var(--dim); font-weight: normal;
+    padding: 4px 6px; white-space: nowrap;
+  }
+  th.rowh { text-align: right; color: var(--text); font-size: 12px; padding-right: 12px; }
+  th.rowh small { color: var(--dim); display: block; font-size: 10px; }
+  td { padding: 0; }
+  .cell {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    line-height: 0;
+    transition: border-color .18s, transform .18s;
+  }
+  .cell:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .cell img { display: block; border-radius: 8px; }
+
+  /* 尺寸梯度 */
+  .sizes { display: flex; align-items: flex-end; gap: 26px; flex-wrap: wrap; }
+  .size-item { text-align: center; }
+  .size-item span { display: block; font-size: 11px; color: var(--dim); margin-top: 8px; }
+
+  /* 种族横排 */
+  .races { display: flex; gap: 14px; flex-wrap: wrap; }
+  .race-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    min-width: 172px;
+  }
+  .race-card .txt b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .race-card .txt small { color: var(--dim); font-size: 11px; }
+
+  /* 战斗卡牌模拟 */
+  .sim {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    background: linear-gradient(160deg, #171720, #101015);
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+  }
+  .unit {
+    width: 210px; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .unit-top { display: flex; gap: 10px; align-items: center; }
+  .unit-icon { line-height: 0; position: relative; }
+  .unit-info { flex: 1; min-width: 0; }
+  .unit-name {
+    font-weight: bold; font-size: 14px; color: #f2ead6;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .unit-lvl { color: var(--dim); font-size: 11px; margin-top: 1px; }
+  .bar { height: 8px; background: #241f1c; border-radius: 5px; margin-top: 9px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 5px; }
+  .bar.hp i { background: linear-gradient(90deg, #8f2a22, #d94a3a); }
+  .bar.mp i { background: linear-gradient(90deg, #2a4f8f, #4a8fd9); }
+  .tag {
+    font-size: 9px; padding: 1px 5px; border-radius: 4px; margin-left: 5px;
+    background: #4a1f1c; color: #ff9a8a; vertical-align: middle;
+  }
+  .tag.pet { background: #1c3a26; color: #aef2c0; }
+
+  .note {
+    margin-top: 12px; font-size: 12px; color: var(--dim); line-height: 1.9;
+    background: var(--panel); border-left: 2px solid var(--gold);
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+  }
+  .note b { color: var(--text); }
+  code {
+    background: #22222c; padding: 1px 6px; border-radius: 4px;
+    font-size: 11.5px; color: #9fd0ff;
+  }
+</style>
+</head>
+<body>
+
+<h1>角色贴图 <span class="accent">程序化 SVG</span> · 8 种族 × 9 职业</h1>
+<div class="sub">
+  零图片文件 · 单张 2~3 KB · 矢量不糊 · 可按装备/等级实时换装。下方全部为真实渲染结果。
+</div>
+
+<h2>72 种组合矩阵 <span class="hint">种族 × 职业</span></h2>
+<div class="matrix" id="matrix"></div>
+
+<h2>尺寸梯度 <span class="hint">从 20px 徽标到 128px 立绘，同一份矢量</span></h2>
+<div class="sizes" id="sizes"></div>
+
+<h2>战斗卡牌模拟 <span class="hint">替换现有 emoji 图标后的实际观感</span></h2>
+<div class="sim" id="sim"></div>
+
+<div class="note">
+  <b>接入方式：</b>战斗界面只需把 <code>&lt;span class="unit-icon"&gt;${e.icon}&lt;/span&gt;</code>
+  换成 <code>WOW.Portrait.html(race, cls, {size:40})</code>，
+  怪物侧则按 <code>MONSTERS[id].icon</code> 映射到预设怪物贴图，未命中时自动回退 emoji。
+</div>
+
+<script src="js/portrait.js"></script>
+<script>
+  const RACES = [
+    ['human', '人类'], ['dwarf', '矮人'], ['night_elf', '暗夜精灵'], ['gnome', '侏儒'],
+    ['orc', '兽人'], ['tauren', '牛头人'], ['troll', '巨魔'], ['undead', '亡灵'],
+  ];
+  const CLASSES = [
+    ['warrior', '战士'], ['paladin', '圣骑士'], ['hunter', '猎人'],
+    ['rogue', '盗贼'], ['priest', '牧师'], ['shaman', '萨满'], ['mage', '法师'],
+    ['warlock', '术士'], ['druid', '德鲁伊'],
+  ];
+
+  // ---- 矩阵 ----
+  const t = document.createElement('table');
+  let head = '<tr><th></th>';
+  CLASSES.forEach(([, cn]) => { head += `<th>${cn}</th>`; });
+  head += '</tr>';
+  t.innerHTML = head;
+  RACES.forEach(([rid, rcn]) => {
+    const tr = document.createElement('tr');
+    let row = `<th class="rowh">${rcn}<small>${rid}</small></th>`;
+    CLASSES.forEach(([cid]) => {
+      row += `<td><div class="cell">${WOW.Portrait.html(rid, cid, { size: 62 })}</div></td>`;
+    });
+    tr.innerHTML = row;
+    t.appendChild(tr);
+  });
+  document.getElementById('matrix').appendChild(t);
+
+  // ---- 尺寸 ----
+  const sizes = [20, 24, 32, 40, 56, 72, 96, 128];
+  document.getElementById('sizes').innerHTML = sizes.map((s) =>
+    `<div class="size-item">${WOW.Portrait.html('night_elf', 'priest', { size: s })}<span>${s}px</span></div>`
+  ).join('');
+
+  // ---- 战斗模拟 ----
+  const units = [
+    { race: 'human', cls: 'warrior', name: '洛萨', lvl: 60, hp: 78, mp: 40, pet: false },
+    { race: 'orc', cls: 'warlock', name: '古尔丹', lvl: 60, hp: 52, mp: 88, pet: false },
+    { race: 'tauren', cls: 'druid', name: '凯恩', lvl: 58, hp: 91, mp: 30, pet: false },
+    { race: 'undead', cls: 'rogue', name: '希尔瓦娜斯', lvl: 60, hp: 34, mp: 0, pet: false },
+    { race: 'night_elf', cls: 'hunter', name: '泰兰德', lvl: 55, hp: 66, mp: 55, pet: true },
+  ];
+  document.getElementById('sim').innerHTML = units.map((u) => `
+    <div class="unit">
+      <div class="unit-top">
+        <span class="unit-icon">${WOW.Portrait.html(u.race, u.cls, { size: 40 })}</span>
+        <div class="unit-info">
+          <div class="unit-name">${u.name}${u.pet ? '<span class="tag pet">宠物</span>' : ''}</div>
+          <div class="unit-lvl">Lv.${u.lvl}</div>
+        </div>
+      </div>
+      <div class="bar hp"><i style="width:${u.hp}%"></i></div>
+      ${u.mp ? `<div class="bar mp"><i style="width:${u.mp}%"></i></div>` : ''}
+    </div>
+  `).join('');
+</script>
+</body>
+</html>

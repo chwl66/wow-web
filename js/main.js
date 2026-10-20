@@ -227,7 +227,7 @@
         <div class="race-pick pick-${faction}">
           ${races.map((r) => `
             <button class="race-card" data-act="race-${r.id}">
-              <span class="rc-badge">${r.icon}</span>
+              <span class="rc-badge">${W.Portrait ? W.Portrait.html(r.id, r.classes[0], { size: 64 }) : r.icon}</span>
               <span class="rc-name">${U.esc(r.name)}</span>
               <span class="rc-en">${r.en}</span>
               <span class="rc-classes" title="可玩职业">${r.classes.map((cid) => D.CLASSES[cid] ? `<span class="rc-class" title="${U.esc(D.CLASSES[cid].name)}">${D.CLASSES[cid].icon}</span>` : '').join('')}</span>
@@ -259,7 +259,7 @@
             const rc = roleColor[String(c.role).split('·')[0].trim()] || '#8a8a8a';
             return `
             <button class="class-card" data-act="class-${c.id}" style="--c1:${c.colors[0]};--c2:${c.colors[1]}">
-              <span class="cc-icon">${c.icon}</span>
+              <span class="cc-icon">${W.Portrait ? W.Portrait.html(race.id, c.id, { size: 48 }) : c.icon}</span>
               <span class="cc-name">${U.esc(c.name)}</span>
               <span class="cc-role" style="background:${rc}">${U.esc(c.role)}</span>
             </button>`;
@@ -281,7 +281,7 @@
       root.innerHTML = `
         <div class="create-step-title">为你的人类英雄命名</div>
         <div class="name-pick">
-          <div class="name-summary">${race.icon} <b>${U.esc(race.name)}</b> · ${cls.icon} <b>${U.esc(cls.name)}</b></div>
+          <div class="name-summary"><span class="ns-avatar">${W.Portrait ? W.Portrait.html(race.id, cls.id, { size: 76 }) : race.icon}</span><span class="ns-text"><b>${U.esc(race.name)}</b> · <b>${U.esc(cls.name)}</b></span></div>
           <input id="char-name" class="name-input" maxlength="12" placeholder="输入英雄的名字…" autocomplete="off">
           <div class="modal-actions">
             <button class="btn gold big" data-act="create">⚔️ 创建英雄</button>
