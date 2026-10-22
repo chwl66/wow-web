@@ -304,49 +304,49 @@
     aqt_elite:        M('aqt_elite', '维克洛尔大帝', '🪬', 60, 4690, [192, 247], 126, 1850, 1300, 'elemental', ['m_shadow', 'm_charge', 'm_enrage'], { elite: 1, title: '安其拉神殿 · 精英' }),
     cthun:            M('cthun', '克苏恩', '🫀', 60, 7560, [223, 288], 132, 15000, 12000, 'elemental', ['m_eye_beam', 'm_shadow', 'm_breath', 'm_enrage'], { elite: 1, boss: 1, title: '安其拉神殿 · 千眼之魔' }),
     /* ===== 新增 8 副本 ===== */
-    /* 怒焰裂谷 (13-16) */
+    /* 怒焰裂谷 (15-16) */
     rfc_trooper:      M('rfc_trooper', '怒焰狂暴者', '🧌', 13, 240, [28, 38], 22, 105, 82, 'humanoid', ['m_bash', 'm_war_cry']),
     rfc_cultist:      M('rfc_cultist', '暗影议会成员', '🧙', 14, 250, [30, 40], 20, 112, 90, 'humanoid', ['m_shadow', 'm_claw']),
     rfc_imp:          M('rfc_imp', '虚空小鬼', '👿', 14, 220, [26, 34], 14, 108, 78, 'demon', ['m_bite', 'm_fireball']),
     rfc_elite:        M('rfc_elite', '烈焰守卫', '🔥', 15, 700, [40, 54], 30, 520, 330, 'humanoid', ['m_charge', 'm_war_cry'], { elite: 1, title: '怒焰裂谷 · 精英' }),
     jergosh:          M('jergosh', '杰尔戈什·召唤者', '🧙', 16, 800, [38, 48], 32, 820, 640, 'humanoid', ['m_burning_hex', 'm_shadow', 'm_bash'], { elite: 1, boss: 1, title: '怒焰裂谷 · 最终首领' }),
-    /* 暴风城监狱 (22-26) */
+    /* 暴风城监狱 (24-26) */
     skd_convict:      M('skd_convict', '迪菲亚囚犯', '⛓️', 22, 480, [52, 68], 40, 195, 155, 'humanoid', ['m_claw', 'm_bash']),
     skd_brute:        M('skd_brute', '监狱暴徒', '💢', 24, 540, [56, 74], 46, 215, 172, 'humanoid', ['m_bash', 'm_war_cry']),
     skd_hound:        M('skd_hound', '监狱猎犬', '🐕', 23, 460, [54, 70], 38, 205, 162, 'beast', ['m_bite', 'm_rend']),
     skd_elite:        M('skd_elite', '典狱长', '🔑', 25, 1300, [78, 102], 56, 980, 620, 'humanoid', ['m_charge', 'm_rend'], { elite: 1, title: '暴风城监狱 · 精英' }),
     thredd:           M('thredd', '巴基·斯奈德', '🗡️', 26, 1350, [56, 74], 52, 1600, 1250, 'humanoid', ['m_prison_chain', 'm_charge', 'm_enrage'], { elite: 1, boss: 1, title: '暴风城监狱 · 最终首领' }),
-    /* 黑暗深渊 (20-26) */
+    /* 黑暗深渊 (24-26) */
     bfd_naga:         M('bfd_naga', '深渊纳迦', '🧜', 21, 460, [50, 64], 42, 190, 150, 'humanoid', ['m_claw', 'm_bash']),
     bfd_priestess:    M('bfd_priestess', '深渊祭司', '🧝', 22, 440, [48, 62], 36, 198, 158, 'humanoid', ['m_shadow', 'm_heal']),
     bfd_turtle:       M('bfd_turtle', '深渊巨龟', '🐢', 23, 560, [52, 68], 52, 205, 160, 'beast', ['m_bite', 'm_bash']),
     bfd_elite:        M('bfd_elite', '暮光守卫', '🌆', 25, 1250, [76, 100], 58, 950, 600, 'humanoid', ['m_shadow', 'm_war_cry'], { elite: 1, title: '黑暗深渊 · 精英' }),
     akumai:           M('akumai', '阿库麦尔', '🦑', 26, 1400, [54, 72], 54, 1620, 1270, 'elemental', ['m_shadow_tide', 'm_breath', 'm_regen'], { elite: 1, boss: 1, title: '黑暗深渊 · 最终首领' }),
-    /* 诺莫瑞根 (24-30) */
+    /* 诺莫瑞根 (28-30) */
     gno_mech:         M('gno_mech', '失控机械', '🤖', 25, 560, [60, 78], 50, 210, 165, 'elemental', ['m_charge', 'm_bash']),
     gno_trooper:      M('gno_trooper', '侏儒机械师', '👨‍🔧', 26, 580, [62, 82], 48, 220, 172, 'humanoid', ['m_claw', 'm_fireball']),
     gno_slime:        M('gno_slime', '辐射软泥', '🟢', 27, 620, [56, 74], 40, 230, 180, 'elemental', ['m_poison', 'm_bash']),
     gno_elite:        M('gno_elite', '群体打击者9-60', '🤖', 29, 1500, [86, 112], 62, 1150, 720, 'elemental', ['m_charge', 'm_war_cry'], { elite: 1, title: '诺莫瑞根 · 精英' }),
     thermaplugg:      M('thermaplugg', '瑟玛普拉格', '🎩', 30, 1650, [68, 90], 60, 1900, 1480, 'elemental', ['m_radiation', 'm_fireball', 'm_enrage'], { elite: 1, boss: 1, title: '诺莫瑞根 · 最终首领' }),
-    /* 剃刀沼泽 (25-31) */
+    /* 剃刀沼泽 (29-31) */
     rfk_quill:        M('rfk_quill', '剃刀野猪人', '🐗', 26, 600, [60, 78], 50, 218, 170, 'humanoid', ['m_bash', 'm_war_cry']),
     rfk_boar:         M('rfk_boar', '巨型剃刀野猪', '🐖', 27, 640, [58, 76], 54, 226, 178, 'beast', ['m_charge', 'm_bite']),
     rfk_shaman:       M('rfk_shaman', '野猪人萨满', '🪄', 28, 600, [62, 82], 44, 236, 186, 'humanoid', ['m_shadow', 'm_heal']),
     rfk_elite:        M('rfk_elite', '剃刀卫士', '🛡️', 30, 1550, [90, 116], 64, 1200, 750, 'humanoid', ['m_charge', 'm_rend'], { elite: 1, title: '剃刀沼泽 · 精英' }),
     charlga:          M('charlga', '卡尔加·刺肋', '👸', 31, 1750, [72, 94], 62, 2000, 1560, 'humanoid', ['m_razor_charge', 'm_poison', 'm_enrage'], { elite: 1, boss: 1, title: '剃刀沼泽 · 最终首领' }),
-    /* 剃刀高地 (33-40) */
+    /* 剃刀高地 (38-40) */
     rfd_bones:        M('rfd_bones', '白骨魔像', '💀', 35, 900, [84, 108], 70, 290, 235, 'undead', ['m_bash', 'm_rend']),
     rfd_witch:        M('rfd_witch', '亡者女巫', '🧙‍♀️', 36, 880, [86, 110], 64, 300, 245, 'undead', ['m_shadow', 'm_heal']),
     rfd_worm:         M('rfd_worm', '巨型蛆虫', '🐛', 37, 1000, [82, 106], 74, 310, 255, 'beast', ['m_bite', 'm_poison']),
     rfd_elite:        M('rfd_elite', '坟墓守卫', '⚰️', 39, 2200, [110, 144], 80, 1700, 1050, 'undead', ['m_charge', 'm_rend'], { elite: 1, title: '剃刀高地 · 精英' }),
     amnennar:         M('amnennar', '阿姆纳尔·冷铸者', '🧊', 40, 2450, [88, 116], 78, 2650, 2100, 'undead', ['m_cold_grave', 'm_shadow', 'm_enrage'], { elite: 1, boss: 1, title: '剃刀高地 · 最终首领' }),
-    /* 血色修道院 (29-41) */
+    /* 血色修道院 (39-41) */
     sm_knight:        M('sm_knight', '血色骑士', '⛨', 36, 940, [90, 114], 74, 305, 248, 'humanoid', ['m_bash', 'm_war_cry']),
     sm_crusader:      M('sm_crusader', '血色十字军', '⛪', 37, 980, [94, 120], 78, 315, 258, 'humanoid', ['m_charge', 'm_rend']),
     sm_cleric:        M('sm_cleric', '血色牧师', '🙏', 38, 920, [88, 112], 66, 325, 268, 'humanoid', ['m_heal', 'm_shadow']),
     sm_elite:         M('sm_elite', '血色勇士', '⚔️', 40, 2300, [116, 150], 84, 1800, 1100, 'humanoid', ['m_charge', 'm_war_cry'], { elite: 1, title: '血色修道院 · 精英' }),
     whitemane:        M('whitemane', '大检察官怀特迈恩', '👩‍⚖️', 41, 2550, [92, 122], 82, 2750, 2180, 'humanoid', ['m_holy_wrath', 'm_war_cry', 'm_enrage'], { elite: 1, boss: 1, title: '血色修道院 · 最终首领' }),
-    /* 沉没的神庙 (45-51) */
+    /* 沉没的神庙 (49-51) */
     st_troll:         M('st_troll', '哈卡莱巨魔', '🧟', 46, 1350, [116, 150], 92, 420, 345, 'humanoid', ['m_bash', 'm_war_cry']),
     st_priest:        M('st_priest', '哈卡莱祭司', '🧙', 47, 1300, [114, 148], 84, 435, 358, 'humanoid', ['m_shadow', 'm_heal']),
     st_snake:         M('st_snake', '疯狂巨蟒', '🐍', 48, 1450, [112, 146], 96, 450, 370, 'beast', ['m_poison', 'm_bite']),
@@ -359,7 +359,7 @@
   /* 死亡矿井 / 哀嚎洞穴 的怪物波次 */
   D.DUNGEONS = {
     deadmines: {
-      id: 'deadmines', name: '死亡矿井', icon: '⛏️', zone: 'westfall', minLevel: 14, boss: 'vancleef',
+      id: 'deadmines', name: '死亡矿井', icon: '⛏️', zone: 'westfall', minLevel: 16, boss: 'vancleef',
       waves: [
         { enemies: ['dm_sailor', 'dm_sailor'], name: '甲板守卫' },
         { enemies: ['dm_wizard'], name: '货舱巫师' },
@@ -370,7 +370,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 2], ['m_crystal', 1]], gold: [900, 1500] },
     },
     wailing_caverns: {
-      id: 'wailing_caverns', name: '哀嚎洞穴', icon: '🌿', zone: 'barrens', minLevel: 13, boss: 'mutanus',
+      id: 'wailing_caverns', name: '哀嚎洞穴', icon: '🌿', zone: 'barrens', minLevel: 14, boss: 'mutanus',
       waves: [
         { enemies: ['wc_bat', 'wc_viper'], name: '洞穴入口' },
         { enemies: ['wc_viper', 'wc_bat'], name: '藤蔓走廊' },
@@ -381,7 +381,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 3], ['m_crystal', 1]], gold: [1000, 1700] },
     },
     blackrock_depths: {
-      id: 'blackrock_depths', name: '黑石深渊', icon: '⛏️', zone: 'burning', minLevel: 44, boss: 'emperor_thaurissan',
+      id: 'blackrock_depths', name: '黑石深渊', icon: '⛏️', zone: 'burning', minLevel: 50, boss: 'emperor_thaurissan',
       waves: [
         { enemies: ['brd_guard', 'brd_guard'], name: '黑铁岗哨' },
         { enemies: ['brd_mage'], name: '暗炉祭坛' },
@@ -392,7 +392,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 2], ['tr_imperial_seal', 1]], gold: [2600, 3800] },
     },
     zulfarrak: {
-      id: 'zulfarrak', name: '祖尔法拉克', icon: '🏺', zone: 'tanaris', minLevel: 36, boss: 'zhuzhun',
+      id: 'zulfarrak', name: '祖尔法拉克', icon: '🏺', zone: 'tanaris', minLevel: 42, boss: 'zhuzhun',
       waves: [
         { enemies: ['zf_mummy', 'zf_mummy'], name: '沙怒陵墓' },
         { enemies: ['zf_priest'], name: '沙怒祭坛' },
@@ -403,7 +403,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 1], ['tr_abyss_eye', 1]], gold: [2200, 3200] },
     },
     shadowfang_keep: {
-      id: 'shadowfang_keep', name: '影牙城堡', icon: '🐺', zone: 'duskwood', minLevel: 19, boss: 'arugal',
+      id: 'shadowfang_keep', name: '影牙城堡', icon: '🐺', zone: 'duskwood', minLevel: 23, boss: 'arugal',
       waves: [
         { enemies: ['sfk_worgen', 'sfk_worgen'], name: '城门狼群' },
         { enemies: ['sfk_ghoul', 'sfk_shadow'], name: '地窖亡灵' },
@@ -414,7 +414,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 3], ['m_crystal', 1]], gold: [1400, 2200] },
     },
     uldaman: {
-      id: 'uldaman', name: '奥达曼', icon: '🏛️', zone: 'badlands', minLevel: 30, boss: 'archaledas',
+      id: 'uldaman', name: '奥达曼', icon: '🏛️', zone: 'badlands', minLevel: 34, boss: 'archaledas',
       waves: [
         { enemies: ['uld_trogg', 'uld_trogg'], name: '泰坦之门' },
         { enemies: ['uld_gnome', 'uld_golem'], name: '符文大厅' },
@@ -425,7 +425,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 1], ['tr_ember_heart', 1]], gold: [2000, 3000] },
     },
     maraudon: {
-      id: 'maraudon', name: '玛拉顿', icon: '💧', zone: 'dustwallow', minLevel: 34, boss: 'princess_theradras',
+      id: 'maraudon', name: '玛拉顿', icon: '💧', zone: 'dustwallow', minLevel: 38, boss: 'princess_theradras',
       waves: [
         { enemies: ['mara_satyr', 'mara_satyr'], name: '污染泉眼' },
         { enemies: ['mara_water', 'mara_dryad'], name: '腐化林地' },
@@ -436,7 +436,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 3], ['m_crystal', 2], ['tr_imperial_seal', 1]], gold: [2400, 3400] },
     },
     scholomance: {
-      id: 'scholomance', name: '通灵学院', icon: '🎓', zone: 'plaguelands', minLevel: 54, boss: 'gandling',
+      id: 'scholomance', name: '通灵学院', icon: '🎓', zone: 'plaguelands', minLevel: 56, boss: 'gandling',
       waves: [
         { enemies: ['sch_apprentice', 'sch_apprentice'], name: '昏暗讲堂' },
         { enemies: ['sch_lecturer', 'sch_mage'], name: '解剖室' },
@@ -447,7 +447,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 4], ['m_crystal', 2], ['tr_abyss_eye', 1]], gold: [3600, 4800] },
     },
     naxxramas: {
-      id: 'naxxramas', name: '纳克萨玛斯', icon: '💀', zone: 'winterspring', minLevel: 57, boss: 'kelthuzad',
+      id: 'naxxramas', name: '纳克萨玛斯', icon: '💀', zone: 'winterspring', minLevel: 58, boss: 'kelthuzad',
       waves: [
         { enemies: ['naxx_spider', 'naxx_spider'], name: '织网蛛巢' },
         { enemies: ['naxx_plague', 'naxx_knight'], name: '瘟疫回廊' },
@@ -458,7 +458,7 @@
       chest: { items: [['m_dust', 4], ['m_essence', 4], ['m_crystal', 3], ['tr_naaru_tear', 1]], gold: [5000, 6500] },
     },
     blackrock_spire: {
-      id: 'blackrock_spire', name: '黑石塔', icon: '🏰', zone: 'burning', minLevel: 55, boss: 'drakkisath',
+      id: 'blackrock_spire', name: '黑石塔', icon: '🏰', zone: 'burning', minLevel: 56, boss: 'drakkisath',
       waves: [
         { enemies: ['brs_orc', 'brs_orc'], name: '黑石大门' },
         { enemies: ['brs_whelp', 'brs_spellblade'], name: '龙人走廊' },
@@ -469,7 +469,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 4], ['m_crystal', 2], ['tr_immolthar_eye', 1]], gold: [4200, 5600] },
     },
     stratholme: {
-      id: 'stratholme', name: '斯坦索姆', icon: '🏛️', zone: 'eplaguelands', minLevel: 56, boss: 'rivendare',
+      id: 'stratholme', name: '斯坦索姆', icon: '🏛️', zone: 'eplaguelands', minLevel: 58, boss: 'rivendare',
       waves: [
         { enemies: ['str_ghoul', 'str_ghoul'], name: '亡灵广场' },
         { enemies: ['str_necro', 'str_knight'], name: '十字军大厅' },
@@ -480,7 +480,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 4], ['m_crystal', 2], ['tr_hakkar_heart', 1]], gold: [4600, 6000] },
     },
     dire_maul: {
-      id: 'dire_maul', name: '厄运之槌', icon: '🌿', zone: 'felwood', minLevel: 55, boss: 'immolthar',
+      id: 'dire_maul', name: '厄运之槌', icon: '🌿', zone: 'felwood', minLevel: 56, boss: 'immolthar',
       waves: [
         { enemies: ['dum_satyr', 'dum_treant'], name: '月神庙宇' },
         { enemies: ['dum_ghost', 'dum_satyr'], name: '亡灵庭院' },
@@ -563,7 +563,7 @@
     },
     /* ===== 新增 8 个经典 5 人副本 ===== */
     ragefire_chasm: {
-      id: 'ragefire_chasm', name: '怒焰裂谷', icon: '🔥', zone: 'orgrimmar', minLevel: 13, boss: 'jergosh',
+      id: 'ragefire_chasm', name: '怒焰裂谷', icon: '🔥', zone: 'orgrimmar', minLevel: 15, boss: 'jergosh',
       waves: [
         { enemies: ['rfc_trooper', 'rfc_cultist'], name: '怒焰前厅' },
         { enemies: ['rfc_imp', 'rfc_imp'], name: '暗影祭坛' },
@@ -574,7 +574,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [900, 1500] },
     },
     stockade: {
-      id: 'stockade', name: '暴风城监狱', icon: '⛓️', zone: 'stormwind', minLevel: 22, boss: 'thredd',
+      id: 'stockade', name: '暴风城监狱', icon: '⛓️', zone: 'stormwind', minLevel: 24, boss: 'thredd',
       waves: [
         { enemies: ['skd_convict', 'skd_convict'], name: '牢房走廊' },
         { enemies: ['skd_hound', 'skd_brute'], name: '巡逻猎犬' },
@@ -585,7 +585,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [1500, 2300] },
     },
     blackfathom_deeps: {
-      id: 'blackfathom_deeps', name: '黑暗深渊', icon: '🕳️', zone: 'dustwallow', minLevel: 20, boss: 'akumai',
+      id: 'blackfathom_deeps', name: '黑暗深渊', icon: '🕳️', zone: 'dustwallow', minLevel: 24, boss: 'akumai',
       waves: [
         { enemies: ['bfd_naga', 'bfd_turtle'], name: '潮汐之门' },
         { enemies: ['bfd_priestess', 'bfd_priestess'], name: '暮光祭坛' },
@@ -596,7 +596,7 @@
       chest: { items: [['m_dust', 2], ['m_essence', 1]], gold: [1400, 2100] },
     },
     gnomeregan: {
-      id: 'gnomeregan', name: '诺莫瑞根', icon: '🤖', zone: 'redridge', minLevel: 24, boss: 'thermaplugg',
+      id: 'gnomeregan', name: '诺莫瑞根', icon: '🤖', zone: 'redridge', minLevel: 28, boss: 'thermaplugg',
       waves: [
         { enemies: ['gno_mech', 'gno_trooper'], name: '机械工坊' },
         { enemies: ['gno_slime', 'gno_slime'], name: '辐射通道' },
@@ -607,7 +607,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 2]], gold: [1700, 2500] },
     },
     razorfen_kraul: {
-      id: 'razorfen_kraul', name: '剃刀沼泽', icon: '🌾', zone: 'barrens', minLevel: 25, boss: 'charlga',
+      id: 'razorfen_kraul', name: '剃刀沼泽', icon: '🌾', zone: 'barrens', minLevel: 29, boss: 'charlga',
       waves: [
         { enemies: ['rfk_quill', 'rfk_boar'], name: '野猪人营地' },
         { enemies: ['rfk_shaman', 'rfk_shaman'], name: '萨满祭坛' },
@@ -618,7 +618,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 2]], gold: [1800, 2600] },
     },
     razorfen_downs: {
-      id: 'razorfen_downs', name: '剃刀高地', icon: '🥀', zone: 'barrens', minLevel: 33, boss: 'amnennar',
+      id: 'razorfen_downs', name: '剃刀高地', icon: '🥀', zone: 'barrens', minLevel: 38, boss: 'amnennar',
       waves: [
         { enemies: ['rfd_bones', 'rfd_worm'], name: '白骨回廊' },
         { enemies: ['rfd_witch', 'rfd_witch'], name: '亡者祭坛' },
@@ -629,7 +629,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]], gold: [2300, 3300] },
     },
     scarlet_monastery: {
-      id: 'scarlet_monastery', name: '血色修道院', icon: '⛪', zone: 'plaguelands', minLevel: 29, boss: 'whitemane',
+      id: 'scarlet_monastery', name: '血色修道院', icon: '⛪', zone: 'plaguelands', minLevel: 39, boss: 'whitemane',
       waves: [
         { enemies: ['sm_knight', 'sm_crusader'], name: '血色大厅' },
         { enemies: ['sm_cleric', 'sm_cleric'], name: '圣光礼拜堂' },
@@ -640,7 +640,7 @@
       chest: { items: [['m_dust', 3], ['m_essence', 2], ['m_crystal', 1]], gold: [2000, 3000] },
     },
     sunken_temple: {
-      id: 'sunken_temple', name: '沉没的神庙', icon: '🐍', zone: 'ungoro', minLevel: 45, boss: 'avatar_hakkar',
+      id: 'sunken_temple', name: '沉没的神庙', icon: '🐍', zone: 'ungoro', minLevel: 49, boss: 'avatar_hakkar',
       waves: [
         { enemies: ['st_troll', 'st_snake'], name: '哈卡莱回廊' },
         { enemies: ['st_priest', 'st_priest'], name: '神庙祭坛' },
@@ -817,28 +817,28 @@
       '古神克苏恩的沉睡之地，千眼之魔的梦境笼罩着整座神殿。',
       { travel: ['silithus'], monsters: [], dungeon: 'temple_ahnqiraj', inn: false, quests: ['q_temple_ahnqiraj'] }),
     /* ===== 新增 8 副本区域 ===== */
-    ragefire_chasm: Z('ragefire_chasm', '怒焰裂谷', '🔥', 'neutral', '13-16',
+    ragefire_chasm: Z('ragefire_chasm', '怒焰裂谷', '🔥', 'neutral', '15-16',
       '奥格瑞玛地下的熔岩裂隙，暗影议会在此召唤来自深渊的邪火。',
       { travel: ['orgrimmar'], monsters: [], dungeon: 'ragefire_chasm', inn: false, quests: ['q_ragefire'] }),
-    stockade: Z('stockade', '暴风城监狱', '⛓️', 'neutral', '22-26',
+    stockade: Z('stockade', '暴风城监狱', '⛓️', 'neutral', '24-26',
       '暴风城地下的阴暗牢房，迪菲亚暴动分子正谋划越狱。',
       { travel: ['stormwind'], monsters: [], dungeon: 'stockade', inn: false, quests: ['q_stockade'] }),
-    blackfathom_deeps: Z('blackfathom_deeps', '黑暗深渊', '🕳️', 'neutral', '20-26',
+    blackfathom_deeps: Z('blackfathom_deeps', '黑暗深渊', '🕳️', 'neutral', '24-26',
       '尘泥沼泽深处的无底海渊，暮光之锤在此崇拜深渊中的古老恐惧。',
       { travel: ['dustwallow'], monsters: [], dungeon: 'blackfathom_deeps', inn: false, quests: ['q_blackfathom'] }),
-    gnomeregan: Z('gnomeregan', '诺莫瑞根', '🤖', 'neutral', '24-30',
+    gnomeregan: Z('gnomeregan', '诺莫瑞根', '🤖', 'neutral', '28-30',
       '侏儒的科技之城毁于辐射灾难，疯狂的机械仍在地下轰鸣。',
       { travel: ['redridge'], monsters: [], dungeon: 'gnomeregan', inn: false, quests: ['q_gnomeregan'] }),
-    razorfen_kraul: Z('razorfen_kraul', '剃刀沼泽', '🌾', 'neutral', '25-31',
+    razorfen_kraul: Z('razorfen_kraul', '剃刀沼泽', '🌾', 'neutral', '29-31',
       '贫瘠之地南部的荆棘迷宫，野猪人部族盘踞其中。',
       { travel: ['barrens'], monsters: [], dungeon: 'razorfen_kraul', inn: false, quests: ['q_razorfen_kraul'] }),
-    razorfen_downs: Z('razorfen_downs', '剃刀高地', '🥀', 'neutral', '33-40',
+    razorfen_downs: Z('razorfen_downs', '剃刀高地', '🥀', 'neutral', '38-40',
       '野猪人圣地的幽暗墓穴，亡灵巫师在此散布瘟疫。',
       { travel: ['barrens'], monsters: [], dungeon: 'razorfen_downs', inn: false, quests: ['q_razorfen_downs'] }),
-    scarlet_monastery: Z('scarlet_monastery', '血色修道院', '⛪', 'neutral', '29-41',
+    scarlet_monastery: Z('scarlet_monastery', '血色修道院', '⛪', 'neutral', '39-41',
       '血色十字军的圣殿，狂热的圣光信徒在此审判一切异端。',
       { travel: ['plaguelands'], monsters: [], dungeon: 'scarlet_monastery', inn: false, quests: ['q_scarlet_monastery'] }),
-    sunken_temple: Z('sunken_temple', '沉没的神庙', '🐍', 'neutral', '45-51',
+    sunken_temple: Z('sunken_temple', '沉没的神庙', '🐍', 'neutral', '49-51',
       '巨魔古都阿塔哈卡神庙沉入沼泽，哈卡的血祭仍在黑暗中继续。',
       { travel: ['ungoro'], monsters: [], dungeon: 'sunken_temple', inn: false, quests: ['q_sunken_temple'] }),
   };
@@ -1096,7 +1096,7 @@
     a_burning_boots: IT('a_burning_boots', '熔岩战靴', '👢', 'boots', 'blue', 34, { armor: 40, agi: 5, stam: 3 }, { buy: 18000 }),
     a_burning_cloak: IT('a_burning_cloak', '灼热披风', '🧥', 'cloak', 'blue', 34, { armor: 18, int: 5, spi: 3 }, { buy: 17500 }),
     a_desert_ring: IT('a_desert_ring', '沙漠之戒', '💍', 'ring', 'blue', 36, { crit: 0.02, stam: 5, agi: 3 }, { buy: 19800 }),
-    a_burning_gloves: IT('a_burning_gloves', '灼热护手', '🧤', 'gloves', 'blue', 36, { armor: 44, str: 6, stam: 3 }, { buy: 19600 }),
+    a_burning_gloves: IT('a_burning_gloves', '灼热链甲手套', '🧤', 'gloves', 'blue', 36, { armor: 44, str: 6, stam: 3 }, { buy: 19600 }),
     a_desert_neck: IT('a_desert_neck', '沙漠护符', '📿', 'neck', 'blue', 38, { int: 6, spi: 4, stam: 2 }, { buy: 20500 }),
     a_winter_boots: IT('a_winter_boots', '冬泉长靴', '👢', 'boots', 'green', 44, { armor: 30, stam: 5, agi: 3 }, { buy: 14200 }),
     a_blasted_neck: IT('a_blasted_neck', '诅咒之地项圈', '📿', 'neck', 'blue', 46, { agi: 6, crit: 0.02, stam: 3 }, { buy: 30000 }),
@@ -1566,7 +1566,7 @@
     r_sw_sword:   RP('r_sw_sword', '暴风城卫兵长剑', '⚔️', 'weapon', 'blue', 14, { dmg: [24, 36], stam: 3, agi: 2 }, 12000, 'sw', 'honored'),
     r_sw_cloak:   RP('r_sw_cloak', '暴风城荣誉披风', '🧣', 'cloak', 'blue', 12, { armor: 12, stam: 2, agi: 1 }, 9000, 'sw', 'honored'),
     r_sw_plate:   RP('r_sw_plate', '暴风城骑士板甲', '🛡️', 'chest', 'purple', 18, { armor: 42, str: 6, stam: 6 }, 26000, 'sw', 'revered'),
-    r_sw_ring:    RP('r_sw_ring', '暴风城皇家徽记', '💍', 'ring', 'purple', 16, { crit: 0.02, stam: 2, agi: 2 }, 22000, 'sw', 'revered'),
+    r_sw_ring:    RP('r_sw_ring', '暴风城皇家指环', '💍', 'ring', 'purple', 16, { crit: 0.02, stam: 2, agi: 2 }, 22000, 'sw', 'revered'),
     r_sw_horse:   RP('r_sw_horse', '暴风城军马', '🐎', 'mount', 'epic', 10, {}, 80000, 'sw', 'exalted'),
     /* 奥格瑞玛(部落) */
     r_og_axe:     RP('r_og_axe', '奥格瑞玛战斧', '🪓', 'weapon', 'blue', 14, { dmg: [26, 38], str: 3, stam: 2 }, 12000, 'og', 'honored'),
@@ -1628,7 +1628,7 @@
     a_dust_gloves:      IT('a_dust_gloves', '尘泥手套', '🧤', 'gloves', 'green', 28, { armor: 22, str: 3, stam: 2 }, { buy: 9600, sell: 2400 }),
     /* 31-35 段 */
     a_searing_hood:     IT('a_searing_hood', '灼热兜帽', '🪖', 'head', 'green', 33, { armor: 42, str: 5, stam: 3 }, { buy: 15500, sell: 3875 }),
-    a_searing_gauntlets: IT('a_searing_gauntlets', '灼热护手', '🧤', 'gloves', 'green', 33, { armor: 28, str: 4, stam: 3 }, { buy: 11800, sell: 2950 }),
+    a_searing_gauntlets: IT('a_searing_gauntlets', '灼热铸铁护手', '🧤', 'gloves', 'green', 33, { armor: 28, str: 4, stam: 3 }, { buy: 11800, sell: 2950 }),
     a_lava_legs:        IT('a_lava_legs', '熔岩护腿', '👖', 'legs', 'green', 33, { armor: 56, str: 5, stam: 4 }, { buy: 13400, sell: 3350 }),
     a_lava_ring:        IT('a_lava_ring', '熔岩指环', '💍', 'ring', 'green', 33, { crit: 0.01, agi: 4, stam: 4 }, { buy: 12500, sell: 3125 }),
     a_lava_pendant:     IT('a_lava_pendant', '熔岩坠饰', '📿', 'neck', 'green', 33, { int: 5, spi: 5, stam: 2 }, { buy: 10800, sell: 2700 }),
@@ -1662,8 +1662,8 @@
   const COVER_SHOPS = {
     elwynn: ['a_boar_legs', 'a_boar_boots'],
     durotar: ['a_boar_legs', 'a_boar_boots'],
-    stormwind: ['a_linen_pendant', 'a_tin_ring'],
-    orgrimmar: ['a_linen_pendant', 'a_tin_ring'],
+    stormwind: ['a_linen_pendant', 'a_tin_ring', 'w_doom_cleaver', 'w_ice_guardian', 'a_plague_cloak', 'a_epl_helm', 'a_silithid_chitin', 'a_emperor_plate', 'a_obsidian_torc'],
+    orgrimmar: ['a_linen_pendant', 'a_tin_ring', 'w_doom_cleaver', 'w_ice_guardian', 'a_plague_cloak', 'a_epl_helm', 'a_silithid_chitin', 'a_emperor_plate', 'a_obsidian_torc'],
     westfall: ['a_thorn_gloves'],
     barrens: ['a_thorn_gloves'],
     duskwood: ['a_thorn_gloves', 'a_tin_ring', 'a_greywood_pendant'],
@@ -1742,12 +1742,12 @@
   D.REPS = {
     sw: { id: 'sw', name: '暴风城', icon: '🦁', color: '#6aa5d9', faction: 'alliance',
       desc: '联盟的主城，狮王旗飘扬之处皆为暴风城之地。',
-      zones: ['elwynn', 'westfall', 'redridge', 'duskwood', 'stv', 'badlands'],
+      zones: ['elwynn', 'westfall', 'redridge', 'duskwood', 'stv', 'badlands', 'stormwind'],
       dungeons: ['deadmines', 'shadowfang_keep', 'uldaman', 'zulgurub', 'stockade', 'gnomeregan'],
       sources: '击败暴风城势力区域怪物、通关死亡矿井/影牙城堡/奥达曼等副本、完成区域任务' },
     og: { id: 'og', name: '奥格瑞玛', icon: '⚔️', color: '#d9655b', faction: 'horde',
       desc: '部落的主城，钢铁与战鼓铸就的荣耀。',
-      zones: ['durotar', 'barrens', 'thousand_needles', 'tanaris', 'dustwallow'],
+      zones: ['durotar', 'barrens', 'thousand_needles', 'tanaris', 'dustwallow', 'orgrimmar'],
       dungeons: ['wailing_caverns', 'zulfarrak', 'maraudon', 'dire_maul', 'ragefire_chasm', 'razorfen_kraul', 'razorfen_downs'],
       sources: '击败奥格瑞玛势力区域怪物、通关哀嚎洞穴/祖尔法拉克等副本、完成区域任务' },
     argent: { id: 'argent', name: '银色黎明', icon: '🌕', color: '#e8d48b', faction: 'neutral',
@@ -3173,7 +3173,7 @@
       const mon = D.MONSTERS[mid];
       if (!mon) continue;
       const lv = d.minLevel || 10;
-      Q('q_dg_' + dgid + '_boss', '讨伐' + mon.name, dgid, lv + 1,
+      Q('q_dg_' + dgid + '_boss', '讨伐' + mon.name, dgid, Math.min(70, lv + 1),
         '深入' + d.name + '，击败首领' + mon.name + '！', mid, 1,
         1600 + lv * 80, 1500 + lv * 60, ['m_essence', matFor(lv)]);
       n++;
@@ -3187,6 +3187,12 @@
       for (const q of Object.values(D.QUESTS)) {
         const cut = Math.floor(q.exp * (1 - CUT));
         q.exp = Math.max(1, Math.floor(q.exp * CUT));
+        // 等级段修正:41-50 与 61-69 任务稀疏,提高单任务经验;60 级任务扎堆,压低防经验泡沫
+        let segMult = 1;
+        if (q.level >= 41 && q.level <= 50) segMult = 1.55;
+        else if (q.level === 60) segMult = 0.45;
+        else if (q.level >= 61 && q.level <= 69) segMult = 1.3;
+        if (segMult !== 1) q.exp = Math.max(1, Math.round(q.exp * segMult));
         q.gold += Math.max(5, Math.floor(cut * EXP_TO_GOLD));
         // 材料补偿按等级补齐(Lv40+ 双水晶;已含材料的按缺额补足)
         if (q.level >= 40) {
@@ -3198,4 +3204,41 @@
         }
       }
     })();
+  })();
+
+  /* ============ 城市委托:给无任务区域补内容 ============ */
+  (function () {
+    const D = window.WOW.Data;
+    const defs = [
+      { id: 'q_city_sw', name: '暴风城委托：西部荒野的威胁', zone: 'stormwind', lv: 10, target: 'westfall_gnoll', count: 8, exp: 620, gold: 900, items: ['m_dust', 'c_heal'] },
+      { id: 'q_city_org', name: '奥格瑞玛委托：杜隆塔尔的蝎患', zone: 'orgrimmar', lv: 8, target: 'durotar_scorpion', count: 8, exp: 420, gold: 700, items: ['m_dust', 'c_bread'] },
+      { id: 'q_city_shattrath', name: '沙塔斯委托：地狱火半岛的清剿', zone: 'shattrath', lv: 62, target: 'hell_boar', count: 10, exp: 28000, gold: 26000, items: ['m_crystal', 'c_out_heal'] },
+      { id: 'q_city_time', name: '时光之穴委托：时光猎手', zone: 'caverns_of_time', lv: 64, target: 'epoch_hunter', count: 1, exp: 12000, gold: 16000, items: ['m_nether', 'm_crystal'],
+        desc: '青铜龙军团的委托：旧希尔斯布莱德的时光线遭到扰动，进入传送门终结时光猎手埃波克，让历史重回正轨。', giver: '青铜龙使者' },
+      { id: 'q_city_queldanas', name: '奎尔丹纳斯委托：太阳井的终局', zone: 'quel_danas', lv: 70, target: 'kiljaeden', count: 1, exp: 16000, gold: 22000, items: ['m_nether', 'm_crystal', 'm_crystal'],
+        desc: '破碎残阳的求援：基尔加丹的阴影笼罩太阳之井，深入太阳井高地，终结燃烧军团的入侵。', giver: '破碎残阳指挥官' },
+    ];
+    for (const d of defs) {
+      if (!D.ZONES[d.zone] || !D.MONSTERS[d.target]) continue;
+      D.QUESTS[d.id] = {
+        id: d.id, name: d.name, zone: d.zone, level: d.lv,
+        desc: d.desc || '城门口的告示板贴出了悬赏：为商队与平民清除周边的威胁。',
+        type: 'kill', target: d.target, count: d.count,
+        exp: d.exp, gold: d.gold, rewardItems: d.items, giver: d.giver || '城市告示板',
+      };
+      const z = D.ZONES[d.zone];
+      z.quests = z.quests || [];
+      if (!z.quests.includes(d.id)) z.quests.push(d.id);
+      if (!z.shop) z.shop = [];
+    }
+  })();
+
+  /* ============ 成就奖励再平衡:一次性奖励打折,避免成就成为主要成长来源 ============ */
+  (function () {
+    const D = window.WOW.Data;
+    for (const a of Object.values(D.ACHIEVEMENTS || {})) {
+      if (!a.reward) continue;
+      if (a.reward.gold) a.reward.gold = Math.round(a.reward.gold * 0.6);
+      if (a.reward.exp) a.reward.exp = Math.round(a.reward.exp * 0.5);
+    }
   })();

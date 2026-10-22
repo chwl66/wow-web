@@ -39,16 +39,26 @@
           <button class="btn" data-act="talents">🌟 天赋</button>
           <button class="btn wf-more" data-act="more" aria-expanded="false" aria-controls="world-subnav">✨ 更多</button>
         </div>
-        <!-- 二级菜单:锻造 / 声望 / 图鉴 / 成就等低频功能 -->
+        <!-- 二级菜单:按「成长 / 系统」分组收纳,避免一级菜单拥挤 -->
         <div class="wf-sub" id="world-subnav" hidden>
-          <button class="btn" data-act="forge">⚒️ 锻造</button>
-          <button class="btn" data-act="ach">🏅 成就</button>
-          <button class="btn" data-act="codex">👹 图鉴</button>
-          <button class="btn" data-act="rep">🏛️ 声望</button>
-          <button class="btn" data-act="save">💾 存档</button>
-          <button class="btn" data-act="settings">⚙️ 设置</button>
-          <button class="btn gm-btn" data-act="gm" hidden>🛠️ GM 模式</button>
-          <button class="btn ghost" data-act="title">🏠 标题</button>
+          <div class="wf-group">
+            <span class="wf-label">成长</span>
+            <div class="wf-btns">
+              <button class="btn" data-act="forge">⚒️ 锻造</button>
+              <button class="btn" data-act="ach">🏅 成就</button>
+              <button class="btn" data-act="codex">👹 图鉴</button>
+              <button class="btn" data-act="rep">🏛️ 声望</button>
+            </div>
+          </div>
+          <div class="wf-group">
+            <span class="wf-label">系统</span>
+            <div class="wf-btns">
+              <button class="btn" data-act="save">💾 存档</button>
+              <button class="btn" data-act="settings">⚙️ 设置</button>
+              <button class="btn gm-btn" data-act="gm" hidden>🛠️ GM 模式</button>
+              <button class="btn ghost" data-act="title">🏠 标题</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

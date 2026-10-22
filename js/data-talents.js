@@ -164,7 +164,7 @@
       id: 'sub', name: '敏锐', icon: '🌒', color: '#c8c8c8',
       desc: '藏于阴影，伺机而动。',
       talents: [
-        { id: 'r_sub_stealth', name: '强化潜行', icon: '👤', tier: 0, max: 2, desc: '潜行持续时间延长 {n} 回合', mods: [{ t: 'buffDur', skill: 'stealth', per: 1 }] },
+        { id: 'r_sub_stealth', name: '强化潜行', icon: '👤', tier: 0, max: 2, desc: '战斗开始时的潜行持续时间延长 {n} 回合', mods: [{ t: 'buffDur', skill: 'stealth', per: 1 }] },
         { id: 'r_sub_decep', name: '欺诈高手', icon: '🎭', tier: 0, max: 5, desc: '闪避几率提高 {n}%', mods: [{ t: 'stat', stat: 'dodge', per: 0.01 }] },
         { id: 'r_sub_sap', name: '强化闷棍', icon: '🥁', tier: 1, max: 3, desc: '闷棍化为本能，攻击强度提高 {n}%', mods: [{ t: 'apPct', per: 0.02 }] },
         { id: 'r_sub_camo', name: '伪装', icon: '🌫️', tier: 1, max: 5, desc: '命中提高 {n}%，闪避提高 {n2}%', mods: [{ t: 'stat', stat: 'hit', per: 0.01 }, { t: 'stat', stat: 'dodge', per: 0.005 }] },
@@ -182,7 +182,7 @@
         { id: 'pr_disc_shield', name: '强化真言术：盾', icon: '🛡️', tier: 0, max: 5, desc: '真言术：盾吸收量提高 {n}%', mods: [{ t: 'shieldPct', per: 0.07 }] },
         { id: 'pr_disc_fh', name: '强化快速治疗', icon: '💠', tier: 0, max: 5, desc: '快速治疗治疗量提高 {n}%', mods: [{ t: 'skillHeal', skill: 'flash_heal', per: 0.07 }] },
         { id: 'pr_disc_mana', name: '坚定意志', icon: '🧘', tier: 1, max: 5, desc: '法力恢复速度提高 {n}%', mods: [{ t: 'manaRegenPct', per: 0.05 }] },
-        { id: 'pr_disc_renew', name: '强化恢复', icon: '💚', tier: 1, max: 5, desc: '恢复的持续治疗效果提高 {n}%', mods: [{ t: 'hotPct', skill: 'renew', per: 0.06 }] },
+        { id: 'pr_disc_renew', name: '强化恢复', icon: '💚', tier: 1, max: 5, desc: '所有治疗效果提高 {n}%', mods: [{ t: 'healMult', per: 0.02 }] },
         { id: 'pr_disc_spirit', name: '神圣之灵', icon: '🕊️', tier: 2, max: 5, desc: '法术强度提高 {n}%，法力恢复提高 {n2}%', mods: [{ t: 'spellPowerPct', per: 0.04 }, { t: 'manaRegenPct', per: 0.03 }] },
         { id: 'pr_disc_if', name: '心灵之火', icon: '🕯️', tier: 2, max: 1, active: 'inner_fire', desc: '心灵之火常驻：攻击+12%，护甲+20%' },
         { id: 'pr_disc_scream', name: '心灵尖啸', icon: '📢', tier: 2, max: 1, active: 'psychic_scream', desc: '心灵尖啸常驻：战斗开始时恐惧首个敌人 1 回合' },
@@ -379,7 +379,7 @@
     },
   ];
 
-  /* ============ 推荐天赋搭配(每职业 2 套经典点法,共 16 点) ============ */
+  /* ============ 推荐天赋搭配(每职业 2 套核心点法,16 点;剩余点数由一键分配自动补满) ============ */
   D.TALENT_BUILDS = {
     warrior: [
       { name: '武器猛攻', icon: '⚔️', tree: 'arms', desc: '剑出如虹：强化英勇打击与撕裂，武器大师提高攻强，鲁莽收尾爆发。', points: [['w_arms_heroic', 5], ['w_arms_rend', 5], ['w_arms_master', 5], ['w_arms_recklessness', 1]] },

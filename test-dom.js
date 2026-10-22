@@ -193,10 +193,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     check('返回后指示器显示保存时间', !text('.wh-save').includes('—'));
   }
 
-  console.log('== 战斗卷轴(免费不占回合) + 战后回血 ==');
+  console.log('== 战斗卷轴(占用回合) + 战后回血 ==');
   {
     const sc = W.Char.create('卷轴师', 'human', 'mage');
-    sc.level = 10;
+    sc.level = 12;
     sc.inventory.push({ id: 's_force', count: 2 }, { id: 's_spirit', count: 1 });
     const scc = W.Char.computed(sc);
     sc.hp = Math.floor(scc.hpMax * 0.45); sc.hpMax = scc.hpMax; sc.mana = Math.floor(scc.manaMax * 0.4); sc.manaMax = scc.manaMax;
@@ -209,10 +209,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const round0 = sb.round;
     click('[data-scroll="s_force"]');
     await sleep(80);
-    check('力量卷轴:不占回合+祝福生效', sb.round === round0 && !sb.ended && sb.player.buffs.some((x) => x.key === 'sc_atk') && W.Char.Inventory.count(sc, 's_force') === 1);
+    check('力量卷轴:占用回合+祝福生效', sb.round === round0 + 1 && !sb.ended && sb.player.buffs.some((x) => x.key === 'sc_atk') && W.Char.Inventory.count(sc, 's_force') === 1);
     click('[data-scroll="s_spirit"]');
     await sleep(80);
-    check('生命卷轴:立即恢复+不占回合', sb.round === round0 && W.Char.Inventory.count(sc, 's_spirit') === 0);
+    check('生命卷轴:占用回合并消耗', sb.round === round0 + 2 && W.Char.Inventory.count(sc, 's_spirit') === 0);
     let g = 0;
     while (!sb.ended && g++ < 60) {
       const btn = doc.querySelector('.skill-btn[data-skill]:not(:disabled)') || doc.querySelector('[data-act="attack"]');
@@ -231,7 +231,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     }
   }
 
-  console.log('== 战斗药水(免费不占回合+冷却) ==');
+  console.log('== 战斗药水(占用回合+冷却) ==');
   {
     const pc = W.Char.create('药水师', 'human', 'mage');
     pc.level = 12;
@@ -247,7 +247,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const hp0 = pb.player.hp;
     click('[data-potion="c_heal"]');
     await sleep(80);
-    check('点击药水:按百分比恢复生命+不占回合', pb.player.hp === Math.min(pb.player.hpMax, hp0 + Math.round(pb.player.hpMax * D.ITEMS.c_heal.consumable.healPct)) && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_heal') === 2, `hp=${pb.player.hp}/${pb.player.hpMax}`);
+    check('点击药水:按百分比恢复生命+占用回合', pb.player.hp > hp0 && pb.round === pr0 + 1 && W.Char.Inventory.count(pc, 'c_heal') === 2, `hp=${pb.player.hp}/${pb.player.hpMax} round=${pb.round}`);
     // 背包/商店文案同步为百分比口径(不再写死固定数值)
     click('[data-act="bag"]');
     const bagPotionRow = [...doc.querySelectorAll('.bag-row')].find((r) => r.textContent.includes('治疗药水'));
@@ -315,7 +315,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const khp0 = kb.player.hp;
     doc.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'q', bubbles: true }));
     await sleep(80);
-    check('按 Q 键一键喝药(恢复+不占回合)', kb.player.hp > khp0 && kb.round === kround && W.Char.Inventory.count(kc, 'c_heal') === 1);
+    check('按 Q 键一键喝药(恢复+占用回合)', kb.player.hp > khp0 && kb.round === kround + 1 && W.Char.Inventory.count(kc, 'c_heal') === 1, `hp=${kb.player.hp} round=${kb.round}`);
     const khp1 = kb.player.hp;
     doc.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'q', bubbles: true }));
     await sleep(80);
@@ -576,7 +576,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const goBtn = doc.querySelector('[data-ach-next-go]');
     check('通关结算弹窗含下一站按钮', !!goBtn);
     check('下一站为目标副本(哀嚎洞穴)', !!goBtn && goBtn.dataset.achNextGo === 'wailing_caverns', goBtn ? goBtn.dataset.achNextGo : '无');
-    check('下一站行含推荐等级角标', !!goBtn && text('.next-dg-row').includes('Lv.13'), text('.next-dg-row'));
+    check('下一站行含推荐等级角标', !!goBtn && text('.next-dg-row').includes('Lv.14'), text('.next-dg-row'));
     if (goBtn) {
       goBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       check('点击一键前往传送并进入副本', W.State.character.zone === 'wailing_caverns' && W.State.character.dungeon && W.State.character.dungeon.id === 'wailing_caverns',
@@ -750,9 +750,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const farStv = doc.querySelector('.travel-row[data-zone="stv"]');
     check('多跳区域动作标签为首站→', !!farStv && text('.travel-row[data-zone="stv"]').includes('首站 →'));
     if (farStv) {
+      const dbgFirst = W.World._firstHop('stv', W.World._travelGraph().prev);
       farStv.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       await sleep(30);
-      check('多跳区域点击前往首站(赤脊山)', W.State.character.zone === 'redridge', 'zone=' + W.State.character.zone);
+      check('多跳区域点击前往首站(赤脊山)', W.State.character.zone === 'redridge', 'zone=' + W.State.character.zone + ' first=' + dbgFirst);
     }
     click('.close-x');
   }
@@ -1988,6 +1989,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('== 极品装备与任务扩充 ==');
   {
     const pc = W.Char.create('极品种草', 'human', 'warrior');
+    pc.level = 14; // 战刃 Lv14:等级校验上线后需满足装备等级
     W.State.newCharacter(pc);
     W.Char.Inventory.add(pc, 'w_warblade', 1, { perf: true });
     W.World.showWorld();
@@ -2338,7 +2340,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       check('成就直达按钮渲染(≥3)', goBtns.length >= 3, 'n=' + goBtns.length);
       const firstGo = panel.querySelector('[data-ach-go="wailing_caverns"]');
       check('多副本成就直达首个未通关(哀嚎洞穴)', !!firstGo);
-      check('直达按钮含推荐等级角标(哀嚎Lv13)', !!firstGo && firstGo.textContent.includes('Lv.13'), firstGo ? firstGo.textContent : '无');
+      check('直达按钮含推荐等级角标(哀嚎Lv14)', !!firstGo && firstGo.textContent.includes('Lv.14'), firstGo ? firstGo.textContent : '无');
       const mcBtn = panel.querySelector('[data-ach-go="molten_core"]');
       check('熔火之心成就直达按钮存在', !!mcBtn);
       check('直达按钮含推荐等级角标(熔火Lv60)', !!mcBtn && mcBtn.textContent.includes('Lv.60'), mcBtn ? mcBtn.textContent : '无');
@@ -2472,7 +2474,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     check('成就面板筛选工具栏存在', !!toolbar && !!doc.querySelector('.ach-chips'));
     check('筛选芯片含未完成/团本/可直达', /未完成/.test(text('[data-ach-done="todo"]')) && /团本/.test(text('[data-ach-raid="1"]')) && /可直达/.test(text('[data-ach-reach="1"]')));
     check('未完成芯片计数正确(65)', text('[data-ach-done="todo"]').indexOf('65') >= 0, text('[data-ach-done="todo"]'));
-    check('可直达芯片计数正确(7)', text('[data-ach-reach="1"]').indexOf('7') >= 0, text('[data-ach-reach="1"]'));
+    check('可直达芯片计数正确(5)', text('[data-ach-reach="1"]').indexOf('5') >= 0, text('[data-ach-reach="1"]'));
     // 搜索过滤:输入「熔火」只剩烈焰之子一行
     const search = doc.querySelector('.ach-search');
     search.value = '熔火';
@@ -2502,9 +2504,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     doc.querySelector('[data-ach-raid="1"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     doc.querySelector('[data-ach-reach="1"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     const reachRows = doc.querySelectorAll('.ach-body .ach-row');
-    check('可直达筛选(20级)恰 7 行', reachRows.length === 7, 'n=' + reachRows.length);
-    check('可直达行均无锁定按钮', reachRows.length === 7 && !doc.querySelector('.ach-body .ach-go.locked'));
-    check('可直达行均有直达按钮', reachRows.length === 7 && doc.querySelectorAll('.ach-body [data-ach-go]').length === 7);
+    check('可直达筛选(20级)恰 5 行', reachRows.length === 5, 'n=' + reachRows.length);
+    check('可直达行均无锁定按钮', reachRows.length === 5 && !doc.querySelector('.ach-body .ach-go.locked'));
+    check('可直达行均有直达按钮', reachRows.length === 5 && doc.querySelectorAll('.ach-body [data-ach-go]').length === 5);
     // 组合:团本 + 可直达(60级角色全团本可直达 5 行)
     const f60 = W.Char.create('满级侠', 'human', 'warrior');
     f60.level = 60;

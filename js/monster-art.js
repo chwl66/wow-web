@@ -22,6 +22,10 @@
 
   // ---------- 通用 ----------
   const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  // 名称来自数据(未来可能支持自定义怪物/宠物),进入 SVG 属性前统一转义
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   function bg(tint, glow) {
     return (
@@ -758,7 +762,7 @@
       const size = o.size ? ` width="${o.size}" height="${o.size}"` : '';
       return (
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"${size} role="img" ` +
-        `aria-label="${(monster && monster.name) || '怪物'}">${build(monster, o)}</svg>`
+        `aria-label="${esc((monster && monster.name) || '怪物')}">${build(monster, o)}</svg>`
       );
     },
 
@@ -778,7 +782,7 @@
       const cls = o.cls ? ' ' + o.cls : '';
       return (
         `<img class="ma-portrait${cls}" src="${this.uri(monster, o)}" width="${size}" height="${size}" ` +
-        `alt="${(monster && monster.name) || ''}" draggable="false" loading="lazy">`
+        `alt="${esc((monster && monster.name) || '')}" draggable="false" loading="lazy">`
       );
     },
 

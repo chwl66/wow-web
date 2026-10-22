@@ -16,7 +16,6 @@
     DL: 'https://github.com/chwl66/wow-web/releases/download', // Release 附件下载前缀
     CHECK_KEY: 'wow_update_last_check',     // 上次自动检查时间戳(localStorage)
     IGNORE_KEY: 'wow_update_ignored',       // 用户忽略的版本(当日不再提示)
-    APPLIED_KEY: 'wow_web_applied_version', // 当前生效的 Web 资源版本(热更新后为更新版本)
     AUTO_INTERVAL: 24 * 3600 * 1000,        // 自动检查间隔:24 小时
     FETCH_TIMEOUT: 8000,
 
@@ -170,7 +169,6 @@
         if (!write || !write.uri) throw new Error('写入失败');
         // 6. 交给原生:解压 + 切换加载路径 + 重启
         set('⚡ 安装并重启…');
-        this._set(this.APPLIED_KEY, tag); // 先记录,重启后生效版本一致
         await HotUpdate.applyUpdate({ mode, zipPath: write.uri, dirName: 'www-' + tag, version: tag });
         return { ok: true };
       } catch (e) {

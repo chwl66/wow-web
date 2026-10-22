@@ -371,6 +371,21 @@
     },
 
     /* ---------- 探索 / 副本 ---------- */
+    // 野外遭遇变体:凶暴怪保留原 id(任务进度照常),但属性与奖励提高,避免每次都遇到同一批白板怪
+    _encounterEnemies(ids, veteran) {
+      return ids.map((id) => {
+        const m = D.MONSTERS[id];
+        if (!m || !veteran || m.elite || m.boss) return m;
+        return Object.assign({}, m, {
+          name: '凶暴的' + m.name,
+          hp: Math.max(1, Math.round(m.hp * C.VETERAN_HP_MULT)),
+          atk: [Math.max(1, Math.round(m.atk[0] * C.VETERAN_ATK_MULT)), Math.max(1, Math.round(m.atk[1] * C.VETERAN_ATK_MULT))],
+          xp: Math.max(1, Math.round(m.xp * C.VETERAN_XP_MULT)),
+          gold: Math.max(1, Math.round(m.gold * C.VETERAN_GOLD_MULT)),
+          veteran: true,
+        });
+      });
+    },
     explore() {
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
@@ -382,9 +397,12 @@
       }
       const enc = D.ENCOUNTERS[char.zone];
       const pick = RNG.weighted(enc.map(([w, ids]) => [w, ids]));
-      const enemies = pick.map((id) => D.MONSTERS[id]);
+      const hasElite = pick.some((id) => { const m = D.MONSTERS[id]; return m && (m.elite || m.boss); });
+      const veteran = !hasElite && RNG.chance(C.VETERAN_CHANCE);
+      const enemies = this._encounterEnemies(pick, veteran);
       const elite = enemies.some((e) => e.elite);
-      W.BattleView.start({ enemies, name: zone.name, title: elite ? '你遭遇了一群凶猛的生物！' : '' }, { isDungeon: false });
+      const title = elite ? '你遭遇了一群凶猛的生物！' : veteran ? '你遭遇了一群凶暴的生物！' : '';
+      W.BattleView.start({ enemies, name: zone.name, title }, { isDungeon: false });
     },
 
     _dungeonNext() {
@@ -469,6 +487,12 @@
     },
 
     /* ---------- 战斗结算 ---------- */
+    // 副本/突袭波次间隙的部分恢复:只补固定比例,保留资源管理压力
+    _partialRest(char, pct) {
+      const c = W.Char.computed(char);
+      char.hp = Math.min(c.hpMax, char.hp + Math.floor(c.hpMax * pct));
+      if (c.manaMax > 0) char.mana = Math.min(c.manaMax, (char.mana || 0) + Math.floor(c.manaMax * pct));
+    },
     onBattleVictory(b) {
       const char = W.State.character;
       const zone = D.ZONES[char.zone];
@@ -531,8 +555,8 @@
           modal += `<div class="modal-actions"><button class="btn gold" data-continue>返回区域</button></div>`;
         } else {
           char.dungeon.wave++;
-          W.Char.rest(char); // 波次间隙休整
-          modal += `<div class="reward-row">队伍进行了休整，状态完全恢复</div>`;
+          this._partialRest(char, 0.5); // 波次间隙:恢复 50%,药水与治疗仍要省着用
+          modal += `<div class="reward-row">队伍进行了短暂休整，恢复 <b>50%</b> 生命与法力</div>`;
           modal += `<div class="reward-row">副本进度：<b>${char.dungeon.wave}/${dungeon.waves.length}</b></div>`;
           modal += `<div class="modal-actions"><button class="btn gold" data-continue>继续深入 →</button><button class="btn ghost" data-back>离开副本</button></div>`;
         }
@@ -573,8 +597,8 @@
           modal += `<div class="modal-actions"><button class="btn gold" data-continue>返回主城</button></div>`;
         } else if (raid) {
           char.capitalRaid.wave++;
-          W.Char.rest(char);
-          modal += `<div class="reward-row">深入敌营，队伍进行了休整，状态完全恢复</div>`;
+          this._partialRest(char, 0.3);
+          modal += `<div class="reward-row">深入敌营，队伍短暂休整，恢复 <b>30%</b> 生命与法力</div>`;
           modal += `<div class="reward-row">突袭进度：<b>${char.capitalRaid.wave}/${raid.waves.length}</b></div>`;
           modal += `<div class="modal-actions"><button class="btn gold" data-continue>继续深入 →</button><button class="btn ghost" data-back>撤离</button></div>`;
         }
@@ -631,6 +655,9 @@
       char.hp = Math.max(1, Math.floor(c.hpMax * C.REVIVE_HP_PCT));
       char.mana = Math.floor(c.manaMax * C.REVIVE_HP_PCT);
       char.rage = 0;
+      // 死亡代价:损失 10% 当前金币(修装备/灵魂税),至少保留 0
+      const lostGold = Math.floor((char.gold || 0) * 0.1);
+      char.gold = Math.max(0, (char.gold || 0) - lostGold);
       // 回城(深入敌营失败同样撤离)
       char.zone = char.faction === 'alliance' ? 'stormwind' : 'orgrimmar';
       if (char.dungeon) char.dungeon = null;
@@ -642,6 +669,7 @@
           <div class="defeat-title">💀 你倒下了……</div>
           <p class="confirm-text">灵魂回到${char.faction === 'alliance' ? '暴风城' : '奥格瑞玛'}，在圣光（大地母亲）的庇护下复活。</p>
           <div class="reward-row">生命恢复至 ${Math.ceil(char.hp)}</div>
+          ${lostGold > 0 ? `<div class="reward-row">💸 灵魂税：损失 <b>${U.plainMoney(lostGold)}</b> 金币</div>` : ''}
         </div>
         <div class="modal-actions"><button class="btn gold" data-continue>继续冒险</button></div>`,
         { title: '死亡', close: false, lock: true });
@@ -816,6 +844,11 @@
     _itemStatsParts(it, perf) {
       const parts = [];
       const m = perf ? W.Config.PERFECT_STAT_MULT : 1;
+      // 装备类型(护甲/武器),便于玩家判断职业是否可用
+      const eqApi = W.Char.Equipment;
+      const at = eqApi.armorType(it), wt = eqApi.weaponType(it);
+      if (at) parts.push(`【${eqApi.ARMOR_CN[at]}】`);
+      else if (wt) parts.push(`【${eqApi.WEAPON_CN[wt] || wt}】`);
       if (it.stats) {
         if (it.stats.dmg) parts.push(`伤害 ${Math.round(it.stats.dmg[0] * m)}-${Math.round(it.stats.dmg[1] * m)}`);
         if (it.stats.armor) parts.push(`护甲 ${Math.round(it.stats.armor * m)}`);
@@ -913,6 +946,8 @@
           const char = W.State.character;
           const it = D.ITEMS[row.dataset.item];
           if (row.dataset.mode === 'buy') {
+            // 等级门槛二次校验:列表虽已按 char.level+3 过滤,但装备仍要能穿得上才值得买
+            if (this._isGearItem(it) && it.level > char.level) { W.UI.toast(`需要 ${it.level} 级才能使用该装备`, 'warn'); return; }
             if (char.gold < it.buy) { W.UI.toast('金币不足', 'warn'); return; }
             if (W.Char.Inventory.list(char).length >= W.Char.bagSize(char) && it.slot !== 'consumable' && it.slot !== 'bag') { W.UI.toast('背包已满', 'warn'); return; }
             char.gold -= it.buy;
@@ -1022,17 +1057,19 @@
           continue;
         }
         if (qs && qs.done) nTurnin++; else if (qs) nActive++; else nOpen++;
+        const locked = !qs && char.level < (q.level || 1) - 5;
         html += `
-          <div class="quest-row">
+          <div class="quest-row${locked ? ' locked' : ''}">
             <span class="qi">📜</span>
             <div class="quest-body">
-              <div class="quest-name">${U.esc(q.name)}</div>
+              <div class="quest-name">${U.esc(q.name)} <span class="quest-lv">Lv.${q.level || 1}</span></div>
               <div class="quest-desc">${U.esc(q.desc)}</div>
               <div class="quest-reward">奖励：${q.exp} 经验 · ${U.plainMoney(q.gold)}${q.rewardItems.length ? ' · ' + this._questRewardText(q.rewardItems) : ''}</div>
+              ${locked ? `<div class="quest-progress warn-text">等级不足：需要 Lv.${(q.level || 1) - 5} 才能接取</div>` : ''}
               ${qs ? `<div class="quest-progress">进度 ${qs.progress}/${q.count}${qs.done ? ' — <b class="ok-text">可以交付</b>' : ''}</div>` : ''}
             </div>
             <div class="quest-actions">
-              ${qs && qs.done ? `<button class="btn gold small" data-turnin="${qid}">交付</button>` : (!qs ? `<button class="btn small" data-accept="${qid}">接取</button>` : '')}
+              ${qs && qs.done ? `<button class="btn gold small" data-turnin="${qid}">交付</button>` : (!qs ? `<button class="btn small${locked ? ' disabled' : ''}" data-accept="${qid}" ${locked ? 'disabled title="等级不足"' : ''}>${locked ? '等级不足' : '接取'}</button>` : '')}
             </div>
           </div>`;
       }
@@ -1047,6 +1084,10 @@
       m.querySelectorAll('[data-accept]').forEach((btn) => btn.addEventListener('click', () => {
         const qid = btn.dataset.accept;
         if (W.Char.QuestLog.start(char, qid)) { W.UI.toast('接取了任务', 'ok'); this.openQuestBoard(); }
+        else {
+          const q = D.QUESTS[qid];
+          W.UI.toast(q && char.level < (q.level || 1) - 5 ? `需要 Lv.${(q.level || 1) - 5} 才能接取` : '无法接取该任务', 'warn');
+        }
       }));
       m.querySelectorAll('[data-turnin]').forEach((btn) => btn.addEventListener('click', () => {
         const r = W.Char.QuestLog.turnIn(char, btn.dataset.turnin);
@@ -1055,7 +1096,8 @@
           W.State.autoSave(true); // 任务交付:经验/金币/奖励已入账
           const eg = r.events ? r.events.find((e) => e.type === 'expGold') : null;
           const tp = r.events ? r.events.filter((e) => e.level >= 10).length : 0;
-          W.UI.toast(`任务完成！${eg ? `+${eg.amount} 经验已转为 ${U.plainMoney(eg.gold)} 金币` : `+${r.exp} 经验`}${tp ? `，🌟 获得 ${tp} 点天赋点` : ''}`, 'ok');
+          const skipped = (r.skipped || []).length;
+          W.UI.toast(`任务完成！${eg ? `+${eg.amount} 经验已转为 ${U.plainMoney(eg.gold)} 金币` : `+${r.exp} 经验`}${tp ? `，🌟 获得 ${tp} 点天赋点` : ''}${skipped ? `；背包已满，${skipped} 件奖励未领取` : ''}`, skipped ? 'warn' : 'ok');
           this.openQuestBoard();
         }
       }));
@@ -1164,6 +1206,20 @@
       if (!char || !zid || zid === char.zone) return; // 当前所在区域不可再次出发
       const { dist, prev } = this._travelGraph();
       if (dist[zid] == null) { W.UI.toast('该区域暂时无法抵达', 'warn'); return; }
+      // 副本等级锁兜底:列表行不绑事件、地图不含副本节点,但入口可能被后续改动绕过
+      const dstZone = D.ZONES[zid];
+      if (dstZone && dstZone.dungeon) {
+        const dg = D.DUNGEONS[dstZone.dungeon];
+        if (dg && char.level < (dg.minLevel || 1)) {
+          W.UI.toast(`需要 ${dg.minLevel} 级才能进入${dg.name}`, 'warn');
+          return;
+        }
+        // 首领等级悬崖提示:允许进入,但明确告知首领强度
+        const boss = dg && D.MONSTERS[dg.boss];
+        if (boss && char.level < boss.level) {
+          W.UI.toast(`⚠️ ${dg.name}的首领为 Lv.${boss.level}，当前 ${char.level} 级建议谨慎或先提升装备`, 'warn');
+        }
+      }
       const airHere = D.AIRSHIPS[char.zone] || null;
       const byAir = !!airHere && airHere.to.includes(zid);
       const hops = dist[zid];
@@ -1218,7 +1274,13 @@
       const hops = dist[zid];
       const isCur = zid === char.zone;
       const isDungeon = !!z.dungeon;
-      const locked = isDungeon && char.level < (D.DUNGEONS[z.dungeon].minLevel || 1);
+      const zlv = U.zoneLevel(z, 10);
+      const dg = isDungeon ? D.DUNGEONS[z.dungeon] : null;
+      const bossLv = dg && D.MONSTERS[dg.boss] ? D.MONSTERS[dg.boss].level : 0;
+      const locked = isDungeon && char.level < (dg.minLevel || 1);
+      // 野外区域低于推荐下限 5 级:只提示不拦路,保留探索自由
+      const under = !isDungeon && char.level < zlv.min - 5;
+      const danger = isDungeon && bossLv && char.level < bossLv;
       const rareAlive = !isDungeon && W.Char.eliteStatus(char, zid).some((e) => e.alive);
       const wbSt = !isDungeon ? W.Char.worldBossStatus(char).find((s) => s.zoneId === zid) : null;
       const wbAlive = !!wbSt && wbSt.alive;
@@ -1236,11 +1298,11 @@
       const pathTitle = hops > 1 ? '最近路径:' + this._zonePath(zid, prev) : '';
       const goLabel = isCur ? '<span class="tz-cur">已在此处</span>' : (hops === 1 ? '<span class="tz-go">出发 →</span>' : '<span class="tz-go">首站 →</span>');
       return `
-          <div class="travel-row ${locked ? 'locked' : ''}${isCur ? ' is-cur' : ''}${!isCur && !locked && byAir ? ' is-air' : ''}${!isCur && !locked && !byAir && hops === 1 ? ' is-direct' : ''}" data-zone="${zid}" ${pathTitle ? `title="${U.esc(pathTitle)}"` : ''}>
+          <div class="travel-row ${locked ? 'locked' : ''}${under ? ' under' : ''}${isCur ? ' is-cur' : ''}${!isCur && !locked && byAir ? ' is-air' : ''}${!isCur && !locked && !byAir && hops === 1 ? ' is-direct' : ''}" data-zone="${zid}" ${pathTitle ? `title="${U.esc(pathTitle)}"` : ''}>
             <span class="tz-icon">${z.icon}</span>
             <div class="tz-info">
               <div class="tz-name">${U.esc(z.name)}${isDungeon ? ` <span class="tag ${D.DUNGEONS[z.dungeon].raid ? 'raid-tag' : 'd5-tag'}">${D.DUNGEONS[z.dungeon].raid ? '团本' : '5人本'}</span>` : ''}${isCur ? '<span class="tag cur-tag">📍 当前所在</span>' : ''}${z.faction === 'alliance' ? ' <span class="tag ally-tag">联盟</span>' : z.faction === 'horde' ? ' <span class="tag horde-tag">部落</span>' : ''}${rareAlive ? '<span class="tz-elite">🔥 稀有精英出没</span>' : ''}${wbAlive ? '<span class="tz-elite wb">🌍 世界首领出没</span>' : ''}${wbDead ? `<span class="tz-elite wb">🌍 首领刷新中 ${this._fmtCd(wbSt.remainingMs)}</span>` : ''}</div>
-              <div class="tz-level">推荐等级 ${z.level}${qOpen && !locked ? ` · <span class="tz-quest">📜 可接 ${qOpen}</span>` : ''}${pathLine}</div>
+              <div class="tz-level">推荐等级 ${z.level}${danger ? ` · <span class="warn-text">⚠️ 首领 Lv.${bossLv}</span>` : ''}${under ? ' · <span class="warn-text">等级偏低</span>' : ''}${qOpen && !locked ? ` · <span class="tz-quest">📜 可接 ${qOpen}</span>` : ''}${pathLine}</div>
             </div>
             ${locked ? '<span class="tz-lock">等级不足</span>' : (pathBadge + goLabel)}
           </div>`;
@@ -1784,6 +1846,7 @@
       if (mod.startShield != null) parts.push('战斗开始护盾 ' + mod.startShield + '+' + (mod.startShieldSp || 0) + '×法强');
       if (mod.shieldHeal != null && mod.startShield == null) parts.push('受击回血 ' + mod.shieldHeal);
       if (mod.markTaken != null) parts.push('标记易伤 +' + pct(mod.markTaken));
+      if (mod.startStealth != null) parts.push('开战潜行 ' + mod.startStealth + ' 回合');
       if (mod.startCc) {
         const ccs = Array.isArray(mod.startCc) ? mod.startCc : [mod.startCc];
         parts.push('开战自动控场 ' + ccs.map((x) => (CC_CN[x.type] || x.type) + ' ' + x.rounds + ' 回合').join('、'));
@@ -2043,11 +2106,15 @@
           // 锻造材料:不可使用/装备
           btnHtml = '<span class="tag mat-tag">材料</span>';
         } else if (it.scroll) {
-          // 战斗卷轴:仅在战斗中免费使用(不占回合),背包内不可直接使用
-          btnHtml = '<button class="btn small disabled" title="在战斗中点击卷轴免费使用（不消耗回合）">战斗中</button>';
+          // 战斗卷轴:仅在战斗中使用(占用回合),背包内不可直接使用
+          btnHtml = '<button class="btn small disabled" title="在战斗中点击卷轴使用（占用回合）">战斗中</button>';
         } else {
           const useBtn = it.slot === 'consumable' || it.slot === 'bag' ? '使用' : (equipped ? '已装备' : '装备');
-          btnHtml = `<button class="btn small" data-use="${it.id}" data-perf="${s.perf ? 1 : 0}" ${equipped && it.slot !== 'consumable' ? 'disabled' : ''}>${useBtn}</button>`;
+          // 等级/职业熟练度不足:与状态面板空槽候选一致,直接禁用按钮(equipIssue 仍会兜底拦截)
+          const issue = equipped || it.slot === 'consumable' || it.slot === 'bag' ? '' : W.Char.Equipment.equipIssue(char, it.id, false);
+          const lvLocked = !equipped && it.slot !== 'consumable' && it.slot !== 'bag' && !!issue;
+          const lockTitle = issue ? ` title="${U.esc(issue)}"` : '';
+          btnHtml = `<button class="btn small${lvLocked ? ' disabled' : ''}" data-use="${it.id}" data-perf="${s.perf ? 1 : 0}" ${(equipped && it.slot !== 'consumable') || lvLocked ? 'disabled' : ''}${lockTitle}>${lvLocked && !equipped ? '不可装备' : useBtn}</button>`;
           // 分解快捷按钮:仅背包中的绿色/蓝色装备且未强化/附魔
           if (deOk) btnHtml += `<button class="btn small ghost" data-disenchant="${it.id}" data-perf="${s.perf ? 1 : 0}">分解</button>`;
         }
@@ -2647,7 +2714,7 @@
         const bd = (D.TALENT_BUILDS[char.classId] || [])[parseInt(btn.dataset.apply, 10)];
         if (!bd) return;
         const r = W.Char.applyBuild(char, bd);
-        if (r.applied.length && r.remaining === 0) W.UI.toast(`已按「${bd.name}」分配 ${r.applied.length} 点天赋`, 'ok');
+        if (r.applied.length && r.remaining === 0) W.UI.toast(`已按「${bd.name}」分配 ${r.applied.length} 点天赋（含自动补满）`, 'ok');
         else if (r.applied.length) W.UI.toast(`已分配 ${r.applied.length} 点，还差 ${r.remaining} 点（升级可获得）`, 'warn');
         else if (r.remaining === 0) W.UI.toast(`「${bd.name}」已全部习得`, 'ok');
         else W.UI.toast(r.reason || '无法分配', 'warn');

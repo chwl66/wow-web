@@ -13,11 +13,18 @@
     LEVEL_CAP: 70,          // 等级上限(燃烧的远征:外域已扩充至 70 级)
     MAX_SLOTS: 10,         // 存档槽位
     ENCOUNTER_CHANCE: 0.55, // 野外探索遇怪概率
+    VETERAN_CHANCE: 0.12,   // 野外遭遇「凶暴」怪物群的概率(属性与奖励同步提高,增加刷怪变化与威胁)
+    VETERAN_HP_MULT: 1.18,  // 凶暴怪物生命倍率
+    VETERAN_ATK_MULT: 1.12, // 凶暴怪物攻击倍率
+    VETERAN_XP_MULT: 1.3,   // 凶暴怪物经验倍率
+    VETERAN_GOLD_MULT: 1.3, // 凶暴怪物金币倍率
     ELITE_RESPAWN_MS: 5 * 60 * 1000, // 稀有精英击败后刷新周期(5 分钟)
     WORLD_BOSS_RESPAWN_MS: 30 * 60 * 1000, // 世界首领击败后重新现身周期(30 分钟)
     PERFECT_CHANCE: 0.06,     // 装备掉落为极品属性的概率(属性提升 +50%)
     PERFECT_STAT_MULT: 1.5,   // 极品装备属性倍率
     LEGENDARY_PERFECT_CHANCE: 0.15, // 橙色传说装备掉落时附加极品属性的概率
+    PERFECT_PITY_STEP: 0.008, // 每件未出极品的装备为下一次累积的极品率(降低长时间不出极品的波动)
+    PERFECT_PITY_MAX: 0.24,   // 极品保底概率上限(叠加在基础概率上)
     POST_BATTLE_HP_PCT: 0.2,  // 战斗胜利后自动恢复最大生命的比例(不占用回合)
     POST_BATTLE_MP_PCT: 0.2,  // 战斗胜利后自动恢复最大法力的比例(与生命同步回复,不占用回合)
     MONSTER_HP_MULT: 1.1,     // 怪物生命全局难度系数(被动体系调整后统一校准;见 scripts/sim-balance.js)
@@ -37,8 +44,8 @@
 
     // 装备锻造
     FORGE_MAX_LEVEL: 15,          // 强化上限(60级装备长线养成)
-    FORGE_BASE_COST: 50,          // 强化基础费用
-    FORGE_COST_PER_ITEM_LEVEL: 20, // 每级物品等级额外费用
+    FORGE_BASE_COST: 40,          // 强化基础费用
+    FORGE_COST_PER_ITEM_LEVEL: 6, // 每级物品等级额外费用
 
     // 战斗数值
     HIT_BASE: 0.92,        // 同级基础命中
@@ -90,6 +97,22 @@
   W.Utils = {
     clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); },
     clamp01(v) { return W.Utils.clamp(v, 0, 1); },
+    // 区域等级区间:'1-6' / '44-52' / 12 / '—' -> { min, max };解析失败回退 fallback
+    levelRange(spec, fallback) {
+      const fb = Number.isFinite(fallback) ? fallback : 10;
+      if (typeof spec === 'number' && Number.isFinite(spec)) return { min: spec, max: spec };
+      const str = String(spec == null ? '' : spec);
+      const m = str.match(/(\d+)\s*[-–—~]\s*(\d+)/);
+      if (m) return { min: +m[1], max: +m[2] };
+      const n = parseInt(str, 10);
+      if (Number.isFinite(n)) return { min: n, max: n };
+      return { min: fb, max: fb };
+    },
+    // 区域(对象或 id)等级区间;供声望/掉落/提示统一取数值
+    zoneLevel(zone, fallback) {
+      const z = typeof zone === 'string' ? ((W.Data && W.Data.ZONES) ? W.Data.ZONES[zone] : null) : zone;
+      return W.Utils.levelRange(z && z.level, fallback);
+    },
     // ---- 视口 / 设备判定(世界界面与战斗界面按此分叉布局) ----
     // 复用 setup:无 matchMedia 的环境(旧浏览器/测试桩)一律按桌面处理,不抛错
     mediaHit(query) {

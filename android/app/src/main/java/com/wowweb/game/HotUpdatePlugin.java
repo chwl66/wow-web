@@ -1,5 +1,8 @@
 package com.wowweb.game;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -89,6 +92,10 @@ public class HotUpdatePlugin extends Plugin {
             }
             extractZip(zipFile, target);
             writeMeta(target, version);
+            // 先持久化加载路径再切换:Capacitor 的 Bridge 启动时只读
+            // CapWebViewSettings/serverBasePath 这一处(CAP_SERVER_PATH),不写的话
+            // 热更新只在本次进程内有效,重启 App 会回落到 APK 内置资源。
+            persistServerBasePath(target.getAbsolutePath());
             // 切换 WebView 加载路径并重载
             getBridge().setServerBasePath(target.getAbsolutePath());
             call.resolve(new JSObject().put("ok", true));
@@ -100,11 +107,20 @@ public class HotUpdatePlugin extends Plugin {
     /** 回退到应用内置资源 */
     @PluginMethod
     public void resetToBundled(PluginCall call) {
+        // 同步清空持久化路径,否则重启后仍会回到上次的热更新目录
+        persistServerBasePath("");
         getBridge().setServerAssetPath(Bridge.DEFAULT_WEB_ASSET_DIR);
         call.resolve(new JSObject().put("ok", true));
     }
 
     // ---------- 内部工具 ----------
+
+    /** 写入 Capacitor 读取的 serverBasePath 偏好(与 WebView.persistServerBasePath 同键同名) */
+    private void persistServerBasePath(String path) {
+        SharedPreferences prefs = getContext().getSharedPreferences(
+                com.getcapacitor.plugin.WebView.WEBVIEW_PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(com.getcapacitor.plugin.WebView.CAP_SERVER_PATH, path).apply();
+    }
 
     private String stripFileScheme(String p) {
         if (p == null) return p;

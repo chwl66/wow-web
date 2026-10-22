@@ -51,6 +51,8 @@
         for (const k in s.mod) {
           // startCc 为对象(战斗开始自动控场),按数组收集,不做数值累加
           if (k === 'startCc') { (mod.startCc = mod.startCc || []).push(s.mod[k]); continue; }
+          // startStealth 记录持续回合数(只取值最大者,不做对象累加)
+          if (k === 'startStealth') { mod.startStealth = Math.max(mod.startStealth || 0, Number(s.mod[k]) || 0); continue; }
           mod[k] = (mod[k] || 0) + s.mod[k];
         }
       }
@@ -319,6 +321,33 @@
   }
 
   /* ---------- 角色创建 ---------- */
+  /* ---------- 角色名清洗 ----------
+   * 名字会进入战斗日志/存档摘要等高亮 HTML 字符串,必须白名单化后再用:
+   * 允许中日韩文字、字母、数字、空格与少量常见符号;长度上限与创建输入框的 maxlength 一致。
+   * 导入存档时同一入口生效(存档可被手工编辑,不能只依赖创建侧的 maxlength)。 */
+  const NAME_MAX = 12;
+  // 逐字符白名单:中日韩文字 / 拉丁字母 / 数字 / 空格与少量分隔符
+  function _nameCharOk(ch) {
+    const code = ch.codePointAt(0);
+    if (code >= 0x4e00 && code <= 0x9fa5) return true;   // 汉字
+    if (code >= 0x3040 && code <= 0x30ff) return true;   // 日文假名
+    if (code >= 0xac00 && code <= 0xd7af) return true;   // 韩文
+    if (code >= 0x30 && code <= 0x39) return true;       // 0-9
+    if (code >= 0x41 && code <= 0x5a) return true;       // A-Z
+    if (code >= 0x61 && code <= 0x7a) return true;       // a-z
+    return ' ·・_-'.indexOf(ch) >= 0;
+  }
+  function cleanName(raw, fallback) {
+    let out = '';
+    for (const ch of String(raw == null ? '' : raw)) {
+      if (_nameCharOk(ch)) out += ch;
+      if (out.length >= NAME_MAX) break;
+    }
+    out = out.trim();
+    // 清洗后为空:创建流程传 '' 以便走长度校验,其余调用方(存档修复)用默认名兜底
+    return out || (fallback === undefined ? '无名英雄' : fallback);
+  }
+
   function create(name, raceId, classId) {
     const cls = D.CLASSES[classId];
     const skills = [];
@@ -332,7 +361,7 @@
       if (t.active && D.SKILLS[t.active]) skills.push(t.active);
     }
     const char = {
-      name, race: raceId, classId, faction: race.faction,
+      name: cleanName(name), race: raceId, classId, faction: race.faction,
       level: 1, exp: 0,
       hp: 0, hpMax: 0, mana: 0, manaMax: 0, rage: 0, energy: W.Config.ENERGY_MAX, combo: 0,
       gold: 300, // 3 银
@@ -406,17 +435,6 @@
     // 成就:满级(60级)在升级后检查
     Achievements.checkSpecial(char);
     return events;
-  }
-
-  /* ---------- 战斗资源 ---------- */
-  function regen(char) {
-    const c = computed(char);
-    if (c.cls.res === 'mana') {
-      char.mana = U.clamp(char.mana + c.manaRegen, 0, c.manaMax);
-      if (char.hp < c.hpMax && c.hpRegen > 0) char.hp = Math.min(c.hpMax, char.hp + c.hpRegen);
-    }
-    if (c.cls.res === 'energy') char.energy = Math.min(W.Config.ENERGY_MAX, char.energy + W.Config.ENERGY_REGEN);
-    return c;
   }
 
   /* ---------- 背包 ---------- */
@@ -520,10 +538,96 @@
       const name = (D.ITEMS[itemId] || {}).name || itemId;
       return `同一件${slot.startsWith('ring') ? '戒指' : '饰品'}「${name}」不能同时装备到两个槽位`;
     },
+    // ---- 装备类型与职业熟练度 ----
+    // 护甲类型:数据未显式标注时按名称关键词 + 主属性推断,保证 305 件旧数据无需逐件改造
+    ARMOR_RANK: { cloth: 0, leather: 1, mail: 2, plate: 3 },
+    ARMOR_CN: { cloth: '布甲', leather: '皮甲', mail: '锁甲', plate: '板甲' },
+    WEAPON_CN: { sword: '剑', axe: '斧', mace: '锤', dagger: '匕首', staff: '法杖', bow: '弓', gun: '枪', fist: '拳套', polearm: '长柄武器', wand: '魔杖', shield: '盾牌', totem: '图腾', relic: '圣物', offhand: '副手' },
+    CLASS_ARMOR: { warrior: 'plate', paladin: 'plate', hunter: 'mail', shaman: 'mail', rogue: 'leather', druid: 'leather', priest: 'cloth', mage: 'cloth', warlock: 'cloth' },
+    CLASS_WEAPONS: {
+      warrior: ['sword', 'axe', 'mace', 'dagger', 'polearm', 'fist', 'bow', 'gun', 'shield'],
+      paladin: ['sword', 'axe', 'mace', 'polearm', 'shield', 'relic'],
+      hunter: ['sword', 'axe', 'dagger', 'polearm', 'fist', 'bow', 'gun', 'offhand'],
+      rogue: ['sword', 'mace', 'dagger', 'fist', 'bow', 'gun', 'offhand'],
+      priest: ['mace', 'dagger', 'staff', 'wand', 'relic', 'offhand'],
+      shaman: ['axe', 'mace', 'dagger', 'staff', 'fist', 'shield', 'totem', 'offhand'],
+      mage: ['sword', 'dagger', 'staff', 'wand', 'offhand'],
+      warlock: ['sword', 'dagger', 'staff', 'wand', 'offhand'],
+      druid: ['mace', 'dagger', 'staff', 'polearm', 'fist', 'relic', 'offhand'],
+    },
+    CLASS_CN: { warrior: '战士', paladin: '圣骑士', hunter: '猎人', rogue: '盗贼', priest: '牧师', shaman: '萨满', mage: '法师', warlock: '术士', druid: '德鲁伊' },
+    armorType(item) {
+      if (!item) return null;
+      if (item.armorType) return item.armorType;
+      if (!['head', 'chest', 'gloves', 'legs', 'boots'].includes(item.slot)) return null;
+      const n = item.name || '';
+      if (/板|铠|战甲|重甲|战盔|战靴/.test(n)) return 'plate';
+      if (/锁甲|链甲|鳞甲|鳞/.test(n)) return 'mail';
+      if (/皮甲|皮革|皮/.test(n)) return 'leather';
+      if (/布|法袍|长袍|法衣|圣袍|兜帽|头环|法冠|魔纹/.test(n)) return 'cloth';
+      const st = item.stats || {};
+      const str = st.str || 0, agi = st.agi || 0, int = st.int || 0, spi = st.spi || 0;
+      if ((int || spi) && !str && !agi) return 'cloth';
+      if (str && !agi) return 'plate';
+      if (str && agi) return 'mail';
+      return 'leather';
+    },
+    weaponType(item) {
+      if (!item) return null;
+      if (item.weaponType) return item.weaponType;
+      if (item.slot === 'offhand') {
+        const n = item.name || '';
+        if (/图腾/.test(n)) return 'totem';
+        if (/盾|壁垒/.test(n)) return 'shield';
+        if (/圣物/.test(n)) return 'relic';
+        if (/密典/.test(n)) return 'offhand';
+        if (/副刃|短刃|毒刺/.test(n)) return 'offhand';
+        return null;
+      }
+      if (item.slot !== 'weapon') return null;
+      const n = item.name || '';
+      if (/索利达尔|群星之怒/.test(n)) return 'bow';
+      if (/长弓|猎弓|之弓/.test(n)) return 'bow';
+      if (/光枪|火枪|步枪/.test(n)) return 'gun';
+      if (/法杖|之杖|圣杖|秘法杖|恩典/.test(n)) return 'staff';
+      if (/魔杖/.test(n)) return 'wand';
+      if (/长柄|长矛|之矛|战戟/.test(n)) return 'polearm';
+      if (/战斧|之斧|裂爪|收割者/.test(n)) return /裂爪/.test(n) ? 'fist' : 'axe';
+      if (/战锤|之锤|锤/.test(n)) return 'mace';
+      if (/匕首|之牙|刺刀|毒刺/.test(n)) return 'dagger';
+      if (/剑|刃|弯刀|砍刀|屠刀/.test(n)) return 'sword';
+      return null;
+    },
+    // 返回职业限制说明;空串代表可装备
+    proficiencyIssue(char, item) {
+      const cls = D.CLASSES[char.classId];
+      if (!cls) return '';
+      const at = this.armorType(item);
+      if (at) {
+        const owned = this.CLASS_ARMOR[char.classId] || 'cloth';
+        if ((this.ARMOR_RANK[at] || 0) > (this.ARMOR_RANK[owned] || 0)) {
+          return `需要${this.ARMOR_CN[at]}熟练度（${D.CLASSES[char.classId].name}只能穿${this.ARMOR_CN[owned]}及以下）`;
+        }
+      }
+      const wt = this.weaponType(item);
+      if (wt) {
+        const allowed = this.CLASS_WEAPONS[char.classId] || [];
+        if (allowed.length && !allowed.includes(wt)) {
+          return `${D.CLASSES[char.classId].name}无法使用${this.WEAPON_CN[wt] || wt}`;
+        }
+      }
+      return '';
+    },
     // 装备前校验:返回不能装备的原因(空串表示可以装备),供 UI 给出明确反馈
     equipIssue(char, itemId, perf) {
       const item = D.ITEMS[itemId];
       if (!item || !item.slot || item.slot === 'consumable' || item.slot === 'material' || item.slot === 'bag') return '该物品不可装备';
+      // 等级门槛:优先判,避免玩家先看到「双槽冲突」等次要原因
+      const need = item.level || 0;
+      if (char.level < need) return `需要 ${need} 级才能装备（当前 ${char.level} 级）`;
+      // 职业熟练度:护甲类型 / 武器类型
+      const prof = this.proficiencyIssue(char, item);
+      if (prof) return prof;
       // 双槽互斥先判:同名装备已戴在某一格时,同状态→明确拒绝;极品/普通不同状态→允许就地换装该格
       if (item.slot === 'ring' || item.slot === 'trinket') {
         const pair = item.slot === 'ring' ? ['ring1', 'ring2'] : ['trinket1', 'trinket2'];
@@ -548,6 +652,9 @@
     equip(char, itemId, perf) {
       const item = D.ITEMS[itemId];
       if (!item || item.slot === 'consumable' || item.slot === 'material' || item.slot === 'bag') return false;
+      // 等级兜底:equipIssue 已拦截,这里再挡一次防止非 UI 调用(脚本/测试/存档修复)绕过
+      if (char.level < (item.level || 0)) return false;
+      if (this.proficiencyIssue(char, item)) return false;
       if (!char.eqPerf) char.eqPerf = {};
       this._migrateOrphanRing(char);
       // 同 id 且同极品状态时不重复装备(允许普通→极品 极品→普通 换装)
@@ -854,6 +961,10 @@
     },
     start(char, qid) {
       if (char.quests[qid] || char.completedQuests.includes(qid)) return false;
+      const q = D.QUESTS[qid];
+      if (!q) return false;
+      // 等级门槛:低于任务等级 5 级无法接取,避免新手误接高等级任务
+      if (char.level < (q.level || 1) - 5) return false;
       char.quests[qid] = { progress: 0, done: false };
       return true;
     },
@@ -877,13 +988,27 @@
       char.completedQuests.push(qid);
       delete char.quests[qid];
       const c = computed(char);
-      char.gold += Math.floor(q.gold * c.goldMult);
-      for (const it of q.rewardItems) Inventory.add(char, it, 1);
+      // 任务奖励随等级差动态化:高出任务 5 级经验减半、10 级仅剩 10%,金币相应补偿,
+      // 避免低级任务永远给同一份满额经验,也让回头清任务仍有金币收益
+      const gap = Math.max(0, char.level - q.level);
+      const expMult = gap >= 10 ? 0.1 : gap >= 5 ? 0.5 : 1;
+      const goldBonus = gap >= 10 ? 1.5 : gap >= 5 ? 1.25 : 1;
+      const goldGain = Math.floor(q.gold * c.goldMult * goldBonus);
+      const expGain = Math.max(0, Math.floor(q.exp * expMult));
+      char.gold += goldGain;
+      // 背包上限:与商店/掉落/成就奖励同口径;满包时非消耗品奖励丢弃并回报给 UI
+      const skipped = [];
+      for (const it of q.rewardItems) {
+        const item = D.ITEMS[it];
+        const isConsumable = !item || item.slot === 'consumable';
+        if (!isConsumable && Inventory.list(char).length >= bagSize(char)) { skipped.push(it); continue; }
+        Inventory.add(char, it, 1);
+      }
       // 阵营声望:任务交付获得区域声望
       const qrep = Reps.forZone(q.zone);
       if (qrep) Reps.add(char, qrep, Math.max(20, q.level * 15));
-      const events = q.exp > 0 ? addExp(char, q.exp) : [];
-      return { exp: q.exp, gold: Math.floor(q.gold * c.goldMult), items: q.rewardItems, events };
+      const events = expGain > 0 ? addExp(char, expGain) : [];
+      return { exp: expGain, gold: goldGain, items: q.rewardItems, skipped, events };
     },
   };
 
@@ -1079,13 +1204,14 @@
     // 增加声望;返回 { rep, value, tier, newTier, amount }
     add(char, repId, amount) {
       const rep = D.REPS[repId];
-      if (!rep || !amount) return null;
+      const gain = Math.floor(Number(amount));
+      if (!rep || !Number.isFinite(gain) || gain <= 0) return null;
       const reps = this.ensure(char);
       const before = reps[repId] || 0;
-      const v = before + Math.max(0, Math.floor(amount));
+      const v = before + gain;
       reps[repId] = v;
       const t0 = this.tierOf(before), t1 = this.tierOf(v);
-      return { rep, value: v, tier: t1, newTier: t1.key !== t0.key, amount: Math.floor(amount) };
+      return { rep, value: v, tier: t1, newTier: t1.key !== t0.key, amount: gain };
     },
     // 区域 → 声望阵营(野生区域与副本区域同查)
     forZone(zoneId) {
@@ -1242,7 +1368,7 @@
     return { ok: true, cost, unspent: getUnspent(char) };
   }
 
-  // 一键分配推荐搭配:跳过已习得天赋,天赋点不足时停止并返回整体剩余
+  // 一键分配推荐搭配:先点满核心 16 点,再用剩余点数自动补满主系 → 副系被动(不点主动天赋,避免技能栏膨胀)
   function applyBuild(char, build) {
     const applied = [];
     let totalNeed = 0;
@@ -1257,7 +1383,27 @@
         applied.push(tid);
       }
     }
-    return { applied, remaining: 0 };
+    // 核心点法完成后,自动把剩余点数投入被动天赋:主系优先,其次其他系(按层级从低到高)
+    const treeIds = [build.tree].concat((D.TALENTS[char.classId] || [])
+      .map((t) => t.id).filter((id) => id !== build.tree));
+    let guard = 0;
+    while (getUnspent(char) > 0 && guard++ < 500) {
+      let spent = false;
+      for (const treeId of treeIds) {
+        const tree = (D.TALENTS[char.classId] || []).find((t) => t.id === treeId);
+        if (!tree) continue;
+        const nodes = tree.talents.slice().sort((a, b) => (a.tier - b.tier));
+        for (const n of nodes) {
+          if (n.active) continue; // 主动天赋只由核心点法解锁
+          if (rankOf(char, treeId, n.id) >= n.max) continue;
+          const r = learnTalent(char, treeId, n.id);
+          if (r.ok) { applied.push(n.id); spent = true; break; }
+        }
+        if (spent) break;
+      }
+      if (!spent) break;
+    }
+    return { applied, remaining: getUnspent(char) };
   }
 
   /* ---------- 盗贼毒药 ---------- */
@@ -1351,7 +1497,7 @@
     char.hp = c.hpMax; char.mana = c.manaMax; char.rage = 0; char.energy = W.Config.ENERGY_MAX;
     char.zone = char.zone; // 原地
   }    W.Char = {
-    computed, passiveMods, create, addExp, expNeeded, regen, rest,
+    computed, passiveMods, create, addExp, expNeeded, rest,
     // GM 调试模式:配置读写与生效判定
     GM,
     Inventory, Equipment, QuestLog, bagSize, expandBag,
@@ -1359,7 +1505,7 @@
     setCounts, activeSetBonuses, setMods,
     // 成就系统
     Achievements,
-    applyPoison, removePoison, Pets, ensureClassFeatures,
+    applyPoison, removePoison, Pets, ensureClassFeatures, cleanName, NAME_MAX,
     // 深入敌营:每日限定突袭状态(每座敌方主城独立每日限次)
     // 返回 { available, remaining, doneToday, lastAt, minLevel, rewardNames }
     capitalRaidStatus(char, zoneId) {

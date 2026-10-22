@@ -483,7 +483,7 @@
       W.Combat.playerAction(action);
     },
 
-    /* ---------- 战斗增益卷轴栏(免费动作,不占回合) ---------- */
+    /* ---------- 战斗增益卷轴栏(占用回合) ---------- */
     _renderScrollBar() {
       const b = this.battle;
       const char = W.State.character;
@@ -503,7 +503,7 @@
       this.els.scrollbar.style.display = '';
       const coll = this._itemsCollapsed;
       const total = scrolls.length + potions.length;
-      let html = `<button class="item-bar-toggle" data-toggle-items title="${coll ? '展开战斗道具栏' : '折叠战斗道具栏（节省界面空间）'}">${coll ? '▸' : '▾'}</button><span class="scroll-bar-hint">🎒 战斗道具（免费·不占回合）${coll ? ` <b class="sc-mini">${total} 个 · Q/E/R/F 急救</b>` : ''}</span>`;
+      let html = `<button class="item-bar-toggle" data-toggle-items title="${coll ? '展开战斗道具栏' : '折叠战斗道具栏（节省界面空间）'}">${coll ? '▸' : '▾'}</button><span class="scroll-bar-hint">🎒 战斗道具（占用回合）${coll ? ` <b class="sc-mini">${total} 个 · Q/E/R/F 急救</b>` : ''}</span>`;
       const cd = player.potionCd || 0;
       // 药水快捷键映射:背包中前 4 瓶(折叠态一键急救用)
       const HOTKEY = ['Q', 'E', 'R', 'F'];
@@ -525,7 +525,7 @@
           it.consumable.manaPct || it.consumable.mana ? `${U.consEffectText(it.consumable, 'mana')}（约 ${U.consAmount(it.consumable, 'mana', player.manaMax)}）` : '',
         ].filter(Boolean).join(' · ');
         const hkTip = (!coll && pi < 4) ? `；按 ${HOTKEY[pi]} 键一键使用` : '';
-        const title = `${U.esc(it.name)}：${effect}（战斗内免费使用，不消耗回合；冷却 ${W.Combat.POTION_CD_ROUNDS} 回合）${hkTip}`;
+        const title = `${U.esc(it.name)}：${effect}（战斗内使用，占用回合；冷却 ${W.Combat.POTION_CD_ROUNDS} 回合）${hkTip}`;
         if (coll) {
           if (pi < 4) {
             const hk = HOTKEY[pi];
@@ -541,8 +541,8 @@
         if (coll) continue;
         const n = W.Char.Inventory.count(char, it.id);
         const title = it.scroll.buff
-          ? `${U.esc(it.name)}：${U.esc(it.scroll.name)}，持续 ${it.scroll.rounds} 回合（战斗内免费使用，不消耗回合）`
-          : `${U.esc(it.name)}：${U.esc(it.scroll.name)}（战斗内免费使用，不消耗回合）`;
+          ? `${U.esc(it.name)}：${U.esc(it.scroll.name)}，持续 ${it.scroll.rounds} 回合（战斗内使用，占用回合）`
+          : `${U.esc(it.name)}：${U.esc(it.scroll.name)}（战斗内使用，占用回合）`;
         html += `<button class="scroll-btn" data-scroll="${it.id}" title="${title}"><span class="sc-ico">${it.icon}</span><span class="sc-name">${U.esc(it.name)}</span><span class="sc-num">×${n}</span></button>`;
       }
       this.els.scrollbar.innerHTML = html;
@@ -645,6 +645,7 @@
     if (mod.lifesteal) return { icon: '🩸', label: '吸血', cls: 'pp-badge-leech' };
     if (mod.startShield != null || mod.startShieldSp != null) return { icon: '❄️', label: '护盾', cls: 'pp-badge-shield' };
     if (mod.markTaken) return { icon: '🎯', label: '印记', cls: 'pp-badge-mark' };
+    if (mod.startStealth) return { icon: '🌫️', label: '潜行', cls: 'pp-badge-stealth' };
     return null;
   };
   // 自动释放技能专属角标:按「效果类型」给持续伤害/减益一个彩色角标(与被动角标同一套视觉)

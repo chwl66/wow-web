@@ -32,6 +32,8 @@
       goldMult: c.goldMult, weapon: c.weapon, weaponLifesteal: c.weaponLifesteal || 0,
       critMult: c.critMult || 0, talents: W.Char.talentMods(char),
       dmgTaken: c.dmgTaken || 0, healPct: c.healPct || 0,
+      // 每回合法力/生命回复(精神与冥想/唤醒等被动,见 Config.MANA_REGEN_PCT)
+      manaRegen: c.manaRegen || 0, hpRegen: c.hpRegen || 0,
       buffs: [], dots: [], hots: [], shield: null, cd: {}, ccs: [],
       learned: char.learnedSkills.slice(),
       // 被动技能:常驻的战斗类效果(onHit 圣印 / thorns 荆棘 / 起始护盾 / 印记);属性类已在 computed() 生效
@@ -39,6 +41,7 @@
         onHit: pm.onHit || 0, thorns: pm.thorns || 0,
         startShield: pm.startShield || 0, startShieldSp: pm.startShieldSp || 0,
         shieldHeal: pm.shieldHeal || 0, markTaken: pm.markTaken || 0,
+        startStealth: pm.startStealth || 0,
         petAtkPct: pm.petAtkPct || 0,
         startCcs: pm.startCc || [],
       },
@@ -97,6 +100,8 @@
         char, ui, player, enemies, pets: [], round: 1, ended: false, busy: false,
         isDungeon: !!opts.isDungeon, isBoss: !!opts.isBoss, context: opts.context || 'wild',
         victory: false, fleed: false, rewards: null, onEnd: ui.onEnd || null,
+        // 召唤物 key 计数器:不能用 enemies.length(驯服/死亡会缩短数组,导致 key 与现存单位重复)
+        nextEnemyKey: enemies.length,
       };
       this._applyPassiveStart();
       this._logGmEffects();
@@ -134,7 +139,7 @@
       if (skill.cd) player.cd[skill.id] = skill.cd;
       const names = targets.map((t) => t.name).join('、');
       const kind = skill.dot ? `${TYPE_CN[skill.dot.type] || ''}伤害` : '减益';
-      ui.log('dot', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 本能地施放 <b>${skill.name}</b>，使 <b>${names}</b> 持续受到${kind}（自动施放 · 不占回合）`);
+      ui.log('dot', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 本能地施放 <b>${skill.name}</b>，使 <b>${names}</b> 持续受到${kind}（自动施放 · 不占回合）`);
       if (skill.dot) W.Audio.dot();
       return true;
     },
@@ -175,7 +180,15 @@
         const t = player.talents || {};
         const amt = Math.max(1, Math.round((pm.startShield + (pm.startShieldSp || 0) * (player.spellPower || 0)) * (1 + (t.shieldPct || 0))));
         player.shield = { amount: amt, rounds: 999, healOnHit: pm.shieldHeal || 0 };
-        b.ui.log('buff', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 的守护之力提供了 <b>${amt}</b> 点吸收护盾`);
+        b.ui.log('buff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 的守护之力提供了 <b>${amt}</b> 点吸收护盾`);
+      }
+      // 潜行被动:战斗开始时自动进入潜行(盗贼);强化潜行天赋延长持续时间
+      if (pm.startStealth > 0) {
+        const t = player.talents || {};
+        const rounds = pm.startStealth + ((t.buffDur && t.buffDur.stealth) || 0);
+        player.buffs = player.buffs.filter((x) => x.key !== 'stealth');
+        player.buffs.push({ key: 'stealth', name: '潜行', rounds, mod: { stealth: 1 } });
+        b.ui.log('buff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 遁入阴影，获得 <b>潜行</b> ${rounds} 回合`);
       }
       // 猎人印记:自动标记首个敌人(天赋 debuffPct 强化易伤)
       if (pm.markTaken > 0 && b.enemies.length) {
@@ -191,7 +204,7 @@
         const e = b.enemies[0];
         for (const sc of pm.startCcs) {
           if (this._applyCC(e, sc.type, sc.rounds, true)) {
-            b.ui.log('cc', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 的控场本能生效：<b>${e.name}</b> 被<b>${CC_CN[sc.type] || sc.type}</b> ${sc.rounds} 回合`);
+            b.ui.log('cc', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 的控场本能生效：<b>${e.name}</b> 被<b>${CC_CN[sc.type] || sc.type}</b> ${sc.rounds} 回合`);
           } else {
             b.ui.log('info', `<b>${e.name}</b> 免疫了控制效果！`);
           }
@@ -201,8 +214,9 @@
 
     /* ---------- 伤害计算 ---------- */
     // 返回 {damage, crit, miss, dodged, resisted, invuln, shielded}
-    rollAttack(attacker, defender, skill) {
+    rollAttack(attacker, defender, skill, opts) {
       const b = this.battle;
+      const o = opts || {};
       const isMagic = !!(skill && (skill.magic || (skill.dmg && skill.dmg.type !== 'physical')));
       const dmgType = isMagic ? ((skill.dmg && skill.dmg.type) || 'fire') : 'physical';
 
@@ -243,7 +257,11 @@
       base *= (1 + this._buffMod(attacker, 'atkPct', 0));
       if (attacker.isPlayer && attacker.beastDmg && defender.kind === 'beast') base *= (1 + attacker.beastDmg);
       let stealthBonus = 1;
-      if (attacker.isPlayer && defender.isEnemy && attacker.buffs.some((x) => x.mod && x.mod.stealth)) {
+      // 潜行加成:技能路径会在施放前移除潜行(见 _executeSkill),因此接受施法瞬间的快照
+      const stealthed = o.stealthed != null
+        ? !!o.stealthed
+        : attacker.buffs.some((x) => x.mod && x.mod.stealth);
+      if (attacker.isPlayer && defender.isEnemy && stealthed) {
         stealthBonus = (skill && skill.stealthMult) || 1.5;
       }
       base *= stealthBonus;
@@ -348,8 +366,9 @@
     },
     _applyHeal(unit, amount) {
       if (unit.hp <= 0) return 0;
-      // 受治疗增减益(哈卡腐化之血等)
-      amount = Math.max(0, Math.round(amount * (1 - this._buffMod(unit, 'healTaken', 0))));
+      // 受治疗增减益(致死打击 -50% / 哈卡腐化之血等)
+      // 口径统一定义为「对治疗量的修正」:负数=抑制,正数=强化,与 atkPct/takenPct 一致
+      amount = Math.max(0, Math.round(amount * (1 + this._buffMod(unit, 'healTaken', 0))));
       const before = unit.hp;
       unit.hp = Math.min(unit.hpMax, unit.hp + amount);
       return unit.hp - before;
@@ -419,7 +438,21 @@
       return Math.max(0, skill.cd - (t.cdReduce || 0) - (t.cdSkill[skill.id] || 0));
     },
 
-    /* ---------- 战斗增益卷轴(免费动作,不占用回合) ---------- */
+    // 结束玩家回合:递减控制、宠物行动、敌方回合与下一回合(技能/普攻/药水/卷轴共用)
+    async _endPlayerTurn(player) {
+      const b = this.battle;
+      this._tickCC(player);
+      for (const p of b.pets.slice()) this._tickCC(p);
+      b.ui.render();
+      await this._enemyTurn();
+      if (!b.ended) {
+        const end = await this._checkEnd();
+        if (!end) { this._nextRound(); }
+      }
+      b.ui.render();
+    },
+
+    /* ---------- 战斗增益卷轴(占用回合) ---------- */
     async useScroll(scrollId) {
       const b = this.battle;
       if (b.ended || b.busy) return;
@@ -428,32 +461,37 @@
       if (!it || !it.scroll) return;
       if (W.Char.Inventory.count(char, scrollId) <= 0) return;
       const player = b.player;
+      // 等级检查:高等级卷轴不能在低等级角色上使用
+      if ((it.level || 0) > player.level) {
+        b.ui.log('warn', `<span class="dn">📜</span> 需要 ${it.level} 级才能使用 <b>${it.name}</b>`);
+        return;
+      }
       const sc = it.scroll;
       b.busy = true;
       try {
         W.Char.Inventory.remove(char, scrollId, 1);
         if (sc.healPct) {
           const h = this._applyHeal(player, Math.round(player.hpMax * sc.healPct));
-          b.ui.log('heal', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！恢复 <b class="heal">${h}</b> 点生命（不占回合）`);
+          b.ui.log('heal', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！恢复 <b class="heal">${h}</b> 点生命（占用回合）`);
           this._float(player, '+' + h, 'heal');
         } else if (sc.manaPct) {
           const before = player.mana;
           player.mana = Math.min(player.manaMax, player.mana + Math.round(player.manaMax * sc.manaPct));
-          b.ui.log('buff', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！恢复 <b>${player.mana - before}</b> 点法力（不占回合）`);
+          b.ui.log('buff', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！恢复 <b>${player.mana - before}</b> 点法力（占用回合）`);
         } else if (sc.buff) {
           // 同类卷轴增益刷新时长,不叠加
           player.buffs = player.buffs.filter((x) => x.key !== sc.key);
           player.buffs.push({ key: sc.key, name: sc.name, rounds: sc.rounds || 5, mod: sc.buff });
-          b.ui.log('buff', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！获得 <b>${sc.name}</b>（${sc.rounds || 5} 回合，不占回合）`);
+          b.ui.log('buff', `<span class="dn">📜</span> 使用 <b>${it.name}</b>！获得 <b>${sc.name}</b>（${sc.rounds || 5} 回合，占用回合）`);
         }
-        if (b.ui.render) b.ui.render();
         W.Audio.spell();
+        await this._endPlayerTurn(player);
       } finally {
         b.busy = false;
       }
     },
 
-    /* ---------- 战斗药水(免费动作,不占用回合;冷却期内禁用) ---------- */
+    /* ---------- 战斗药水(占用回合;冷却期内禁用) ---------- */
     async usePotion(itemId) {
       const b = this.battle;
       if (b.ended || b.busy) return;
@@ -463,6 +501,10 @@
       if (!W.Utils.consHasEffect(it.consumable)) return;
       if (W.Char.Inventory.count(char, itemId) <= 0) return;
       const player = b.player;
+      if ((it.level || 0) > player.level) {
+        b.ui.log('warn', `<span class="dn">🧪</span> 需要 ${it.level} 级才能使用 <b>${it.name}</b>`);
+        return;
+      }
       if (player.potionCd > 0) {
         b.ui.log('warn', `<span class="dn">🧪</span> <b>${it.name}</b> 冷却中，还需 <b>${player.potionCd}</b> 回合`);
         return;
@@ -493,10 +535,11 @@
           player.mana = Math.min(player.manaMax, player.mana + manaAmt);
           if (player.mana > before) parts.push(`恢复 <b>${player.mana - before}</b> 法力`);
         }
-        player.potionCd = POTION_CD_ROUNDS;
-        b.ui.log('heal', `<span class="dn">🧪</span> 使用 <b>${it.name}</b>！${parts.join('，')}（不占回合，冷却 ${POTION_CD_ROUNDS} 回合）`);
-        if (b.ui.render) b.ui.render();
+        // 本次行动结束时会立刻 tick 一次,故 +1 保证玩家实际获得完整 3 回合冷却
+        player.potionCd = POTION_CD_ROUNDS + 1;
+        b.ui.log('heal', `<span class="dn">🧪</span> 使用 <b>${it.name}</b>！${parts.join('，')}（占用回合，冷却 ${POTION_CD_ROUNDS} 回合）`);
         W.Audio.spell();
+        await this._endPlayerTurn(player);
       } finally {
         b.busy = false;
       }
@@ -525,13 +568,13 @@
         // 被控制则跳过行动
         if (this._isCCed(player)) {
           const c = player.ccs[0];
-          b.ui.log('cc', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 被<b>${CC_CN[c.type]}</b>住了，无法行动！`);
+          b.ui.log('cc', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 被<b>${CC_CN[c.type]}</b>住了，无法行动！`);
         } else if (action.type === 'flee') {
           await this._flee(player, target);
         } else if (action.type === 'defend') {
           player.buffs = player.buffs.filter((x) => x.key !== 'defend');
           player.buffs.push({ key: 'defend', name: '防御', rounds: 1, mod: { armorPct: C.DEFEND_ARMOR_BONUS } });
-          b.ui.log('buff', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 摆出防御姿态`);
+          b.ui.log('buff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 摆出防御姿态`);
         } else if (action.type === 'attack') {
           await this._playerAttack(player, target, null);
         } else if (action.type === 'skill') {
@@ -540,17 +583,8 @@
           await this._executeSkill(player, skill, target);
         }
 
-        // 玩家回合结束:递减玩家自身控制时长(保证控制至少生效一个完整回合)
-        this._tickCC(player);
-        for (const p of b.pets.slice()) this._tickCC(p);
-
-        b.ui.render();
-        await this._enemyTurn();
-        if (!b.ended) {
-          const end = await this._checkEnd();
-          if (!end) { this._nextRound(); }
-        }
-        b.ui.render();
+        // 玩家回合结束:控制递减、敌方行动、进入下一回合
+        await this._endPlayerTurn(player);
       } finally {
         b.busy = false;
       }
@@ -575,10 +609,12 @@
     async _playerAttack(player, target, skill) {
       const b = this.battle;
       const ui = b.ui;
-      if (player.buffs.some((x) => x.mod && x.mod.stealth) && !skill) this._removeBuff(player, 'stealth');
-      const r = this.rollAttack(player, target, skill);
+      // 普通攻击也吃潜行 1.5× 加成:先记状态再结算,结算完才破潜
+      const wasStealthed = player.buffs.some((x) => x.mod && x.mod.stealth);
+      const r = this.rollAttack(player, target, skill, wasStealthed ? { stealthed: true } : null);
+      if (wasStealthed && !skill) this._removeBuff(player, 'stealth');
       if (r.miss) {
-        ui.log('miss', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 的攻击<b>未命中</b>`);
+        ui.log('miss', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 的攻击<b>未命中</b>`);
         this._float(target, '未命中', 'miss'); W.Audio.miss();
       } else if (r.dodged) {
         ui.log('miss', `<b>${target.name}</b> 闪避了你的攻击！`);
@@ -590,7 +626,7 @@
       } else {
         this._applyDamage(target, r.damage);
         ui.log(r.crit ? 'crit' : 'hit',
-          `<span class="dn">${player.icon}</span> <b>${player.name}</b> ${r.crit ? '<b>暴击！</b>' : '攻击'}了 <b>${target.name}</b>，造成 <b class="dmg">${r.damage}</b> 点伤害`);
+          `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> ${r.crit ? '<b>暴击！</b>' : '攻击'}了 <b>${target.name}</b>，造成 <b class="dmg">${r.damage}</b> 点伤害`);
         this._float(target, (r.crit ? '暴击 ' : '') + r.damage, r.crit ? 'crit' : 'hit');
         W.Audio.crit();
         // 毒药触发(普通攻击必触发)
@@ -626,16 +662,18 @@
         ui.log('debuff', `<span class="dn">${player.icon}</span> 消耗了 <b>${skill.shardCost}</b> 枚灵魂碎片（剩余 ${player.soulShards}）`);
       }
 
-      // 潜行处理
+      // 潜行处理:先记录施法瞬间是否处于潜行(破潜技能仍要享受潜行倍率),
+      // 再移除 buff —— 顺序不能反,否则 rollAttack 读到的潜行状态已被清空
       const wasStealthed = player.buffs.some((x) => x.mod && x.mod.stealth);
       if (skill.breakStealth && wasStealthed) this._removeBuff(player, 'stealth');
       if (wasStealthed && skill.dmg) this._removeBuff(player, 'stealth');
+      const strikeOpts = wasStealthed ? { stealthed: true } : null;
 
       if (skill.buff) this._removeBuff(player, skill.buff.key);
       if (skill.debuff && target) this._removeBuff(target, skill.debuff.key);
 
       const cast = () => {
-        ui.log('spell', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 施放 <b>${skill.name}</b>！`);
+        ui.log('spell', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 施放 <b>${skill.name}</b>！`);
       };
       let didCast = false;
 
@@ -646,7 +684,7 @@
           let rounds = skill.cc.rounds;
           if (ct.isPlayer) rounds = Math.max(1, Math.round(rounds * (1 - (ct.ccReduce || 0))));
           if (!this._applyCC(ct, skill.cc.type, rounds)) ui.log('info', `<b>${ct.name}</b> 免疫了控制效果！`);
-          else ui.log('cc', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 对 <b>${ct.name}</b> 施放 <b>${skill.name}</b>！${skill.cc.type === 'sheep' ? '（受到伤害会解除）' : ''}`);
+          else ui.log('cc', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 对 <b>${ct.name}</b> 施放 <b>${skill.name}</b>！${skill.cc.type === 'sheep' ? '（受到伤害会解除）' : ''}`);
         }
       }
 
@@ -660,7 +698,7 @@
         const targets = skill.aoe ? b.enemies.filter((e) => e.hp > 0) : [target];
         if (targets.length) { cast(); didCast = true; }
         for (const t of targets) {
-          const r = this.rollAttack(player, t, effSkill);
+          const r = this.rollAttack(player, t, effSkill, strikeOpts);
           if (r.miss) { ui.log('miss', `<b>${t.name}</b> 抵抗了 <b>${skill.name}</b>！`); continue; }
           if (r.dodged) { ui.log('miss', `<b>${t.name}</b> 闪避了 <b>${skill.name}</b>！`); this._float(t, '闪避', 'miss'); continue; }
           if (r.invuln) { ui.log('buff', `<b>${t.name}</b> 免疫了 <b>${skill.name}</b>！`); continue; }
@@ -668,7 +706,7 @@
           if (r.shielded) { this._float(t, '吸收', 'shield'); continue; }
           this._applyDamage(t, r.damage);
           ui.log(r.crit ? 'crit' : 'spell',
-            `<span class="dn">${player.icon}</span> <b>${player.name}</b> 施放 <b>${skill.name}</b>，对 <b>${t.name}</b> 造成 <b class="dmg">${r.damage}</b> 点${TYPE_CN[r.dmgType] || ''}伤害${r.crit ? '（<b>暴击</b>）' : ''}`);
+            `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 施放 <b>${skill.name}</b>，对 <b>${t.name}</b> 造成 <b class="dmg">${r.damage}</b> 点${TYPE_CN[r.dmgType] || ''}伤害${r.crit ? '（<b>暴击</b>）' : ''}`);
           this._float(t, (r.crit ? '暴击 ' : '') + r.damage, r.crit ? 'crit' : 'spell');
           this._soundType(r.dmgType, r.crit);
           // 毒药触发(近战技能有 60% 几率)
@@ -677,7 +715,7 @@
           if (skill.backfirePct && t.hp <= 0 && !this._gm('god')) {
             const bf = Math.max(1, Math.round(player.hpMax * skill.backfirePct));
             player.hp = Math.max(1, player.hp - bf);
-            ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${skill.name}</b> 的反噬灼伤了 <b>${player.name}</b>（${bf} 点伤害）`);
+            ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${skill.name}</b> 的反噬灼伤了 <b>${U.esc(player.name)}</b>（${bf} 点伤害）`);
             this._float(player, '-' + bf, 'dot');
           }
           // 吸取生命(天赋强化吸取)
@@ -735,7 +773,7 @@
       if (skill.flee) {
         if (b.isDungeon || b.isBoss) { ui.log('info', '此地无法假死脱战！'); }
         else {
-          ui.log('info', `<b>${player.name}</b> 使用 <b>${skill.name}</b> 脱离战斗！`);
+          ui.log('info', `<b>${U.esc(player.name)}</b> 使用 <b>${skill.name}</b> 脱离战斗！`);
           W.Audio.flee();
           b.fleed = true; b.ended = true;
           this._finish();
@@ -753,7 +791,7 @@
       if (skill.heal) {
         const h = Math.round((skill.heal.base + skill.heal.scale * player.spellPower) * healMult * skillHealBoost(skill.id));
         const healed = this._applyHeal(player, h);
-        ui.log('heal', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 施放 <b>${skill.name}</b>，恢复 <b class="heal">${healed}</b> 点生命`);
+        ui.log('heal', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 施放 <b>${skill.name}</b>，恢复 <b class="heal">${healed}</b> 点生命`);
         this._float(player, '+' + healed, 'heal');
         W.Audio.heal();
       }
@@ -791,7 +829,7 @@
           if (mod.armorPct != null) mod.armorPct += bp;
         }
         player.buffs.push({ key: bf.key, name: bf.name, rounds, mod });
-        ui.log('buff', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 获得 <b>${bf.name}</b> 效果`);
+        ui.log('buff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 获得 <b>${bf.name}</b> 效果`);
         W.Audio.holy();
       }
 
@@ -828,7 +866,7 @@
       if (skill.selfDmgPct && !this._gm('god')) {
         const sd = Math.max(1, Math.round(player.hpMax * skill.selfDmgPct));
         player.hp = Math.max(1, player.hp - sd);
-        ui.log('debuff', `<b>${player.name}</b> 被 <b>${skill.name}</b> 灼伤，受到 ${sd} 点伤害`);
+        ui.log('debuff', `<b>${U.esc(player.name)}</b> 被 <b>${skill.name}</b> 灼伤，受到 ${sd} 点伤害`);
         this._float(player, '-' + sd, 'dot');
       }
 
@@ -850,11 +888,6 @@
         ui.log('buff', `<b>${skill.name}</b> 解除了身上的负面效果`);
       }
 
-      // 法力唤醒
-      if (skill.manaHot) {
-        player.buffs.push({ key: 'evocation', name: '唤醒', rounds: skill.manaHot.rounds, mod: { manaHot: skill.manaHot.pct } });
-      }
-
       // 连击点
       if (skill.combo) player.combo = Math.min(5, player.combo + skill.combo);
       if (skill.comboSpend) player.combo = Math.max(0, player.combo - skill.comboSpend);
@@ -865,7 +898,7 @@
       // 消耗气定神闲
       if (pom) {
         this._removeBuff(player, 'pom');
-        ui.log('buff', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 的<b>气定神闲</b>效果被消耗`);
+        ui.log('buff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 的<b>气定神闲</b>效果被消耗`);
       }
     },
 
@@ -890,7 +923,8 @@
       const mod = {};
       if (debuff.key === 'atk') mod.atkPct = debuff.pct;
       if (debuff.key === 'taken') mod.takenPct = debuff.pct;
-      if (debuff.key === 'healTaken') mod.healTakenPct = debuff.pct;
+      // 玩家技能用正数 pct 表示「治疗降低 50%」,统一转成负修正;怪物技能数据直接给 mod(负数)
+      if (debuff.key === 'healTaken') mod.healTaken = -(debuff.pct || 0);
       return mod;
     },
 
@@ -963,6 +997,16 @@
         if (unit.shield.rounds <= 0) unit.shield = null;
       }
       for (const k in unit.cd) if (unit.cd[k] > 0) unit.cd[k]--;
+      // 怪物技能冷却:与玩家 cd 分开存放(mSkillCds),必须同步递减,
+      // 否则每场战斗每个技能只会施放一次(首领机制退化为一次性演出)
+      if (unit.mSkillCds) for (const k in unit.mSkillCds) if (unit.mSkillCds[k] > 0) unit.mSkillCds[k]--;
+      // 法力/生命回复(仅玩家):冥想/唤醒/法力之潮等被动与精神属性通过这里生效
+      if (unit.isPlayer && unit.hp > 0) {
+        if (unit.manaRegen > 0 && unit.mana < unit.manaMax) {
+          unit.mana = Math.min(unit.manaMax, unit.mana + unit.manaRegen);
+        }
+        if (unit.hpRegen > 0 && unit.hp < unit.hpMax) this._applyHeal(unit, unit.hpRegen);
+      }
       // 巨魔再生
       if (isAlly && unit.regenPct && unit.hp > 0 && unit.hp < unit.hpMax) {
         const h = Math.max(1, Math.round(unit.hpMax * unit.regenPct));
@@ -1079,8 +1123,11 @@
       if (skill) {
         e.mSkillCds[skill.id] = skill.cd || 1;
         if (skill.summon) {
-          const add = buildEnemyUnit(D.MONSTERS[skill.summon], b.enemies.length);
-          add.key = 'e' + b.enemies.length;
+          // 用递增计数器生成 key:驯服会从 enemies 中移除单位,按数组长度生成会与现存 key 撞车
+          const seq = b.nextEnemyKey;
+          b.nextEnemyKey = seq + 1;
+          const add = buildEnemyUnit(D.MONSTERS[skill.summon], seq);
+          add.key = 'e' + seq;
           b.enemies.push(add);
           ui.log('boss', `<span class="dn">${e.icon}</span> <b>${e.name}</b> 施放 <b>${skill.name}</b>！召唤了 <b>${add.name}</b>`);
           this._float(e, '召唤！', 'boss');
@@ -1090,7 +1137,7 @@
             const db = skill.debuff;
             player.buffs = player.buffs.filter((x) => x.key !== db.key);
             player.buffs.push({ key: db.key, name: db.name, rounds: db.rounds || 2, mod: db.mod || {}, isNegative: true });
-            ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${player.name}</b> 中了 <b>${db.name}</b>！`);
+            ui.log('debuff', `<span class="dn">${player.icon}</span> <b>${U.esc(player.name)}</b> 中了 <b>${db.name}</b>！`);
             this._float(player, db.name, 'debuff');
           }
           return;
@@ -1211,7 +1258,7 @@
       const st = this._checkAlive();
       if (this._isDead(b.player)) {
         b.ended = true; b.victory = false;
-        b.ui.log('death', `<span class="dn">💀</span> <b>${b.player.name}</b> 倒下了……`);
+        b.ui.log('death', `<span class="dn">💀</span> <b>${U.esc(b.player.name)}</b> 倒下了……`);
         W.Audio.lose();
         this._finish();
         return true;
@@ -1253,7 +1300,9 @@
         // 阵营声望:击杀所在区域怪物获取区域声望(召唤物不计数,数值随区域等级提升)
         const zrep = (e.mid !== 'dm_add') ? W.Char.Reps.forZone(char.zone) : null;
         if (zrep && D.REPS[zrep]) {
-          const zr = W.Char.Reps.add(char, zrep, Math.max(6, Math.round((D.ZONES[char.zone] ? D.ZONES[char.zone].level : 10) * 1.2)));
+          // 区域等级是 '1-6' 这类区间字符串,先解析成数值再算声望(旧代码直接乘 → NaN)
+          const zlv = W.Utils.zoneLevel(char.zone, 10);
+          const zr = W.Char.Reps.add(char, zrep, Math.max(6, Math.round(zlv.max * 1.2)));
           if (zr && zr.newTier) ui.log('buff', `<span class="dn">🏛️</span> 你在 <b>${D.REPS[zrep].name}</b> 的声望达到了 <b>${zr.tier.name}</b>！`);
         }
         // 物品/装备掉落:每个阵亡敌人独立掷取;装备掉率大幅上调(×DROP_EQUIP_BOOST)
@@ -1273,8 +1322,11 @@
             return;
           }
           // 小概率掉落极品装备(属性 +50%);橙色传说装备极品率更高
-          const perfChance = it.quality === 'legendary' ? C.LEGENDARY_PERFECT_CHANCE : C.PERFECT_CHANCE;
+          // 连续未出极品时逐步累积保底概率,避免长时间「非酋」导致掉落波动过大
+          const pity = Math.min(C.PERFECT_PITY_MAX, (char.perfectPity || 0) * C.PERFECT_PITY_STEP);
+          const perfChance = (it.quality === 'legendary' ? C.LEGENDARY_PERFECT_CHANCE : C.PERFECT_CHANCE) + pity;
           const perf = isGear && RNG.chance(perfChance);
+          if (isGear) char.perfectPity = perf ? 0 : (char.perfectPity || 0) + 1;
           W.Char.Inventory.add(char, dropId, 1, { perf });
           drops.push(dropId);
           if (EQ_QUALITIES.includes(it.quality)) epicDropped = true;
@@ -1375,6 +1427,8 @@
           while (char.level < C.LEVEL_CAP && char.exp >= U.expNeeded(char.level)) {
             char.exp -= U.expNeeded(char.level);
             char.level++;
+            // 满级后清空多余经验(与 addExp 口径一致,避免经验条残留)
+            if (char.level >= C.LEVEL_CAP) char.exp = 0;
             const c = W.Char.computed(char);
             char.hpMax = c.hpMax; char.manaMax = c.manaMax;
             char.hp = c.hpMax; char.mana = c.manaMax;
@@ -1387,11 +1441,15 @@
                 newSkills.push(s);
               }
             }
-            ui.log('levelup', `🎉 <b>${char.name}</b> 升到了 <b>${char.level}</b> 级！` + (newSkills.length ? ` 学会了：${newSkills.map((s) => s.name).join('、')}` : ''));
+            ui.log('levelup', `🎉 <b>${U.esc(char.name)}</b> 升到了 <b>${char.level}</b> 级！` + (newSkills.length ? ` 学会了：${newSkills.map((s) => s.name).join('、')}` : ''));
             W.Audio.levelup();
             if (char.level === 10) ui.log('info', '🌟 <b>天赋系统解锁！</b>从 10 级起每级获得 1 点天赋点（点击「天赋」按钮分配）');
             else if (char.level > 10) ui.log('info', '🌟 获得 1 点天赋点！');
           }
+          // 成就:等级/套装/图鉴等特殊条件在战斗升级后同样要检查
+          // (addExp 路径已有此调用;战斗内升级不走 addExp,漏掉会让 60 级成就延迟到下次交任务才发)
+          const achUnlocked = W.Char.Achievements.checkSpecial(char);
+          if (achUnlocked.length) ui.log('ach', '🏅 成就达成！' + achUnlocked.map((g) => g.ach.name).join('、'));
         }
       }
       b.rewards = { xp, gold, drops, xpGold };

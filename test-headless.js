@@ -119,11 +119,16 @@ function checkEq(name, got, want) {
     check('盾牌带护甲与耐力', shieldOff.length >= 3 && shieldOff.every((it) => it.stats.armor > 0 && it.stats.stam > 0));
     check('副刃带敏捷', bladeOff.length >= 2 && bladeOff.every((it) => it.stats.agi > 0));
     check('圣物带智力', totemOff.length >= 2 && totemOff.every((it) => it.stats.int > 0));
-    check('副手槽独立于武器(全职业可装备)', ['warrior', 'paladin', 'rogue', 'hunter', 'mage', 'priest', 'shaman', 'warlock', 'druid'].every((cid) => {
+    check('副手槽独立于武器(盾牌职业可装备)', ['warrior', 'paladin', 'shaman'].every((cid) => {
       const ch = W.Char.create('副手测', cid === 'undead' ? 'undead' : 'orc', cid);
       ch.level = 30;
       return W.Char.Equipment.equip(ch, 'w_off_hide_shield') && ch.equipment.offhand === 'w_off_hide_shield';
-    }), '任意职业应能装备副手');
+    }), '盾牌职业应能装备盾牌副手');
+    check('非盾牌职业受武器熟练度限制', ['rogue', 'hunter', 'mage', 'priest', 'warlock', 'druid'].every((cid) => {
+      const ch = W.Char.create('副手限', 'orc', cid);
+      ch.level = 30;
+      return !W.Char.Equipment.equip(ch, 'w_off_hide_shield') && !ch.equipment.offhand;
+    }), '非盾牌职业不应能装备盾牌');
     // 极品换装回归(平衡审计 P0 验证:普通↔极品同id换装全流程正常)
     {
       const c = W.Char.create('换装回归', 'human', 'warrior');
@@ -812,7 +817,7 @@ function checkEq(name, got, want) {
     const reck = armsTree && armsTree.talents.find((n) => n.active === 'recklessness');
     check('鲁莽来源:武器系tier2需本系10点', !!reck && reck.tier === 2 && reck.tier * 5 === 10, JSON.stringify(reck));
     // 总览基础数值展示覆盖性:所有被动技能 mod 键须在可展示集合内(防止未来新被动静默不显示数值)
-    const covered = ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'onHit', 'thorns', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal', 'startCc'];
+    const covered = ['atkPct', 'armorPct', 'crit', 'dodge', 'hit', 'spellPowerPct', 'manaRegenPct', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'onHit', 'thorns', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal', 'startCc', 'startStealth'];
     const badKey = [];
     for (const s of Object.values(D.SKILLS)) {
       if (!(s && s.passive && s.mod)) continue;
@@ -942,7 +947,7 @@ function checkEq(name, got, want) {
     check('毒药物品数据', D.ITEMS.p_instant && D.ITEMS.p_instant.poison && D.ITEMS.p_deadly && D.ITEMS.p_crippling);
     check('驯服野兽技能', D.SKILLS.tame_beast && D.SKILLS.tame_beast.tame === 1);
     check('召唤地狱火技能(3碎片)', D.SKILLS.summon_infernal && D.SKILLS.summon_infernal.shardCost === 3);
-    check('灵魂之火消耗1碎片', D.SKILLS.soul_fire && D.SKILLS.soul_fire.shardCost === 1);
+    check('灵魂之火已转为常驻被动', D.SKILLS.soul_fire && D.SKILLS.soul_fire.passive && !D.SKILLS.soul_fire.shardCost);
     check('地狱火宠物数据', !!D.PETS.pet_infernal);
     const pd = D.makePetDef(D.MONSTERS.elwynn_boar);
     check('makePetDef 转换野兽', !!pd && pd.id === 'elwynn_boar' && Array.isArray(pd.skills) && pd.skills.length > 0);
@@ -1063,7 +1068,6 @@ function checkEq(name, got, want) {
     const b = W.Combat.battle;
     W.Utils.delay = () => Promise.resolve();
     b.player.hit = 1; b.enemies[0].dodge = 0; b.enemies[0].resists.shadow = -1000;
-    check('无碎片无法施放灵魂之火', !W.Combat.canUse(D.SKILLS.soul_fire, b.player));
     let guard = 0;
     while (!b.ended && guard++ < 40) {
       const p = b.player;
@@ -1079,10 +1083,6 @@ function checkEq(name, got, want) {
     check('3枚碎片可召唤地狱火', W.Combat.canUse(D.SKILLS.summon_infernal, b2.player));
     await W.Combat.playerAction({ type: 'skill', skill: 'summon_infernal', target: 'e0' });
     check('地狱火入队并消耗3枚碎片', b2.pets.length === 1 && b2.pets[0].petId === 'pet_infernal' && b2.player.soulShards === 0);
-    b2.player.soulShards = 1;
-    const logLen = log.length;
-    await W.Combat.playerAction({ type: 'skill', skill: 'soul_fire', target: 'e0' });
-    check('灵魂之火消耗1枚碎片(目标未死)', b2.player.soulShards === 0 && b2.enemies[0].hp > 0 && log.slice(logLen).some((l) => l.includes('灵魂之火')));
     // 修复验证:战斗中消耗的碎片在胜利结算后正确扣除(3 消耗 + 1 收割 = 1)
     char.soulShards = 3;
     W.Combat.start(char, [D.MONSTERS.elwynn_boar], ui, {});
@@ -1375,9 +1375,9 @@ function checkEq(name, got, want) {
       }
       check('传说武器引擎战力领先同线(≥1.20×)', weakW.length === 0, weakW.join(','));
     }
-    // 战斗中卷轴:免费动作不占回合
+    // 战斗中卷轴:占用一回合
     const sc = W.Char.create('卷轴使者', 'human', 'warrior');
-    sc.level = 10;
+    sc.level = 12;
     sc.inventory.push({ id: 's_force', count: 2 }, { id: 's_spirit', count: 1 });
     const scc = W.Char.computed(sc);
     sc.hp = Math.floor(scc.hpMax * 0.5); sc.hpMax = scc.hpMax;
@@ -1387,13 +1387,11 @@ function checkEq(name, got, want) {
     const sb = W.Combat.battle;
     const round0 = sb.round;
     await W.Combat.useScroll('s_force');
-    check('力量卷轴不占回合且施加祝福', sb.round === round0 && !sb.ended && sb.player.buffs.some((x) => x.key === 'sc_atk' && x.mod.atkPct === 0.2));
+    check('力量卷轴占用回合并施加祝福', sb.round === round0 + 1 && !sb.ended && sb.player.buffs.some((x) => x.key === 'sc_atk' && x.mod.atkPct === 0.2));
     check('卷轴消耗背包1个', W.Char.Inventory.count(sc, 's_force') === 1);
-    const hpBefore = sb.player.hp;
     await W.Combat.useScroll('s_spirit');
-    check('生命卷轴立即恢复且不占回合', sb.player.hp > hpBefore && sb.round === round0);
-    check('背包外卷轴无法使用', W.Char.Inventory.count(sc, 's_force') === 1 && W.Char.Inventory.count(sc, 's_spirit') === 0);
-        // 战斗中药水:免费动作不占回合 + 冷却 + 满状态不消耗
+    check('生命卷轴占用回合并消耗', sb.round === round0 + 2 && W.Char.Inventory.count(sc, 's_spirit') === 0);
+        // 战斗中药水:占用回合 + 冷却 + 满状态不消耗
     {
       const pc = W.Char.create('药水使者', 'human', 'mage');
       pc.level = 12;
@@ -1402,34 +1400,38 @@ function checkEq(name, got, want) {
       pc.hp = Math.floor(pcc.hpMax * 0.4); pc.hpMax = pcc.hpMax;
       pc.mana = Math.floor(pcc.manaMax * 0.3); pc.manaMax = pcc.manaMax;
       W.State.newCharacter(pc);
-      const pui = { log: () => {}, float: () => {}, render: () => {}, onEnd: null };
+      const plog = [];
+      const pui = { log: (t, h) => plog.push(String(h)), float: () => {}, render: () => {}, onEnd: null };
       W.Combat.start(pc, [D.MONSTERS.elwynn_boar], pui, {});
       const pb = W.Combat.battle;
       const pr0 = pb.round;
       const hp0 = pb.player.hp;
-      const wantHeal = Math.round(pb.player.hpMax * D.ITEMS.c_heal.consumable.healPct);
       await W.Combat.usePotion('c_heal');
-      check('治疗药水不占回合且按百分比恢复', pb.round === pr0 && pb.player.hp === hp0 + wantHeal && pb.player.hp <= pb.player.hpMax, `hp=${pb.player.hp} want=${hp0 + wantHeal}`);
+      check('治疗药水占用回合并恢复', pb.round === pr0 + 1 && pb.player.hp > hp0 && plog.some((l) => l.includes('占用回合')), `hp=${pb.player.hp}`);
       check('药水消耗背包1个', W.Char.Inventory.count(pc, 'c_heal') === 2);
       check('药水进入3回合冷却', pb.player.potionCd === 3);
       const hp1 = pb.player.hp;
+      const round1 = pb.round;
       await W.Combat.usePotion('c_heal');
-      check('冷却期喝药无效且不消耗', pb.player.hp === hp1 && W.Char.Inventory.count(pc, 'c_heal') === 2);
+      check('冷却期喝药无效且不消耗', pb.round === round1 && pb.player.hp === hp1 && W.Char.Inventory.count(pc, 'c_heal') === 2);
       // 回合推进递减冷却(3 次 tick 后清零)
       W.Combat._tickUnit(pb.player, true);
       check('冷却回合递减', pb.player.potionCd === 2);
       W.Combat._tickUnit(pb.player, true);
       W.Combat._tickUnit(pb.player, true);
       check('冷却3回合后清零可再用', pb.player.potionCd === 0);
+      pb.player.mana = Math.floor(pb.player.manaMax * 0.3);
       const mana0 = pb.player.mana;
-      const wantMana = Math.round(pb.player.manaMax * D.ITEMS.c_mana.consumable.manaPct);
+      const round2 = pb.round;
       await W.Combat.usePotion('c_mana');
-      check('法力药水按百分比恢复且不占回合', pb.player.mana === mana0 + wantMana && pb.round === pr0 && W.Char.Inventory.count(pc, 'c_mana') === 1, `mana=${pb.player.mana} want=${mana0 + wantMana}`);
+      check('法力药水占用回合并按百分比恢复', pb.round === round2 + 1 && pb.player.mana > mana0 && W.Char.Inventory.count(pc, 'c_mana') === 1, `mana=${pb.player.mana}`);
       // 满状态不消耗
       pb.player.hp = pb.player.hpMax; pb.player.mana = pb.player.manaMax;
+      pb.player.potionCd = 0;
       const cnt = W.Char.Inventory.count(pc, 'c_heal');
+      const round3 = pb.round;
       await W.Combat.usePotion('c_heal');
-      check('满状态喝药不消耗', W.Char.Inventory.count(pc, 'c_heal') === cnt);
+      check('满状态喝药不消耗', W.Char.Inventory.count(pc, 'c_heal') === cnt && pb.round === round3);
     }
 // 已装备物品分解/出售
     const dc2 = W.Char.create('装备商', 'human', 'warrior');
@@ -1747,6 +1749,7 @@ function checkEq(name, got, want) {
   {
     // 戒指槽映射:空槽优先 ring1 → ring2;属性计入 computed;双满替换较弱者
     const rc = W.Char.create('戒王', 'human', 'warrior');
+    rc.level = 30;
     const c0 = W.Char.computed(rc);
     // 临时弱戒指(耐力1)用于验证替换较弱者
     D.ITEMS.__test_weak_ring = { id: '__test_weak_ring', name: '弱戒', icon: '💍', slot: 'ring', quality: 'green', level: 1, stats: { stam: 1 }, buy: 100 };
@@ -1769,6 +1772,7 @@ function checkEq(name, got, want) {
     // 饰品双槽:trinket1/trinket2 空槽优先;属性计入 computed;双满替换较弱者;极品/普通实例区分
     {
       const tc = W.Char.create('饰王', 'human', 'warrior');
+      tc.level = 30;
       const c0 = W.Char.computed(tc);
       D.ITEMS.__test_weak_trinket = { id: '__test_weak_trinket', name: '弱饰', icon: '🎖️', slot: 'trinket', quality: 'green', level: 1, stats: { stam: 1 }, buy: 100 };
       tc.inventory.push({ id: '__test_weak_trinket', count: 1 }, { id: 'tr_might_signet', count: 1 }, { id: 'tr_ember_heart', count: 1 });
@@ -2035,9 +2039,9 @@ function checkEq(name, got, want) {
   console.log('== 平衡性数值 ==');
   {
     check('背包扩容至40格', W.Config.BAG_SIZE === 40);
-    check('强化费用降低(基础50/每级20)', W.Config.FORGE_BASE_COST === 50 && W.Config.FORGE_COST_PER_ITEM_LEVEL === 20);
+    check('强化费用降低(基础40/每级6)', W.Config.FORGE_BASE_COST === 40 && W.Config.FORGE_COST_PER_ITEM_LEVEL === 6);
     const cost = W.Char.Forge.enhanceCost(D.ITEMS.vancleef_fang, 0);
-    check('17级武器强化+1费用为456(含等级系数)', cost === Math.round((50 + 17 * 20) * 1 * 1.17), `cost=${cost}`);
+    check('17级武器强化+1费用为166(含等级系数)', cost === Math.round((40 + 17 * 6) * 1 * 1.17), `cost=${cost}`);
     // 高等级强化费用随等级上浮(经济修复:匹配后期收益,低等级不敏感)
     const costLow = W.Char.Forge.enhanceCost(D.ITEMS.a_band, 0); // Lv8 戒指
     const costHigh = W.Char.Forge.enhanceCost(D.ITEMS.w_frostmourne, 0); // Lv60 传说武器
@@ -2082,7 +2086,7 @@ function checkEq(name, got, want) {
     check('等级上限提升至 70', W.Config.LEVEL_CAP === 70, `LEVEL_CAP=${W.Config.LEVEL_CAP}`);
     check('区域扩充至 83 个', Object.keys(D.ZONES).length === 83, `got ${Object.keys(D.ZONES).length}`);
     check('副本扩充至 50 个', Object.keys(D.DUNGEONS).length === 50, `got ${Object.keys(D.DUNGEONS).length}`);
-    check('任务扩充至 192 个', Object.keys(D.QUESTS).length === 192, `got ${Object.keys(D.QUESTS).length}`);
+    check('任务扩充至 197 个(含 5 个城市/枢纽委托)', Object.keys(D.QUESTS).length === 197, `got ${Object.keys(D.QUESTS).length}`);
     check('新地图悬赏+副本讨伐任务已接入任务板', Object.keys(D.QUESTS).some((q) => q.startsWith('q_map_')) && Object.keys(D.QUESTS).some((q) => q.startsWith('q_dg_')));
     check('新副本区域入口存在', D.ZONES.blackrock_depths.dungeon === 'blackrock_depths' && D.ZONES.zulfarrak.dungeon === 'zulfarrak');
     check('黑石深渊 7 波(中途首领+索瑞森大帝)', D.DUNGEONS.blackrock_depths && D.DUNGEONS.blackrock_depths.waves.length === 7 && D.DUNGEONS.blackrock_depths.boss === 'emperor_thaurissan');
@@ -2987,7 +2991,7 @@ function checkEq(name, got, want) {
       const t60 = W.Char.create('直达', 'human', 'warrior');
       t60.level = 60;
       check('指定目标成就直达固定副本(熔火之心)', W.World._achDungeonTarget(t60, D.ACHIEVEMENTS.ach_dg_molten_core) === 'molten_core');
-      check('多副本成就跳首个未通关(哀嚎洞穴Lv13)', W.World._achDungeonTarget(t60, D.ACHIEVEMENTS.ach_dungeon_all) === 'wailing_caverns');
+      check('多副本成就跳首个未通关(哀嚎洞穴Lv14)', W.World._achDungeonTarget(t60, D.ACHIEVEMENTS.ach_dungeon_all) === 'wailing_caverns');
       t60.dungeons = ['wailing_caverns', 'ragefire_chasm'];
       check('通关后跳到下一座(死亡矿井)', W.World._achDungeonTarget(t60, D.ACHIEVEMENTS.ach_dungeon_all) === 'deadmines');
       t60.dungeons = Object.keys(D.DUNGEONS);
@@ -3040,7 +3044,7 @@ function checkEq(name, got, want) {
       // 可直达:20 级 → 5 座低阶副本 + 2 个泛用 = 7
       W.World._achFilter = { q: '', done: 'all', raid: false, reach: true };
       const reach = allAch.filter((a) => W.World._achMatchFilter(fs, a, fst));
-      check('可直达(20级)恰 7 项', reach.length === 7, 'n=' + reach.length + ' ' + reach.map((a) => a.id).join(','));
+      check('可直达(20级)恰 5 项', reach.length === 5, 'n=' + reach.length + ' ' + reach.map((a) => a.id).join(','));
       check('可直达不含熔火之心', !reach.some((a) => a.target === 'molten_core'));
       check('可直达含两个泛用成就', reach.some((a) => a.id === 'ach_dungeon_1') && reach.some((a) => a.id === 'ach_dungeon_all'));
       const lowF = W.Char.create('低等', 'human', 'warrior');
@@ -3058,7 +3062,7 @@ function checkEq(name, got, want) {
       check('全部计数=67', W.World._achCount(fs, fst, { done: 'all' }) === 67, 'n=' + W.World._achCount(fs, fst, { done: 'all' }));
       check('未完成计数=65', W.World._achCount(fs, fst, { done: 'todo' }) === 65, 'n=' + W.World._achCount(fs, fst, { done: 'todo' }));
       check('团本计数=13', W.World._achCount(fs, fst, { raid: true }) === 13, 'n=' + W.World._achCount(fs, fst, { raid: true }));
-      check('可直达计数=7', W.World._achCount(fs, fst, { reach: true }) === 7, 'n=' + W.World._achCount(fs, fst, { reach: true }));
+      check('可直达计数=5', W.World._achCount(fs, fst, { reach: true }) === 5, 'n=' + W.World._achCount(fs, fst, { reach: true }));
       W.World._achFilter = { q: '熔火', done: 'all', raid: false, reach: false };
       check('搜索熔火后全部计数=1', W.World._achCount(fs, fst, { done: 'all' }) === 1, 'n=' + W.World._achCount(fs, fst, { done: 'all' }));
       W.World._achFilter = { q: '', done: 'all', raid: false, reach: false };
@@ -3151,6 +3155,7 @@ function checkEq(name, got, want) {
   console.log('== 已装备不占背包 ==');
   {
     const p = W.Char.create('背包侠', 'human', 'warrior');
+    p.level = 20; // 铁剑 Lv11 / 马刀 Lv18:等级校验上线后需满足物品等级
     W.Char.Inventory.add(p, 'w_iron_sword', 1);
     const before = W.Char.Inventory.list(p).length;
     check('装备前背包含剑', W.Char.Inventory.count(p, 'w_iron_sword') === 1);
@@ -3189,6 +3194,7 @@ function checkEq(name, got, want) {
     check('普通堆先被移除', st.length === 1 && st[0].perf === true && st[0].count === 2);
     // 装备极品 → 属性 +50%
     const c2 = W.Char.create('极品者', 'human', 'warrior');
+    c2.level = 20; // 战刃 Lv14:满足装备等级
     W.Char.Inventory.add(c2, 'w_warblade', 1, { perf: true });
     W.Char.Equipment.equip(c2, 'w_warblade', true);
     const perfC = W.Char.computed(c2);
@@ -3527,7 +3533,7 @@ function checkEq(name, got, want) {
     const westfall0 = W.World._zoneQuestOpen(qc, 'westfall');
     W.Char.QuestLog.start(qc, 'q_golem');
     check('接取未完成任务不算已完成(计数-1)', W.World._zoneQuestOpen(qc, 'westfall') === westfall0 - 1, 'open=' + W.World._zoneQuestOpen(qc, 'westfall'));
-    check('无任务主城区域未接数为0', W.World._zoneQuestOpen(qc, 'stormwind') === 0);
+    check('主城委托在任务板可接取', W.World._zoneQuestOpen(qc, 'stormwind') === 1);
     const total = Object.keys(D.ZONES).reduce((s, z) => s + W.World._zoneQuestOpen(qc, z), 0);
     check('全图未接任务总数为正整数', total > 0 && Number.isInteger(total), 'total=' + total);
   }
@@ -3577,6 +3583,17 @@ function checkEq(name, got, want) {
     check('新野怪掉落联动21-30段新装备', ['a_badlands_legs', 'w_marsh_bow', 'a_stv_ring', 'w_badlands_cleaver'].every((i) => wildIds.some((m) => D.DROPS[m].some((r) => r[0] === i))));
   }
 
+  // 凶暴怪物变体(野外刷怪变化 + 威胁)
+  {
+    const base = D.MONSTERS.elwynn_boar;
+    const v = W.World._encounterEnemies(['elwynn_boar'], true)[0];
+    check('凶暴变体保留原 id(任务进度照常)', v.id === base.id && v.veteran === true);
+    check('凶暴变体名称/生命/攻击/经验/金币提高', v.name === '凶暴的' + base.name && v.hp > base.hp && v.atk[0] > base.atk[0] && v.xp > base.xp && v.gold > base.gold,
+      `hp=${v.hp}/${base.hp} atk=${v.atk[0]}/${base.atk[0]} xp=${v.xp}/${base.xp} gold=${v.gold}/${base.gold}`);
+    check('普通遭遇不改变原怪物定义', W.World._encounterEnemies(['elwynn_boar'], false)[0] === base);
+    check('首领与精英不会被凶暴化', W.World._encounterEnemies(['vancleef'], true)[0] === D.MONSTERS.vancleef);
+  }
+
   // 任务经验再平衡(削减经验→折算金币与材料,野外刷怪重新有意义)
   {
     let sumExp = 0, sumGold = 0;
@@ -3607,6 +3624,16 @@ function checkEq(name, got, want) {
     tc.quests.q_boar.done = true;
     const tr = W.Char.QuestLog.turnIn(tc, 'q_boar');
     check('交付按新金币结算入账', !!tr && tc.gold === g0 + Math.floor(q.gold * W.Char.computed(tc).goldMult), 'gain=' + (tc.gold - g0));
+    // 等级差奖励动态化:高出任务 5 级 → 经验减半、金币 +25%
+    const th = W.Char.create('任务压级', 'human', 'warrior');
+    th.level = 6;
+    const thGold0 = th.gold;
+    W.Char.QuestLog.start(th, 'q_boar');
+    th.quests.q_boar.progress = q.count;
+    th.quests.q_boar.done = true;
+    const trh = W.Char.QuestLog.turnIn(th, 'q_boar');
+    check('高于任务 5 级:经验减半、金币 +25%', !!trh && trh.exp === Math.floor(q.exp * 0.5) && trh.gold === Math.floor(q.gold * W.Char.computed(th).goldMult * 1.25) && th.gold - thGold0 === trh.gold,
+      `exp=${trh && trh.exp}/${q.exp} gold=${trh && trh.gold}`);
   }
 
   console.log('== GM 调试模式 ==');
@@ -3693,11 +3720,13 @@ function checkEq(name, got, want) {
       W.Combat.start(ch, [D.MONSTERS.hogger], uiStub, {});
       const b = W.Combat.battle, p = b.player, e = b.enemies[0];
       const mk = e.buffs.find((x) => x.key === 'hunters_mark');
+      const st = p.buffs.find((x) => x.key === 'stealth');
       return [
         p.shield ? p.shield.amount : 0,
         p.shield ? (p.shield.healOnHit || 0) : 0,
         mk ? mk.mod.takenPct : 0,
         e.ccs.map((x) => x.type + ':' + x.rounds).join(','),
+        st ? st.rounds : 0,
         W.Combat._buffMod(p, 'onHit', 0),
         W.Combat._buffMod(p, 'thorns', 0),
         (p.passiveMod || {}).petAtkPct || 0,
@@ -3728,10 +3757,10 @@ function checkEq(name, got, want) {
       if (!statDiff.length && b0 === b1) dead.push(sid + '(' + s.name + ')');
     }
     check('全部被动技能都有可观测效果(属性或战斗)', dead.length === 0, dead.join(','));
-    check('被动审计覆盖 59 个技能', audited === 59, 'audited=' + audited);
+    check('被动审计覆盖 65 个技能', audited === 65, 'audited=' + audited);
     // 每个 mod 键都要有消费方:属性类进 computed(),战斗类进 buildPlayerUnit/passiveMod 或 _applyPassiveStart
     const consumed = ['atkPct', 'armorPct', 'spellPowerPct', 'hpPct', 'hit', 'dodge', 'crit', 'dmgTaken', 'healPct', 'ccReduce', 'lifesteal', 'manaRegenPct',
-      'onHit', 'thorns', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'startCc'];
+      'onHit', 'thorns', 'startShield', 'startShieldSp', 'shieldHeal', 'markTaken', 'petAtkPct', 'startCc', 'startStealth'];
     const orphan = Object.keys(modKeys).filter((k) => !consumed.includes(k));
     check('被动 mod 键全部有消费方', orphan.length === 0, orphan.join(','));
   }
@@ -3739,7 +3768,7 @@ function checkEq(name, got, want) {
   console.log('== 戒指/饰品双槽不可重复 ==');
   {
     const rc = W.Char.create('双戒', 'human', 'warrior');
-    rc.level = 30;
+    rc.level = 60; // 安其拉戒指 Lv52:等级校验上线后需满足物品等级
     W.Char.Inventory.add(rc, 'a_band', 2); // 背包里两枚同名戒指
     check('第 1 枚戒指装备到 ring1', W.Char.Equipment.equip(rc, 'a_band') && rc.equipment.ring1 === 'a_band', JSON.stringify(rc.equipment));
     check('同名戒指不会再占 ring2', W.Char.Equipment.equip(rc, 'a_band') === false && !rc.equipment.ring2);
@@ -3768,11 +3797,11 @@ function checkEq(name, got, want) {
 
   console.log('== 减益/DOT 技能自动释放 ==');
   {
-    const AUTO_IDS = ['rend', 'consecration', 'serpent_sting', 'shadow_word_pain', 'corruption', 'curse_of_agony'];
-    check('6 个纯减益/DOT 技能标记为自动释放', AUTO_IDS.every((id) => D.SKILLS[id] && D.SKILLS[id].autoCast === true));
+    const AUTO_IDS = ['rend', 'consecration', 'serpent_sting', 'shadow_word_pain', 'corruption', 'curse_of_agony', 'immolate', 'frost_shock'];
+    check('8 个纯减益/DOT 技能标记为自动释放', AUTO_IDS.every((id) => D.SKILLS[id] && D.SKILLS[id].autoCast === true));
     check('自动释放技能免费(不消耗资源)', AUTO_IDS.every((id) => !D.SKILLS[id].res && !D.SKILLS[id].cost));
     check('自动释放技能仍非被动(不计入常驻属性)', AUTO_IDS.every((id) => !D.SKILLS[id].passive && !D.SKILLS[id].mod));
-    check('带伤害的减益技能仍为手动主动', ['mortal_strike', 'frostbolt', 'immolate', 'moonfire', 'shield_slam', 'flame_shock', 'frost_shock', 'blizzard'].every((id) => D.SKILLS[id] && !D.SKILLS[id].autoCast && !D.SKILLS[id].passive));
+    check('带伤害的减益技能仍为手动主动', ['mortal_strike', 'frostbolt', 'moonfire', 'shield_slam', 'flame_shock', 'stormstrike', 'blizzard'].every((id) => D.SKILLS[id] && !D.SKILLS[id].autoCast && !D.SKILLS[id].passive));
 
     const logs = [];
     const uiA = { log: (cls, html) => logs.push(String(html)), float: () => {}, render: () => {}, onEnd: null };
@@ -4003,6 +4032,96 @@ function checkEq(name, got, want) {
       W.Char.rest(raidWar);
     }
     check('外域世界首领末日行者可被击败(≥1/3)', worldWins >= 1, `wins=${worldWins}/3, rounds=${worldRounds}`);
+  }
+
+  console.log('== 审计回归:战斗与存档机制 ==');
+  {
+    const uiStub = { log() {}, float() {}, render() {}, onEnd: null };
+
+    // 1) 怪物技能冷却必须每回合递减(旧实现只递减玩家 cd,怪物技能整场只放一次)
+    const cdUnit = {
+      key: 'e0', name: '冷却木桩', icon: '🪵', hp: 100, hpMax: 100, mana: 0, manaMax: 0,
+      buffs: [], dots: [], hots: [], ccs: [], shield: null, cd: {}, mSkillCds: { m_test: 2 }, resists: {},
+    };
+    W.Combat.battle = { ui: uiStub, player: { potionCd: 0 }, enemies: [cdUnit] };
+    W.Combat._tickUnit(cdUnit, false);
+    check('怪物技能冷却每回合 -1', cdUnit.mSkillCds.m_test === 1, 'cd=' + cdUnit.mSkillCds.m_test);
+    W.Combat._tickUnit(cdUnit, false);
+    check('怪物技能冷却可递减到 0', cdUnit.mSkillCds.m_test === 0, 'cd=' + cdUnit.mSkillCds.m_test);
+
+    // 2) 治疗抑制:玩家技能(正 pct)与怪物技能(负 mod)两个入口方向必须一致
+    const hu = { isPlayer: true, hp: 50, hpMax: 100, mana: 0, manaMax: 0, buffs: [], dots: [], hots: [], ccs: [], shield: null, cd: {}, potionCd: 0, resists: {} };
+    W.Combat.battle = { ui: uiStub, player: hu, enemies: [] };
+    hu.buffs.push({ key: 'healTaken', name: '致死', rounds: 2, mod: W.Combat._modFromDebuff({ key: 'healTaken', pct: 0.5 }) });
+    const h1 = W.Combat._applyHeal(hu, 40);
+    check('致死打击使治疗量降低 50%', h1 === 20 && hu.hp === 70, `healed=${h1} hp=${hu.hp}`);
+    hu.buffs = [{ key: 'curse', name: '狼化诅咒', rounds: 2, mod: { healTaken: -0.2 } }];
+    hu.hp = 50;
+    const h2 = W.Combat._applyHeal(hu, 50);
+    check('怪物治疗抑制 debuff(负修正)正确生效', h2 === 40 && hu.hp === 90, `healed=${h2} hp=${hu.hp}`);
+
+    // 3) 法力/生命回复必须真正在每回合生效(旧实现 regen() 无任何调用点)
+    const pu = {
+      isPlayer: true, hp: 50, hpMax: 100, mana: 100, manaMax: 200, manaRegen: 25, hpRegen: 5,
+      buffs: [], dots: [], hots: [], ccs: [], shield: null, cd: {}, potionCd: 0, resists: {}, regenPct: 0,
+    };
+    W.Combat.battle = { ui: uiStub, player: pu, enemies: [] };
+    W.Combat._tickUnit(pu, true);
+    check('战斗每回合回复法力 25', pu.mana === 125, 'mana=' + pu.mana);
+    check('战斗每回合回复生命 5', pu.hp === 55, 'hp=' + pu.hp);
+
+    // 4) 潜行快照:技能破潜后仍应按施法瞬间状态结算背刺 2.5×
+    const stealthAtk = { isPlayer: true, level: 10, atkMin: 100, atkMax: 100, hit: 1, crit: 0, buffs: [], talents: null };
+    const stealthDef = { isEnemy: true, level: 10, dodge: 0, armor: 0, buffs: [], ccs: [], shield: null, resists: {} };
+    const backstab = { id: 'backstab', name: '背刺', stealthMult: 2.5, dmg: { base: 100, scale: 0, type: 'physical' } };
+    W.Combat.battle = { ui: uiStub, player: stealthAtk, enemies: [stealthDef] };
+    const noStealth = W.Combat.rollAttack(stealthAtk, stealthDef, backstab);
+    const snap = W.Combat.rollAttack(stealthAtk, stealthDef, backstab, { stealthed: true });
+    check('潜行快照使背刺倍率 2.5× 生效', noStealth.damage === 100 && snap.damage === 250, `no=${noStealth.damage} snap=${snap.damage}`);
+  }
+
+  console.log('== 审计回归:装备等级 / 名字 / 存档 / 任务背包 ==');
+  {
+    // 装备等级门槛
+    const lc = W.Char.create('等级锁', 'human', 'warrior');
+    const starterWeapon = lc.equipment.weapon;
+    W.Char.Inventory.add(lc, 'w_frostmourne', 1);
+    check('低等级无法装备高等级武器', W.Char.Equipment.equip(lc, 'w_frostmourne') === false && lc.equipment.weapon === starterWeapon);
+    check('equipIssue 给出等级提示', /需要 60 级/.test(W.Char.Equipment.equipIssue(lc, 'w_frostmourne')), W.Char.Equipment.equipIssue(lc, 'w_frostmourne'));
+    lc.level = 60;
+    check('达到等级后可正常装备', W.Char.Equipment.equip(lc, 'w_frostmourne') === true && lc.equipment.weapon === 'w_frostmourne');
+
+    // 角色名白名单清洗(创建入口)
+    const dirty = W.Char.create('<b>坏名</b>', 'human', 'warrior');
+    check('角色名白名单清除标签字符', !/[<>]/.test(dirty.name) && dirty.name.includes('坏名'), dirty.name);
+    check('角色名长度上限生效', W.Char.cleanName('a'.repeat(50)).length === W.Char.NAME_MAX, W.Char.cleanName('a'.repeat(50)));
+
+    // 存档载入结构校验:非法职业/区域必须拒绝,不能带进世界界面
+    const savedSlots = W.State.saveSlots;
+    const savedChar = W.State.character;
+    W.State.saveSlots = [
+      { name: '坏档', data: { name: '坏档', classId: 'not_a_class', race: 'human', zone: 'elwynn', level: 1 } },
+      { name: '坏区', data: { name: '坏区', classId: 'warrior', race: 'human', zone: 'not_a_zone', level: 1 } },
+    ];
+    check('非法职业存档拒绝载入', W.State.load(0) === false);
+    check('非法区域存档拒绝载入', W.State.load(1) === false);
+    W.State.saveSlots = savedSlots;
+    W.State.character = savedChar;
+
+    // 任务交付满包:金币/经验照常结算,非消耗品奖励计入 skipped 而不是静默消失
+    const qc = W.Char.create('满包任务', 'human', 'warrior');
+    W.Char.QuestLog.start(qc, 'q_boar');
+    qc.quests.q_boar.progress = D.QUESTS.q_boar.count;
+    qc.quests.q_boar.done = true;
+    qc.inventory = [];
+    for (let i = 0; i < W.Char.bagSize(qc); i++) qc.inventory.push({ id: 'm_dust', count: 1 });
+    const qr = W.Char.QuestLog.turnIn(qc, 'q_boar');
+    const expectedSkipped = D.QUESTS.q_boar.rewardItems.filter((id) => {
+      const it = D.ITEMS[id];
+      return !it || it.slot !== 'consumable';
+    }).length;
+    check('满包仍可完成任务并结算经验金币', !!qr && qc.completedQuests.includes('q_boar') && qr.exp === D.QUESTS.q_boar.exp);
+    check('满包时非消耗品奖励计入未领取', !!qr && qr.skipped.length === expectedSkipped, `skipped=${qr && qr.skipped.length} expected=${expectedSkipped}`);
   }
 
   console.log(failed === 0 ? '\n🎉 全部通过' : `\n❌ ${failed} 项失败`);

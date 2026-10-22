@@ -184,11 +184,18 @@
     },
 
     // 条目缺 data 说明存档不完整(写入被截断/被编辑过),读它会把 character 变成 undefined
+    // 载入前做结构体检:区域/职业/种族必须是数据里存在的 id,否则世界界面会在 D.ZONES[zone] 处崩
     load(slot) {
       const idx = slot == null ? this._saveSlot : slot;
       const entry = this.saveSlots[idx];
       if (!entry || !entry.data) return false;
-      this.character = entry.data;
+      const c = entry.data;
+      const D = W.Data;
+      if (!D.CLASSES[c.classId] || !D.RACES[c.race]) return false;
+      if (!D.ZONES[c.zone]) return false;
+      // 名字来自可编辑的存档文件,统一走白名单清洗(旧版本可能存了标记字符)
+      if (W.Char && W.Char.cleanName) c.name = W.Char.cleanName(c.name);
+      this.character = c;
       this._saveSlot = idx;
       this._lastAutoSave = 0; // 读档后立即允许自动存档
       return true;
@@ -240,6 +247,18 @@
       // 缺 data 的条目读进去会让角色变成 undefined,提前挡掉
       const usable = incoming.filter((e) => e && e.data);
       if (!usable.length) return { ok: false, err: '存档条目已损坏（缺少角色数据）' };
+      // 结构校验:区域/职业/种族非法会让世界界面直接崩;名字做白名单清洗(存档可被手工编辑)
+      const D = W.Data;
+      const bad = usable.filter((e) => !D.CLASSES[e.data.classId] || !D.RACES[e.data.race] || !D.ZONES[e.data.zone]);
+      if (bad.length) {
+        return { ok: false, err: `有 ${bad.length} 个存档条目的职业/种族/区域无法识别，可能来自其他版本或被编辑过` };
+      }
+      for (const e of usable) {
+        if (W.Char && W.Char.cleanName) {
+          e.data.name = W.Char.cleanName(e.data.name);
+          e.name = e.data.name;
+        }
+      }
 
       this.loadSlots();
       const cur = this.saveSlots.slice();
